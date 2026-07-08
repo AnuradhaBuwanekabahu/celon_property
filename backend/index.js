@@ -1,26 +1,51 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import db from "./configuration/database/db.js";
+
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-// Test Route
-app.get("/", (req, res) => {
-  res.json({
-    success: true,
-    message: "Express server is running 🚀",
-  });
+
+// Test API
+app.get("/", (req,res)=>{
+    res.send("Backend is running");
 });
 
-// Start Server
-app.listen(PORT, () => {
-  console.log(`🚀 Server is running on http://localhost:${PORT}`);
+
+// Test Database Connection
+app.get("/test-db", async(req,res)=>{
+
+    try{
+
+        const [result] = await db.query(
+            "SELECT DATABASE()"
+        );
+
+        res.json({
+            message:"Database connected",
+            database: result
+        });
+
+    }catch(error){
+
+        console.log(error);
+
+        res.status(500).json({
+            message:"Database connection failed"
+        });
+    }
+
+});
+
+
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT,()=>{
+    console.log(`Server running on port ${PORT}`);
 });
