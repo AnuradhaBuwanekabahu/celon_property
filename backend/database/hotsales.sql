@@ -1,4 +1,3 @@
-USE ceylone_property;
 
 CREATE TABLE hot_sales (
 
@@ -24,9 +23,7 @@ CREATE TABLE hot_sales (
 
     location VARCHAR(255) NOT NULL,
 
-    main_image VARCHAR(255) NOT NULL,
-
-    images JSON,
+    main_image LONGBLOB NOT NULL,
 
     status ENUM(
         'pending',
@@ -41,8 +38,26 @@ CREATE TABLE hot_sales (
 
 
     FOREIGN KEY(client_id)
-
     REFERENCES clients(id)
+    ON DELETE CASCADE
+
+);
+
+
+CREATE TABLE hot_sale_images (
+
+    id INT AUTO_INCREMENT PRIMARY KEY,
+
+    hot_sale_id INT NOT NULL,
+
+    image LONGBLOB NOT NULL,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+
+    FOREIGN KEY(hot_sale_id)
+
+    REFERENCES hot_sales(id)
 
     ON DELETE CASCADE
 

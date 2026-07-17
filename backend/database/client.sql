@@ -4,13 +4,12 @@ CREATE TABLE clients (
 
     id INT AUTO_INCREMENT PRIMARY KEY,
 
-    username VARCHAR(50) NOT NULL UNIQUE,
 
     password VARCHAR(255) NOT NULL,
 
     email VARCHAR(150) NOT NULL UNIQUE,
 
-    phone_number VARCHAR(20) NOT NULL,
+    phone_number VARCHAR(20) ,
 
     whatsapp_number VARCHAR(20),
 

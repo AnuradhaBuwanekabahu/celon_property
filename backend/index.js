@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import db from "./configuration/db.js";
 import clientrouter from "./client/routers/clientRoutes.js";
+import adsrouter from "./client/routers/adsRoutes.js";
 
 dotenv.config();
 
@@ -15,7 +16,7 @@ app.use(express.json());
 
 
 app.use("/api/clients", clientrouter);
-
+app.use('/api/ads' ,adsrouter);
 
 // Test API
 app.get("/", (req, res) => {

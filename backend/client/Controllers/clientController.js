@@ -1,31 +1,40 @@
 import db from "../../configuration/db.js";
 import bcrypt from "bcrypt";
 
+
 export const registerClient = async (req, res) => {
 
     try {
 
         const {
-            username,
-            password,
+
+            full_name,
             email,
-            phone_number,
-            whatsapp_number,
-            full_name
+            password,
+            phone_number = null,
+            whatsapp_number = null
         } = req.body;
 
 
-        // Check existing email or username
+        // Validate required fields
+
+        if (!full_name || !email || !password) {
+            return res.status(400).json({
+                message: "Full name, email and password are required"
+            });
+        }
+
+
+        // Check existing email
 
         const [existingClient] = await db.query(
-            "SELECT * FROM clients WHERE email = ? OR username = ?",
-            [email, username]
+            "SELECT * FROM clients WHERE email = ? ", [email]
         );
 
 
         if (existingClient.length > 0) {
             return res.status(400).json({
-                message: "Username or Email already exists"
+                message: "Email already exists"
             });
         }
 
@@ -42,17 +51,17 @@ export const registerClient = async (req, res) => {
             `
             INSERT INTO clients
             (
-                username,
+              
                 password,
                 email,
                 phone_number,
                 whatsapp_number,
                 full_name
             )
-            VALUES (?,?,?,?,?,?)
+            VALUES (?,?,?,?,?)
             `,
             [
-                username,
+                
                 hashedPassword,
                 email,
                 phone_number,
@@ -79,7 +88,6 @@ export const registerClient = async (req, res) => {
     }
 
 };
-
 
 //login client
 
@@ -136,7 +144,7 @@ export const loginClient = async (req, res) => {
             success: true,
             message: "Login successful",
         })
-
+ 
     }
     catch (error) {
 
@@ -145,8 +153,9 @@ export const loginClient = async (req, res) => {
         res.status(500).json({
             success: false,
             message: "Server error"
-        });
+        }); 
 
     }
 
 }
+
