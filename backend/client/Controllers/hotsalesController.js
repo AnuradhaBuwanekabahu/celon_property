@@ -1,8 +1,6 @@
-import db from "../../configuration/db.js";
-
+import db from "../../configuration/db.js"
 
 // Add Hot Sale Property
-
 export const addHotSale = async (req, res) => {
 
     const connection = await db.getConnection();
@@ -18,6 +16,9 @@ export const addHotSale = async (req, res) => {
             description,
             price,
             property_type,
+            rate,
+            paid,
+            overview,
             highlights,
             area_sqft,
             city,
@@ -25,23 +26,28 @@ export const addHotSale = async (req, res) => {
             location
         } = req.body;
 
+        const normalizedClientId = client_id && String(client_id).trim() !== ''
+            ? Number(client_id)
+            : null;
 
+        if (!normalizedClientId) {
+            return res.status(401).json({
+                message: "Please log in before adding a property."
+            });
+        }
 
         // Check main image
-
         if (!req.files || !req.files.main_image) {
 
             return res.status(400).json({
-
                 message: "Main image is required"
-
             });
 
         }
 
 
-        // Insert Hot Sale
 
+        // Insert hot sale
         const [result] = await connection.query(
 
             `
@@ -52,7 +58,9 @@ export const addHotSale = async (req, res) => {
                 description,
                 price,
                 property_type,
+                rate,
                 highlights,
+                overview,
                 area_sqft,
                 city,
                 map_address,
@@ -60,12 +68,13 @@ export const addHotSale = async (req, res) => {
                 main_image
             )
 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+
             `,
 
             [
 
-                client_id,
+                normalizedClientId,
 
                 title,
 
@@ -75,7 +84,15 @@ export const addHotSale = async (req, res) => {
 
                 property_type,
 
-                highlights ? JSON.stringify(highlights) : null,
+                rate || null,
+
+                highlights 
+                ? JSON.stringify(highlights) 
+                : null,
+
+                overview 
+                ? JSON.stringify(overview) 
+                : null,
 
                 area_sqft || null,
 
@@ -83,7 +100,7 @@ export const addHotSale = async (req, res) => {
 
                 map_address || null,
 
-                location,
+                location || null,
 
                 req.files.main_image[0].buffer
 
@@ -92,11 +109,12 @@ export const addHotSale = async (req, res) => {
         );
 
 
+
         const hotSaleId = result.insertId;
 
 
 
-        // Insert Multiple Images
+        // Insert additional images
 
         if (req.files.images) {
 
@@ -113,15 +131,13 @@ export const addHotSale = async (req, res) => {
                         image
                     )
 
-                    VALUES (?, ?)
+                    VALUES (?,?)
+
                     `,
 
                     [
-
                         hotSaleId,
-
                         image.buffer
-
                     ]
 
                 );
@@ -129,12 +145,12 @@ export const addHotSale = async (req, res) => {
 
             }
 
-
         }
 
 
 
         await connection.commit();
+
 
 
         res.status(201).json({
@@ -147,7 +163,7 @@ export const addHotSale = async (req, res) => {
 
 
 
-    } catch (error) {
+    } catch(error) {
 
 
         await connection.rollback();
@@ -165,7 +181,6 @@ export const addHotSale = async (req, res) => {
         });
 
 
-
     } finally {
 
 
@@ -175,7 +190,6 @@ export const addHotSale = async (req, res) => {
     }
 
 };
-
 
 
 // Get All Hot Sales
@@ -196,6 +210,7 @@ export const getHotSales = async (req, res) => {
                 price,
                 property_type,
                 highlights,
+                overview,
                 area_sqft,
                 city,
                 map_address,
@@ -304,6 +319,7 @@ export const editHotSale = async (req, res) => {
             price,
             property_type,
             highlights,
+            overview,
             area_sqft,
             city,
             map_address,
@@ -356,6 +372,8 @@ export const editHotSale = async (req, res) => {
                 price = ?,
                 property_type = ?,
                 highlights = ?,
+                overview =?,
+            
                 area_sqft = ?,
                 city = ?,
                 map_address = ?,
@@ -380,7 +398,11 @@ export const editHotSale = async (req, res) => {
 
                 property_type,
 
+          
+
                 highlights ? JSON.stringify(highlights) : null,
+
+                overview ? JSON.stringify(highlights) : null,
 
                 area_sqft || null,
 
@@ -414,8 +436,10 @@ export const editHotSale = async (req, res) => {
                 title = ?,
                 description = ?,
                 price = ?,
+                rate=?,
                 property_type = ?,
                 highlights = ?,
+                overview =?,
                 area_sqft = ?,
                 city = ?,
                 map_address = ?,
@@ -439,8 +463,11 @@ export const editHotSale = async (req, res) => {
                 price,
 
                 property_type,
-
+                
+                rate , 
                 highlights ? JSON.stringify(highlights) : null,
+
+                overview ? JSON.stringify(highlights) : null,
 
                 area_sqft || null,
 

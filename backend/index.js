@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import db from "./configuration/db.js";
 import clientrouter from "./client/routers/clientRoutes.js";
 import adsrouter from "./client/routers/adsRoutes.js";
-
+import hotsalerouter from './client/routers/hotsaleRoutes.js'
 dotenv.config();
 
 const app = express();
@@ -17,7 +17,7 @@ app.use(express.json());
 
 app.use("/api/clients", clientrouter);
 app.use('/api/ads' ,adsrouter);
-
+app.use('/api/hotsales',hotsalerouter)
 // Test API
 app.get("/", (req, res) => {
   

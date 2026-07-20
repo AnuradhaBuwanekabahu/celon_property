@@ -1,10 +1,10 @@
 import express from "express"
-import { addHotSale ,getHotSales , editHotSale} from "../Controllers/hotsalesController";
-import upload from "../Middleware/upload";
+import { addHotSale ,getHotSales , editHotSale,deleteHotSale} from "../Controllers/hotsalesController.js";
+import upload from "../Middleware/upload.js";
 
 const hotsalerouter = express.Router();
 hotsalerouter.post(
-    "/hot-sales",
+    "/add",
     upload.fields([
         {
             name:"main_image",

@@ -12,9 +12,13 @@ CREATE TABLE stays_to_rent (
 
     price DECIMAL(12,2) NOT NULL,
 
+    overview JSON,
+
     property_type VARCHAR(50) NOT NULL,
 
     highlights JSON,
+
+   rate DECIMAL(2,1) DEFAULT 0.0
 
     area_sqft DECIMAL(10,2),
 

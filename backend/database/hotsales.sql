@@ -13,6 +13,8 @@ CREATE TABLE hot_sales (
 
     property_type VARCHAR(50) NOT NULL,
 
+    overview JSON,
+
     highlights JSON,
 
     area_sqft DECIMAL(10,2),
@@ -24,6 +26,8 @@ CREATE TABLE hot_sales (
     location VARCHAR(255) NOT NULL,
 
     main_image LONGBLOB NOT NULL,
+ 
+    rate DECIMAL(2,1) DEFAULT 0.0,
 
     status ENUM(
         'pending',

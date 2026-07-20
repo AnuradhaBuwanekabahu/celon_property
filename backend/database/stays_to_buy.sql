@@ -10,6 +10,8 @@ CREATE TABLE stays_to_buy (
 
     description TEXT,
 
+    overview JSON,
+
     price DECIMAL(12,2) NOT NULL,
 
     property_type VARCHAR(50) NOT NULL,
@@ -21,6 +23,8 @@ CREATE TABLE stays_to_buy (
     city VARCHAR(100) NOT NULL,
 
     map_address VARCHAR(255),
+
+    rate DECIMAL(2,1) DEFAULT 0.0
 
     location VARCHAR(255),
 

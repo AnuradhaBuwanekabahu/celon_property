@@ -1,5 +1,3 @@
-USE ceylone_property;
-
 CREATE TABLE payments (
 
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -18,25 +16,27 @@ CREATE TABLE payments (
 
     amount DECIMAL(10,2) NOT NULL,
 
+    currency VARCHAR(10) DEFAULT 'LKR',
+
     payment_method VARCHAR(50),
 
     transaction_ref VARCHAR(150),
 
+    payment_gateway VARCHAR(50),
+
+    paid_at DATETIME,
+
     status ENUM(
         'pending',
         'paid',
-        'failed'
+        'failed',
+        'refunded'
     ) DEFAULT 'pending',
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-
-    CONSTRAINT fk_payment_client
-
-    FOREIGN KEY(client_id)
-
+    FOREIGN KEY (client_id)
     REFERENCES clients(id)
-
     ON DELETE CASCADE
 
 );

@@ -43,7 +43,14 @@ export default function Login() {
         password: formData.password
       }
       )
-    navigate('/dashboard')
+
+      const clientData = response.data.client || { id: response.data.clientId };
+
+      localStorage.setItem(
+        "client",
+        JSON.stringify(clientData)
+      );
+      navigate('/dashboard')
 
     }
 

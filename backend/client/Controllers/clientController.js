@@ -5,9 +5,9 @@ import bcrypt from "bcrypt";
 export const registerClient = async (req, res) => {
 
     try {
+        
 
         const {
-
             full_name,
             email,
             password,
@@ -138,11 +138,19 @@ export const loginClient = async (req, res) => {
             })
         }
 
-        //login successfull
+        //login successful
 
         res.status(200).json({
             success: true,
             message: "Login successful",
+            client: {
+                id: client.id,
+                full_name: client.full_name,
+                email: client.email,
+                phone_number: client.phone_number,
+                whatsapp_number: client.whatsapp_number,
+                is_active: client.is_active
+            }
         })
  
     }
