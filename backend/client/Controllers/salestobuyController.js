@@ -21,6 +21,7 @@ export const addStayToBuy = async (req, res) => {
       city,
       map_address,
       location,
+      duration,
     } = req.body;
 
     // Validation
@@ -39,8 +40,13 @@ export const addStayToBuy = async (req, res) => {
 
     // Main Image
     let mainImage = null;
+    let mainVideo = null;
     if (req.files?.main_image?.length > 0) {
-      mainImage = req.files.main_image[0].filename;
+      mainImage = req.files.main_image[0].path;
+    }
+
+    if (req.files?.main_video?.length > 0) {
+      mainVideo = req.files.main_video[0].path;
     }
 
     if (!mainImage) {
@@ -71,9 +77,11 @@ export const addStayToBuy = async (req, res) => {
         map_address,
         location,
         main_image,
-        images
+        main_video,
+        images,
+        duration
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     await connection.query(sql, [
@@ -88,7 +96,9 @@ export const addStayToBuy = async (req, res) => {
       map_address,
       location,
       mainImage,
+      mainVideo,
       JSON.stringify(images),
+      duration || 'month',
     ]);
 
     await connection.commit();
@@ -193,18 +203,24 @@ export const updateStayToBuy = async (req, res) => {
       map_address,
       location,
       status,
+      duration,
     } = req.body;
 
     let mainImage = null;
+    let mainVideo = null;
 
     if (req.files?.main_image?.length > 0) {
-      mainImage = req.files.main_image[0].filename;
+      mainImage = req.files.main_image[0].path;
+    }
+
+    if (req.files?.main_video?.length > 0) {
+      mainVideo = req.files.main_video[0].path;
     }
 
     let images = [];
 
     if (req.files?.images?.length > 0) {
-      images = req.files.images.map((img) => img.filename);
+      images = req.files.images.map((img) => img.path);
     }
 
     const sql = `
@@ -220,7 +236,9 @@ export const updateStayToBuy = async (req, res) => {
       map_address=?,
       location=?,
       status=?,
+      duration=?,
       main_image=COALESCE(?, main_image),
+      main_video=COALESCE(?, main_video),
       images=CASE
           WHEN ? IS NULL THEN images
           ELSE ?
@@ -239,7 +257,9 @@ export const updateStayToBuy = async (req, res) => {
       map_address,
       location,
       status,
+      duration || 'month',
       mainImage,
+      mainVideo,
       images.length ? JSON.stringify(images) : null,
       images.length ? JSON.stringify(images) : null,
       id,

@@ -13,6 +13,13 @@ CREATE TABLE stays_to_rent (
     price DECIMAL(12,2) NOT NULL,
 
     overview JSON,
+    
+     duration ENUM(
+       'year',
+       'month',
+       'day'
+    ) DEFAULT 'month',
+
 
     property_type VARCHAR(50) NOT NULL,
 

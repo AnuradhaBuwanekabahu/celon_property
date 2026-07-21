@@ -17,6 +17,7 @@ const AddHotSales = () => {
         description: '',
         price: '',
         property_type: '',
+        duration: 'month',
         rate: '',
         overview: [{ title: 'Bedrooms', value: '' }],
         highlights: [],
@@ -136,58 +137,79 @@ const AddHotSales = () => {
         });
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+   const handleSubmit = async (e) => {
+    e.preventDefault();
 
-        let client = null;
-        const storedClient = localStorage.getItem('client');
+    let client = null;
+    const storedClient = localStorage.getItem('client');
 
-        if (storedClient && storedClient !== 'undefined') {
-            try {
-                client = JSON.parse(storedClient);
-            } catch {
-                client = null;
-            }
-        }
-
-        const clientId = client?.id ?? client?.clientId ?? client?.client_id ?? '';
-
+    if (storedClient && storedClient !== 'undefined') {
         try {
-            const data = new FormData();
-            data.append('client_id', clientId || '');
-
-            Object.keys(formData).forEach((key) => {
-                if (key === 'overview' || key === 'highlights') {
-                    data.append(key, JSON.stringify(formData[key]));
-                } else {
-                    data.append(key, formData[key]);
-                }
-            });
-
-            if (mainImage) {
-                data.append('main_image', mainImage);
-            }
-
-            galleryImages.forEach((img) => {
-                data.append('images', img.file);
-            });
-
-            await API.post('/api/hotsales/add', data, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
-
-            toast.success('Data Added Successfully');
-
-            navigate("/dashboard/payment")
-        
-        } catch (error) {
-            console.error(error);
-            toast.error('Something went wrong');
+            client = JSON.parse(storedClient);
+        } catch {
+            client = null;
         }
-    };
+    }
 
+    const clientId = client?.id ?? client?.clientId ?? client?.client_id ?? '';
+
+    if (!clientId) {
+        toast.error('You must be logged in to add a property');
+        return;
+    }
+
+    try {
+        const data = new FormData();
+        data.append('client_id', clientId);
+
+        Object.keys(formData).forEach((key) => {
+            if (key === 'overview' || key === 'highlights') {
+                data.append(key, JSON.stringify(formData[key]));
+            } else {
+                data.append(key, formData[key]);
+            }
+        });
+
+        if (mainImage) {
+            data.append('main_image', mainImage);
+        }
+
+        galleryImages.forEach((img) => {
+            data.append('images', img.file);
+        });
+
+        const response = await API.post('/api/hotsales/add', data, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+
+       
+        const newPropertyId = response.data.property?.id ?? response.data.id;
+
+        if (!newPropertyId) {
+            console.error('No property id returned from add endpoint:', response.data);
+            toast.error('Property saved, but could not proceed to payment. Contact support.');
+            return;
+        }
+
+        toast.success('Data Added Successfully');
+
+        navigate("/dashboard/payment", {
+            state: {
+                clientId: Number(clientId),
+                propertyType: "hot_sales",
+                propertyId: newPropertyId,
+                amount: 2500,               // your fixed listing fee — see note below
+                listingLabel: formData.title || "Property Listing"
+            }
+        });
+
+    } catch (error) {
+        console.error(error);
+        toast.error('Something went wrong');
+    }
+};
     return (
         <div className="max-w-6xl mt-8 mx-auto p-4 sm:p-6">
             <h2 className="text-xl sm:text-2xl font-bold text-[#14213D] mb-5">
@@ -250,6 +272,19 @@ const AddHotSales = () => {
                                 {item}
                             </option>
                         ))}
+                    </select>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <select
+                        name="duration"
+                        value={formData.duration}
+                        onChange={handleChange}
+                        className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
+                    >
+                        <option value="year">Year</option>
+                        <option value="month">Month</option>
+                        <option value="day">Day</option>
                     </select>
                 </div>
 

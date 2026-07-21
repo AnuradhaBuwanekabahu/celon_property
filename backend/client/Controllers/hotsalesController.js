@@ -17,6 +17,7 @@ export const addHotSale = async (req, res) => {
             price,
             property_type,
             rate,
+            duration,
             paid,
             overview,
             highlights,
@@ -59,6 +60,7 @@ export const addHotSale = async (req, res) => {
                 price,
                 property_type,
                 rate,
+                duration,
                 highlights,
                 overview,
                 area_sqft,
@@ -68,7 +70,7 @@ export const addHotSale = async (req, res) => {
                 main_image
             )
 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 
             `,
 
@@ -86,6 +88,8 @@ export const addHotSale = async (req, res) => {
 
                 rate || null,
 
+                duration || 'month',
+
                 highlights 
                 ? JSON.stringify(highlights) 
                 : null,
@@ -102,7 +106,7 @@ export const addHotSale = async (req, res) => {
 
                 location || null,
 
-                req.files.main_image[0].buffer
+                req.files.main_image[0].path
 
             ]
 
@@ -137,7 +141,7 @@ export const addHotSale = async (req, res) => {
 
                     [
                         hotSaleId,
-                        image.buffer
+                        image.path
                     ]
 
                 );
@@ -209,6 +213,7 @@ export const getHotSales = async (req, res) => {
                 description,
                 price,
                 property_type,
+                duration,
                 highlights,
                 overview,
                 area_sqft,
@@ -318,6 +323,8 @@ export const editHotSale = async (req, res) => {
             description,
             price,
             property_type,
+            rate,
+            duration,
             highlights,
             overview,
             area_sqft,
@@ -371,6 +378,7 @@ export const editHotSale = async (req, res) => {
                 description = ?,
                 price = ?,
                 property_type = ?,
+                duration = ?,
                 highlights = ?,
                 overview =?,
             
@@ -398,7 +406,7 @@ export const editHotSale = async (req, res) => {
 
                 property_type,
 
-          
+                duration || 'month',
 
                 highlights ? JSON.stringify(highlights) : null,
 
@@ -414,7 +422,7 @@ export const editHotSale = async (req, res) => {
 
                 status,
 
-                req.files.main_image[0].buffer,
+                req.files.main_image[0].path,
 
                 id
 
@@ -438,6 +446,7 @@ export const editHotSale = async (req, res) => {
                 price = ?,
                 rate=?,
                 property_type = ?,
+                duration = ?,
                 highlights = ?,
                 overview =?,
                 area_sqft = ?,
@@ -463,7 +472,7 @@ export const editHotSale = async (req, res) => {
                 price,
 
                 property_type,
-                
+                duration || 'month',
                 rate , 
                 highlights ? JSON.stringify(highlights) : null,
 
@@ -515,7 +524,7 @@ export const editHotSale = async (req, res) => {
 
                     [
                         id,
-                        image.buffer
+                        image.path
                     ]
 
                 );

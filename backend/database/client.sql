@@ -4,7 +4,6 @@ CREATE TABLE clients (
 
     id INT AUTO_INCREMENT PRIMARY KEY,
 
-
     password VARCHAR(255) NOT NULL,
 
     email VARCHAR(150) NOT NULL UNIQUE,

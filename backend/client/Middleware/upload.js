@@ -1,35 +1,33 @@
 import multer from "multer";
 
-
 const storage = multer.memoryStorage();
-
 
 const upload = multer({
 
-    storage: storage,
+    storage,
 
     limits: {
-        fileSize: 5 * 1024 * 1024 // 5MB limit
+        fileSize: 100 * 1024 * 1024 // 100MB limit for videos
     },
 
     fileFilter: (req, file, cb) => {
 
-        const allowedTypes = [
+        const allowedImages = [
             "image/jpeg",
             "image/png",
             "image/webp"
         ];
 
+        const isImage = allowedImages.includes(file.mimetype);
+        const isVideo = file.mimetype.startsWith("video/");
 
-        if (allowedTypes.includes(file.mimetype)) {
+        if (isImage || isVideo) {
             cb(null, true);
         } else {
-            cb(new Error("Only JPG, PNG, WEBP images are allowed"));
+            cb(new Error("Only JPG, PNG, WEBP images and videos are allowed"));
         }
-
     }
 
 });
-
 
 export default upload;

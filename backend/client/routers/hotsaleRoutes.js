@@ -18,15 +18,9 @@ hotsalerouter.post(
     addHotSale
 );
 
+hotsalerouter.get( "/show",  getHotSales);
 
-hotsalerouter.get(
-    "/show",
-    getHotSales
-);
-
-hotsalerouter.put(
-    "/:id",
-    upload.fields([
+hotsalerouter.put("show/:id", upload.fields([
         {
             name:"main_image",
             maxCount:1
@@ -39,8 +33,5 @@ hotsalerouter.put(
     editHotSale
 );
 
-hotsalerouter.delete(
-    "/:id",
-    deleteHotSale
-);
+hotsalerouter.delete( "/:id", deleteHotSale);
 export default hotsalerouter;

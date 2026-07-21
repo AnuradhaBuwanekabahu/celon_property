@@ -9,7 +9,8 @@ const Home =() =>{
 
         <div>
 
-            <button className='py-2 px-4 border boder-black' onClick={()=>navigate('/client-login')}>
+            <button className='py-2 px-4 border boder-black' 
+            onClick={()=>navigate('/client-login')}>
                 Login
             </button>
         </div>

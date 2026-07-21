@@ -6,8 +6,9 @@ import Register from './client/pages/login/Register';
 import DashboardHome from './client/pages/dashboard/DashboardHome';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import DashnoardAddHotSales from './client/pages/dashboard/DashnoardAddHotSales';
-import DashboardPayment from './client/pages/dashboard/Payment/DashboardPayment';
+import DashnoardAddHotSales from './client/pages/dashboard/HotSales/DashnoardAddHotSales';
+import DashboardPayment from './client/Routes/DashboardPayment';
+import PaymentSuccess from './client/components/PaymentSuccess';
 function  App(){
   return(
     <div>
@@ -18,7 +19,7 @@ function  App(){
         hideProgressBar={false}
         closeOnClick
         pauseOnHover
-        draggable
+        draggables
       />
          <Routes>
           <Route element={<Home/>} path="/"/>
@@ -31,7 +32,8 @@ function  App(){
            
            {/* payment */}
 
-           <Route element={<DashboardPayment/>} path ="/dashboard/payment"/>
+           <Route element={<DashboardPayment/>} path="/dashboard/payment"/>
+           <Route path="/payment-success" element={<PaymentSuccess />} />
          </Routes>
     </div>
   )

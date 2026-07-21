@@ -9,7 +9,6 @@ const DashboardHome = () => {
     <div className="w-full min-h-screen bg-gray-50">
 
       <Dashboardnavbar />
-
       <div className="flex mt-6">
 
         {/* Sidebar */}

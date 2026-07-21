@@ -26,9 +26,11 @@ CREATE TABLE stays_to_buy (
 
     rate DECIMAL(2,1) DEFAULT 0.0
 
+
     location VARCHAR(255),
 
-    main_image VARCHAR(255) NOT NULL,
+    main_image  longblob NOT NULL,
+     main_video LONGBLOB NULL,
 
     images JSON,
 
@@ -37,6 +39,13 @@ CREATE TABLE stays_to_buy (
         'active',
         'sold'
     ) DEFAULT 'pending',
+
+    duration ENUM(
+       'year',
+       'month',
+       'day'
+    ) DEFAULT 'month',
+
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
