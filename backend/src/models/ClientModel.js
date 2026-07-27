@@ -1,34 +1,34 @@
 const BaseModel = require('./BaseModel');
 const { db } = require('../config/database');
+const bcrypt = require('bcrypt');
 
 class ClientModel extends BaseModel {
     constructor() {
         super('clients');
     }
 
-    // Get client by username
     async getByUsername(username) {
         const [rows] = await db.query('SELECT * FROM clients WHERE username = ?', [username]);
         return rows[0];
     }
 
-    // Get client by email
     async getByEmail(email) {
         const [rows] = await db.query('SELECT * FROM clients WHERE email = ?', [email]);
         return rows[0];
     }
 
-    // Create new client
     async create(data) {
         const { username, password, email, phone_number, whatsapp_number, full_name } = data;
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+        
         const [result] = await db.query(
             'INSERT INTO clients (username, password, email, phone_number, whatsapp_number, full_name) VALUES (?, ?, ?, ?, ?, ?)',
-            [username, password, email, phone_number, whatsapp_number || null, full_name]
+            [username, hashedPassword, email, phone_number, whatsapp_number || null, full_name]
         );
         return result.insertId;
     }
 
-    // Update client
     async update(id, data) {
         const { email, phone_number, whatsapp_number, full_name, is_active } = data;
         const [result] = await db.query(
@@ -38,11 +38,31 @@ class ClientModel extends BaseModel {
         return result.affectedRows > 0;
     }
 
-    // Login
     async login(username, password) {
         const [rows] = await db.query(
-            'SELECT id, username, email, phone_number, full_name, is_active FROM clients WHERE username = ? AND password = ? AND is_active = TRUE',
-            [username, password]
+            'SELECT * FROM clients WHERE username = ? AND is_active = TRUE',
+            [username]
+        );
+        
+        if (rows.length === 0) {
+            return null;
+        }
+
+        const client = rows[0];
+        const isPasswordValid = await bcrypt.compare(password, client.password);
+        
+        if (!isPasswordValid) {
+            return null;
+        }
+
+        delete client.password;
+        return client;
+    }
+
+    async getById(id) {
+        const [rows] = await db.query(
+            'SELECT id, username, email, phone_number, whatsapp_number, full_name, ads_count, free_tier_limit, is_active, created_at, updated_at FROM clients WHERE id = ?',
+            [id]
         );
         return rows[0];
     }
