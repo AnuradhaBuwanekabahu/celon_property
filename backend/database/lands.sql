@@ -16,6 +16,17 @@ CREATE TABLE land (
     
     land_size DECIMAL(10,2) NOT NULL,
 
+     main_video LONGBLOB,
+
+
+    duration  ENUM (
+        'permanent',
+        'month',
+        'year',
+        'week',
+        'day'
+    ),
+
     size_unit ENUM(
         'perches',
         'acres',
