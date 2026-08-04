@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body, #root {
+    height: 100%;
+  }
+
+  body {
+    @apply m-0 bg-bg text-ink font-body text-sm antialiased;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-display text-teal-deep font-semibold;
+    margin: 0 0 4px 0;
+  }
+
+  a {
+    color: inherit;
+  }
+
+  button {
+    @apply font-body cursor-pointer;
+  }
+
+  :focus-visible {
+    @apply outline outline-2 outline-clay outline-offset-2;
+  }
+}
