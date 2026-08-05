@@ -6,123 +6,100 @@ import db from "../../configuration/db.js";
 // Add Hot Sale Property
 // ==========================
 
+const getValidClientId = async (reqClientId) => {
+    if (reqClientId) {
+        const [found] = await db.query("SELECT id FROM clients WHERE id = ?", [reqClientId]);
+        if (found.length) return found[0].id;
+    }
+    const [first] = await db.query("SELECT id FROM clients LIMIT 1");
+    if (first.length) return first[0].id;
+    throw new Error("No client account found. Please create a client account first.");
+};
+
 export const addHotSale = async (req, res) => {
-
     try {
-
         const {
             title,
             description,
             price,
             property_type,
             city,
-            status
+            Location,
+            location,
+            map_address,
+            area_sqft,
+            status,
+            client_id,
+            main_image
         } = req.body;
 
-
         if (!title) {
-
-            return res.status(400).json({
-
-                message: "Title is required"
-
-            });
-
+            return res.status(400).json({ success: false, message: "Title is required" });
         }
 
-
-        if (!req.files || !req.files.main_image) {
-
-            return res.status(400).json({
-
-                message: "Main image is required"
-
-            });
-
+        const clientId = await getValidClientId(client_id);
+        const loc = Location || location || city || 'Sri Lanka';
+        
+        let imageBuffer = null;
+        if (req.files && req.files.main_image && req.files.main_image[0]) {
+            imageBuffer = req.files.main_image[0].buffer;
+        } else if (main_image) {
+            imageBuffer = main_image;
+        } else {
+            imageBuffer = "https://images.unsplash.com/photo-1564013799919-ab600027ffc6";
         }
 
-
-        const mainImage = req.files.main_image[0].buffer;
-
-
-        const images = req.files.images
-            ? req.files.images.map(
-                file => file.buffer
-            )
+        const extraImages = req.files?.images
+            ? req.files.images.map(file => file.buffer ? file.buffer.toString('base64') : file.path)
             : [];
 
-
-
         const sql = `
-
             INSERT INTO hot_sales
             (
+                client_id,
                 title,
                 description,
                 price,
                 property_type,
                 city,
+                Location,
+                map_address,
+                area_sqft,
                 main_image,
                 images,
                 status
             )
-
-            VALUES (?,?,?,?,?,?,?,?)
-
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
         `;
 
-
         await db.query(sql, [
-
+            clientId,
             title,
-
             description || null,
-
-            price || null,
-
-            property_type || null,
-
-            city || null,
-
-            mainImage,
-
-            JSON.stringify(images),
-
-            status || "pending"
-
+            price || 0,
+            property_type || "House",
+            city || "Colombo",
+            loc,
+            map_address || null,
+            area_sqft || null,
+            imageBuffer,
+            JSON.stringify(extraImages),
+            status || "active"
         ]);
 
-
-
         res.status(201).json({
-
             success: true,
-
             message: "Hot Sale added successfully"
-
         });
 
-
-
-    } catch(error) {
-
-
-        console.log(error);
-
-
+    } catch (error) {
+        console.error("addHotSale error:", error);
         res.status(500).json({
-
-            success:false,
-
-            message:"Server Error",
-
-            error:error.message
-
+            success: false,
+            message: "Server Error: " + error.message,
+            error: error.message
         });
-
-
     }
-
 };
 
 
@@ -162,9 +139,9 @@ export const getHotSales = async (req,res)=>{
 
         res.status(200).json({
 
-            success:true,
+            success: true,
 
-            hotSales:rows
+            data: rows
 
         });
 

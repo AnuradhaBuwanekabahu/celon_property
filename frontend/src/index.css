@@ -1,1 +1,21 @@
 @import "tailwindcss";
+
+@theme {
+  --color-bg: #F6F1E6;
+  --color-surface: #FFFFFF;
+  --color-surface-sunken: #F8FAFC;
+  --color-ink: #1E293B;
+  --color-ink-soft: #64748B;
+  --color-teal-deep: #14213D;
+  --color-teal: #0F766E;
+  --color-clay: #C1622D;
+  --color-gold: #D97706;
+  --color-line: #E2E8F0;
+  --color-danger: #DC2626;
+  --color-danger-bg: #FEE2E2;
+  --color-pending-bg: #FEF3C7;
+  --color-success: #16A34A;
+  --color-success-bg: #DCFCE7;
+  --radius-radius: 8px;
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+}

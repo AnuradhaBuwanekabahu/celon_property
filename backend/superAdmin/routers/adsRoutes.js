@@ -22,6 +22,13 @@ const adsRouter = express.Router();
 
 // Add Advertisement
 adsRouter.post(
+    "/",
+    authMiddleware,
+    upload.single("image"),
+    createAd
+);
+
+adsRouter.post(
     "/add",
     authMiddleware,
     upload.single("image"),
@@ -67,6 +74,12 @@ adsRouter.delete(
 
 
 // Change Advertisement Status
+adsRouter.patch(
+    "/:id/toggle",
+    authMiddleware,
+    toggleAdStatus
+);
+
 adsRouter.patch(
     "/status/:id",
     authMiddleware,

@@ -46,9 +46,10 @@ export default function Admins() {
   const createAdmin = async () => {
     setSaving(true);
     try {
-      await api.post('/admin', { ...form, is_approved: false });
+      await api.post('/admin', { ...form, is_approved: true });
       setShowCreate(false);
       setForm({});
+      setTab('all');
       load();
     } catch (err) {
       alert(err.message);
@@ -126,7 +127,7 @@ export default function Admins() {
             <tbody>
               {rows.map((a) => (
                 <tr key={a.id} className={trHover}>
-                  <td className={`${td} ${cellTitle}`}>{a.Name}</td>
+                  <td className={`${td} ${cellTitle}`}>{a.Name || a.name}</td>
                   <td className={td}>{a.email}</td>
                   <td className={td}>{a.role || 'admin'}</td>
                   <td className={td}>

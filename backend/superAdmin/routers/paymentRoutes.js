@@ -7,7 +7,8 @@ import {
     getPaymentById,
     updatePaymentStatus,
     paymentStats,
-    deletePayment
+    deletePayment,
+    createPayment
 } from "../Controllers/paymentController.js";
 
 
@@ -22,10 +23,23 @@ import {
 const paymentRouter = express.Router();
 
 
+// Create payment
+paymentRouter.post(
+    "/",
+    createPayment
+);
+
 
 // Get all payments
 paymentRouter.get(
     "/",
+    getAllPayments
+);
+
+
+// Get payments by status
+paymentRouter.get(
+    "/status/:status",
     getAllPayments
 );
 
@@ -38,6 +52,11 @@ paymentRouter.get(
 
 
 // Update payment status
+paymentRouter.patch(
+    "/:id/status",
+    updatePaymentStatus
+);
+
 paymentRouter.put(
     "/status/:id",
     updatePaymentStatus
@@ -47,6 +66,11 @@ paymentRouter.put(
 // Payment statistics
 paymentRouter.get(
     "/stats",
+    paymentStats
+);
+
+paymentRouter.get(
+    "/admin/total-revenue",
     paymentStats
 );
 

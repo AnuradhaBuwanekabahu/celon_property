@@ -1,18 +1,39 @@
 import db from "../../configuration/db.js";
 
+const getOwnerId = async (req) => {
+    const rawValue = req.body?.client_id ?? req.body?.admin_id ?? req.body?.created_by ?? req.admin?.id;
+    if (rawValue) {
+        const [found] = await db.query("SELECT id FROM clients WHERE id = ?", [rawValue]);
+        if (found.length) return found[0].id;
+    }
+    const [first] = await db.query("SELECT id FROM clients LIMIT 1");
+    if (first.length) return first[0].id;
+    throw new Error("No client account found in database.");
+};
+
+const getImageBuffer = (req) => {
+    if (req.file?.buffer?.length) {
+        return req.file.buffer;
+    }
+
+    const imageValue = req.body?.image_url ?? req.body?.image;
+    if (typeof imageValue === "string" && imageValue.trim()) {
+        return Buffer.from(imageValue.trim());
+    }
+
+    return Buffer.from("placeholder");
+};
+
 // Create Advertisement
 
 export const createAd = async (req, res) => {
 
     try {
 
-        const {
-            title,
-            link_url,
-            position,
-            created_by
-        } = req.body;
-
+        const title = req.body?.title?.trim();
+        const link_url = req.body?.link_url || null;
+        const position = Number(req.body?.position ?? 0) || 0;
+        const clientId = await getOwnerId(req);
 
         if (!title) {
 
@@ -22,41 +43,29 @@ export const createAd = async (req, res) => {
 
         }
 
-
-        if (!req.file) {
-
-            return res.status(400).json({
-                message: "Image is required"
-            });
-
-        }
-
+        const imageBuffer = getImageBuffer(req);
 
         const sql = `
             INSERT INTO ads
             (
+                client_id,
                 title,
                 image,
                 link_url,
                 position,
-                created_by
+                is_active
             )
-            VALUES (?,?,?,?,?)
+            VALUES (?,?,?,?,?,?)
         `;
 
 
         const [result] = await db.query(sql, [
-
+            clientId,
             title,
-
-            req.file.buffer,
-
-            link_url || null,
-
-            position || 0,
-
-            created_by
-
+            imageBuffer,
+            link_url,
+            position,
+            1
         ]);
 
 
@@ -148,18 +157,10 @@ export const updateAd = async (req, res) => {
 
         const { id } = req.params;
 
-        const {
-
-            title,
-
-            link_url,
-
-            position,
-
-            created_by
-
-        } = req.body;
-
+        const title = req.body?.title?.trim();
+        const link_url = req.body?.link_url || null;
+        const position = Number(req.body?.position ?? 0) || 0;
+        const clientId = await getOwnerId(req);
 
         const [existingAd] = await db.query(
 
@@ -180,40 +181,34 @@ export const updateAd = async (req, res) => {
 
         }
 
+        const shouldUpdateImage = Boolean(req.file || req.body?.image_url || req.body?.image);
 
         let sql;
 
         let values;
 
 
-        if (req.file) {
+        if (shouldUpdateImage) {
 
             sql = `
                 UPDATE ads
                 SET
+                    client_id=?,
                     title=?,
                     image=?,
                     link_url=?,
-                    position=?,
-                    created_by=?
+                    position=?
                 WHERE id=?
             `;
 
 
             values = [
-
+                clientId,
                 title,
-
-                req.file.buffer,
-
-                link_url || null,
-
-                position || 0,
-
-                created_by,
-
+                getImageBuffer(req),
+                link_url,
+                position,
                 id
-
             ];
 
         }
@@ -223,26 +218,20 @@ export const updateAd = async (req, res) => {
             sql = `
                 UPDATE ads
                 SET
+                    client_id=?,
                     title=?,
                     link_url=?,
-                    position=?,
-                    created_by=?
+                    position=?
                 WHERE id=?
             `;
 
 
             values = [
-
+                clientId,
                 title,
-
-                link_url || null,
-
-                position || 0,
-
-                created_by,
-
+                link_url,
+                position,
                 id
-
             ];
 
         }
@@ -292,11 +281,11 @@ export const getAds = async (req, res) => {
             `
             SELECT
                 id,
+                client_id,
                 title,
                 link_url,
                 position,
-                status,
-                created_by,
+                is_active,
                 created_at
             FROM ads
             ORDER BY position ASC
@@ -319,7 +308,7 @@ export const getAds = async (req, res) => {
             success: true,
 
             message: "Advertisements fetched successfully",
-
+            data: adsWithImage,
             ads: adsWithImage
 
         });
@@ -423,7 +412,7 @@ export const toggleAdStatus = async (req, res) => {
 
         const [rows] = await db.query(
 
-            "SELECT status FROM ads WHERE id = ?",
+            "SELECT is_active FROM ads WHERE id = ?",
 
             [id]
 
@@ -441,16 +430,12 @@ export const toggleAdStatus = async (req, res) => {
         }
 
 
-        const newStatus = rows[0].status === "active"
-
-            ? "inactive"
-
-            : "active";
+        const newStatus = rows[0].is_active ? 0 : 1;
 
 
         await db.query(
 
-            "UPDATE ads SET status = ? WHERE id = ?",
+            "UPDATE ads SET is_active = ? WHERE id = ?",
 
             [
 

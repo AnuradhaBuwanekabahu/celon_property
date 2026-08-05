@@ -5,21 +5,19 @@ import db from "../../configuration/db.js";
 // ADD STAY TO BUY (SUPER ADMIN)
 // ==========================================
 
-export const addStayToBuy = async (req,res)=>{
+const getValidClientId = async (reqClientId) => {
+    if (reqClientId) {
+        const [found] = await db.query("SELECT id FROM clients WHERE id = ?", [reqClientId]);
+        if (found.length) return found[0].id;
+    }
+    const [first] = await db.query("SELECT id FROM clients LIMIT 1");
+    if (first.length) return first[0].id;
+    throw new Error("No client account found. Please create a client account first.");
+};
 
-    let connection;
-
-
-    try{
-
-        connection = await db.getConnection();
-
-        await connection.beginTransaction();
-
-
-
+export const addStayToBuy = async (req, res) => {
+    try {
         const {
-
             client_id,
             title,
             description,
@@ -29,194 +27,69 @@ export const addStayToBuy = async (req,res)=>{
             area_sqft,
             city,
             map_address,
+            Location,
             location,
-            duration,
-            status
-
-
+            status,
+            main_image
         } = req.body;
 
-
-
-
-        if(
-            !client_id ||
-            !title ||
-            !price ||
-            !property_type ||
-            !city
-        ){
-
-            return res.status(400).json({
-
-                success:false,
-
-                message:"Required fields missing"
-
-            });
-
+        if (!title) {
+            return res.status(400).json({ success: false, message: "Title is required" });
         }
 
+        const clientId = await getValidClientId(client_id);
+        const loc = Location || location || city || 'Sri Lanka';
+        const mainImg = req.files?.main_image?.[0]?.path || req.files?.main_image?.[0]?.buffer?.toString('base64') || main_image || "https://images.unsplash.com/photo-1600585154340-be6161a56a0c";
+        const extraImages = req.files?.images ? req.files.images.map(img => img.path || img.buffer?.toString('base64')) : [];
 
-
-
-        let mainImage=null;
-
-        let mainVideo=null;
-
-
-
-        if(req.files?.main_image?.length){
-
-            mainImage=req.files.main_image[0].path;
-
-        }
-
-
-        if(req.files?.main_video?.length){
-
-            mainVideo=req.files.main_video[0].path;
-
-        }
-
-
-
-        if(!mainImage){
-
-            return res.status(400).json({
-
-                success:false,
-
-                message:"Main image required"
-
-            });
-
-        }
-
-
-
-
-        let images=[];
-
-
-        if(req.files?.images?.length){
-
-            images=req.files.images.map(
-
-                img=>img.path
-
-            );
-
-        }
-
-
-
-
-        const sql=`
-
-        INSERT INTO stays_to_buy
-
-        (
-
-        client_id,
-        title,
-        description,
-        price,
-        property_type,
-        highlights,
-        area_sqft,
-        city,
-        map_address,
-        location,
-        main_image,
-        main_video,
-        images,
-        duration,
-        status
-
-        )
-
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-
-        `;
-
-
-
-        const [result]=await connection.query(
-
-            sql,
-
-            [
-
+        const sql = `
+            INSERT INTO stays_to_buy
+            (
                 client_id,
                 title,
-                description || null,
+                description,
                 price,
                 property_type,
-                highlights 
-                ? JSON.stringify(JSON.parse(highlights))
-                : JSON.stringify([]),
-
-                area_sqft || null,
+                Highlights,
+                area_sqft,
                 city,
                 map_address,
-                location,
-                mainImage,
-                mainVideo,
-                JSON.stringify(images),
-                duration || "month",
-                status || "pending"
+                Location,
+                main_image,
+                images,
+                status
+            )
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+        `;
 
-            ]
-
-        );
-
-
-
-        await connection.commit();
-
-
+        const [result] = await db.query(sql, [
+            clientId,
+            title,
+            description || null,
+            price || 0,
+            property_type || "House",
+            highlights ? JSON.stringify(highlights) : JSON.stringify([]),
+            area_sqft || null,
+            city || "Colombo",
+            map_address || null,
+            loc,
+            mainImg,
+            JSON.stringify(extraImages),
+            status || "active"
+        ]);
 
         res.status(201).json({
-
-            success:true,
-
-            message:"Stay To Buy added successfully",
-
-            id:result.insertId
-
+            success: true,
+            message: "Stay To Buy added successfully",
+            id: result.insertId
         });
-
-
-
-    }
-    catch(error){
-
-
-        if(connection)
-            await connection.rollback();
-
-
-
+    } catch (error) {
+        console.error("addStayToBuy error:", error);
         res.status(500).json({
-
-            success:false,
-
-            message:error.message
-
+            success: false,
+            message: error.message
         });
-
-
     }
-    finally{
-
-
-        if(connection)
-            connection.release();
-
-    }
-
-
 };
 
 
@@ -492,10 +365,7 @@ export const updateStayToBuy=async(req,res)=>{
             city,
             map_address,
             location,
-            status,
-            duration
-
-
+            status
         }=req.body;
 
 
@@ -561,7 +431,6 @@ export const updateStayToBuy=async(req,res)=>{
         map_address=?,
         location=?,
         status=?,
-        duration=?,
         main_image=COALESCE(?,main_image),
         main_video=COALESCE(?,main_video),
         images=COALESCE(?,images)
@@ -589,7 +458,6 @@ export const updateStayToBuy=async(req,res)=>{
             map_address,
             location,
             status,
-            duration || "month",
 
             mainImage,
             mainVideo,

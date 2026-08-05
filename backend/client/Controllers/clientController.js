@@ -45,23 +45,25 @@ export const registerClient = async (req, res) => {
 
 
 
-        // Insert client
+        // Generate username if not provided
+        const username = req.body.username || email.split('@')[0] + '_' + Math.floor(1000 + Math.random() * 9000);
 
+        // Insert client
         const [result] = await db.query(
             `
             INSERT INTO clients
             (
-              
+                username,
                 password,
                 email,
                 phone_number,
                 whatsapp_number,
                 full_name
             )
-            VALUES (?,?,?,?,?)
+            VALUES (?,?,?,?,?,?)
             `,
             [
-                
+                username,
                 hashedPassword,
                 email,
                 phone_number,
@@ -166,4 +168,3 @@ export const loginClient = async (req, res) => {
     }
 
 }
-

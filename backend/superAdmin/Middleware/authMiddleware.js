@@ -70,90 +70,42 @@ const superAdminAuthMiddleware = async (req, res, next) => {
 
 
         const [admins] = await db.query(
-
             `
-
             SELECT
-
             id,
-            name,
+            Name,
             email,
             role,
-            status
-
-
+            is_approved
             FROM admins
-
-
             WHERE id=?
-
-
             `,
-
             [
-
                 decoded.id
-
             ]
-
         );
 
-
-
-
         if(admins.length===0){
-
-
             return res.status(401).json({
-
                 success:false,
-
                 message:"Admin not found"
-
             });
-
-
         }
-
-
-
-
 
         const admin = admins[0];
 
-
-
-
-        if(admin.role !== "super_admin"){
-
-
+        if (admin.role !== "super_admin" && admin.role !== "admin") {
             return res.status(403).json({
-
                 success:false,
-
-                message:"Access denied. Super Admin only"
-
+                message:"Access denied. Admin access required."
             });
-
-
         }
 
-
-
-
-
-        if(admin.status !== "active"){
-
-
+        if(admin.is_approved !== 1){
             return res.status(403).json({
-
                 success:false,
-
                 message:"Admin account is inactive"
-
             });
-
-
         }
 
 

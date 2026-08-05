@@ -17,7 +17,7 @@ export const propertyConfigs = {
     title: 'Hot Sales',
     basePath: '/properties/hot-sales',
     statuses: ['pending', 'active', 'sold'],
-    fields: commonFields,
+    fields: [...commonFields, { name: 'images', label: 'Extra Images (comma‑separated URLs)', type: 'textarea', help: 'Enter URLs separated by commas' }],
     columns: [
       { key: 'title', label: 'Title', cell: (r) => <div><div className="font-medium text-teal-deep">{r.title}</div><div className="text-[11.5px] text-ink-soft">{r.property_type}</div></div> },
       { key: 'city', label: 'City' },
@@ -29,7 +29,7 @@ export const propertyConfigs = {
     title: 'Stays to Buy',
     basePath: '/properties/stays-to-buy',
     statuses: ['pending', 'active', 'sold'],
-    fields: commonFields,
+    fields: [...commonFields, { name: 'images', label: 'Extra Images (comma‑separated URLs)', type: 'textarea', help: 'Enter URLs separated by commas' }],
     columns: [
       { key: 'title', label: 'Title', cell: (r) => <div><div className="font-medium text-teal-deep">{r.title}</div><div className="text-[11.5px] text-ink-soft">{r.property_type}</div></div> },
       { key: 'city', label: 'City' },
@@ -41,7 +41,7 @@ export const propertyConfigs = {
     title: 'Stays to Rent',
     basePath: '/properties/stays-to-rent',
     statuses: ['pending', 'active', 'rented'],
-    fields: [...commonFields, { name: 'price_period', label: 'Price period', type: 'select', options: ['monthly', 'yearly'] }],
+    fields: [...commonFields, { name: 'price_period', label: 'Price period', type: 'select', options: ['monthly', 'yearly'] }, { name: 'images', label: 'Extra Images (comma‑separated URLs)', type: 'textarea', help: 'Enter URLs separated by commas' }],
     columns: [
       { key: 'title', label: 'Title', cell: (r) => <div><div className="font-medium text-teal-deep">{r.title}</div><div className="text-[11.5px] text-ink-soft">{r.property_type}</div></div> },
       { key: 'city', label: 'City' },
@@ -62,7 +62,8 @@ export const propertyConfigs = {
       { name: 'size_unit', label: 'Size unit', type: 'select', options: ['perches', 'acres', 'sqft'] },
       { name: 'city', label: 'City', required: true },
       { name: 'Location', label: 'Location' },
-      { name: 'main_image', label: 'Main image URL', required: true }
+      { name: 'main_image', label: 'Main image URL', required: true },
+      { name: 'images', label: 'Extra Images (comma‑separated URLs)', type: 'textarea', help: 'Enter URLs separated by commas' }
     ],
     columns: [
       { key: 'title', label: 'Title', cell: (r) => <div><div className="font-medium text-teal-deep">{r.title}</div><div className="text-[11.5px] text-ink-soft">{r.land_size} {r.size_unit}</div></div> },
@@ -82,7 +83,8 @@ export const propertyConfigs = {
       { name: 'budget', label: 'Budget (Rs)', type: 'number' },
       { name: 'preferred_city', label: 'Preferred city' },
       { name: 'phone_number', label: 'Phone number', required: true },
-      { name: 'main_image', label: 'Main image URL' }
+      { name: 'main_image', label: 'Main image URL' },
+    { name: 'images', label: 'Extra Images (comma‑separated URLs)', type: 'textarea', help: 'Enter URLs separated by commas' }
     ],
     columns: [
       { key: 'title', label: 'Title', cell: (r) => <div><div className="font-medium text-teal-deep">{r.title}</div><div className="text-[11.5px] text-ink-soft">{r.preferred_city || 'any city'}</div></div> },

@@ -1,21 +1,21 @@
 import db from "../../configuration/db.js";
 
-
 // ==============================
-// Add Stay To Buy (Super Admin)
+// Add Stay To Rent (Super Admin)
 // ==============================
 
-export const addStayToBuy = async (req, res) => {
+const getValidClientId = async (reqClientId) => {
+    if (reqClientId) {
+        const [found] = await db.query("SELECT id FROM clients WHERE id = ?", [reqClientId]);
+        if (found.length) return found[0].id;
+    }
+    const [first] = await db.query("SELECT id FROM clients LIMIT 1");
+    if (first.length) return first[0].id;
+    throw new Error("No client account found. Please create a client account first.");
+};
 
-    let connection;
-
+export const addStayToRent = async (req, res) => {
     try {
-
-        connection = await db.getConnection();
-
-        await connection.beginTransaction();
-
-
         const {
             client_id,
             title,
@@ -26,447 +26,150 @@ export const addStayToBuy = async (req, res) => {
             area_sqft,
             city,
             map_address,
+            Location,
             location,
-            duration,
-            status
-
+            price_period,
+            status,
+            main_image
         } = req.body;
 
-
-
-        if (
-            !client_id ||
-            !title ||
-            !price ||
-            !property_type ||
-            !city
-        ) {
-
-            return res.status(400).json({
-
-                success:false,
-
-                message:"Please fill required fields"
-
-            });
-
+        if (!title) {
+            return res.status(400).json({ success: false, message: "Title is required" });
         }
 
-
-
-        let mainImage = null;
-        let mainVideo = null;
-
-
-
-        if(req.files?.main_image?.length){
-
-            mainImage = req.files.main_image[0].path;
-
-        }
-
-
-
-        if(req.files?.main_video?.length){
-
-            mainVideo = req.files.main_video[0].path;
-
-        }
-
-
-
-        if(!mainImage){
-
-            return res.status(400).json({
-
-                success:false,
-
-                message:"Main image is required"
-
-            });
-
-        }
-
-
-
-
-        let images=[];
-
-
-        if(req.files?.images?.length){
-
-            images = req.files.images.map(
-
-                img=>img.path
-
-            );
-
-        }
-
-
+        const clientId = await getValidClientId(client_id);
+        const loc = Location || location || city || 'Sri Lanka';
+        const mainImg = req.files?.main_image?.[0]?.path || req.files?.main_image?.[0]?.buffer?.toString('base64') || main_image || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267";
+        const extraImages = req.files?.images ? req.files.images.map(img => img.path || img.buffer?.toString('base64')) : [];
 
         const sql = `
-
-        INSERT INTO stays_to_buy
-
-        (
-
-        client_id,
-        title,
-        description,
-        price,
-        property_type,
-        highlights,
-        area_sqft,
-        city,
-        map_address,
-        location,
-        main_image,
-        main_video,
-        images,
-        duration,
-        status
-
-        )
-
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-
-        `;
-
-
-
-        const [result] = await connection.query(
-
-            sql,
-
-            [
-
+            INSERT INTO stays_to_rent
+            (
                 client_id,
                 title,
-                description || null,
+                description,
                 price,
                 property_type,
-
-                highlights
-                ? JSON.stringify(JSON.parse(highlights))
-                : JSON.stringify([]),
-
-                area_sqft || null,
+                Highlights,
+                area_sqft,
                 city,
-                map_address || null,
-                location || null,
-                mainImage,
-                mainVideo,
-                JSON.stringify(images),
-                duration || "month",
-                status || "pending"
-
-            ]
-
-        );
-
-
-
-        await connection.commit();
-
-
-
-        res.status(201).json({
-
-            success:true,
-
-            message:"Stay To Buy added successfully",
-
-            id:result.insertId
-
-        });
-
-
-
-    } catch(error){
-
-
-        if(connection){
-
-            await connection.rollback();
-
-        }
-
-
-        console.log(error);
-
-
-        res.status(500).json({
-
-            success:false,
-
-            message:error.message
-
-        });
-
-
-    } finally {
-
-
-        if(connection){
-
-            connection.release();
-
-        }
-
-    }
-
-};
-
-
-
-
-
-// ==============================
-// Get All Stay To Buy
-// Super Admin
-// ==============================
-
-
-export const getAllStayToBuy = async(req,res)=>{
-
-
-    try {
-
-
-        const {
-
-            status,
-            city,
-            property_type
-
-        } = req.query;
-
-
-
-        let sql = `
-
-        SELECT
-
-        s.*,
-
-        c.full_name,
-        c.email,
-        c.phone_number
-
-
-        FROM stays_to_buy s
-
-
-        LEFT JOIN clients c
-
-        ON s.client_id = c.id
-
+                map_address,
+                Location,
+                main_image,
+                images,
+                price_period,
+                status
+            )
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         `;
 
+        const [result] = await db.query(sql, [
+            clientId,
+            title,
+            description || null,
+            price || 0,
+            property_type || "Apartment",
+            highlights ? JSON.stringify(highlights) : JSON.stringify([]),
+            area_sqft || null,
+            city || "Colombo",
+            map_address || null,
+            loc,
+            mainImg,
+            JSON.stringify(extraImages),
+            price_period || "monthly",
+            status || "active"
+        ]);
 
+        res.status(201).json({
+            success: true,
+            message: "Stay To Rent added successfully",
+            id: result.insertId
+        });
+    } catch (error) {
+        console.error("addStayToRent error:", error);
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
 
-        let conditions=[];
+// ==============================
+// Get All Stay To Rent
+// ==============================
 
-        let values=[];
+export const getAllStayToRent = async (req, res) => {
+    try {
+        const status = req.params?.status || req.query?.status;
+        const search = req.query?.search;
 
+        let sql = `
+            SELECT s.*, c.full_name, c.email, c.phone_number
+            FROM stays_to_rent s
+            LEFT JOIN clients c ON s.client_id = c.id
+        `;
+        const conditions = [];
+        const values = [];
 
-
-        if(status){
-
-            conditions.push("s.status=?");
-
+        if (status) {
+            conditions.push("s.status = ?");
             values.push(status);
-
         }
 
-
-
-        if(city){
-
-            conditions.push("s.city=?");
-
-            values.push(city);
-
+        if (search) {
+            conditions.push("(s.title LIKE ? OR s.city LIKE ? OR s.Location LIKE ?)");
+            values.push(`%${search}%`, `%${search}%`, `%${search}%`);
         }
 
-
-
-        if(property_type){
-
-            conditions.push("s.property_type=?");
-
-            values.push(property_type);
-
-        }
-
-
-
-        if(conditions.length){
-
+        if (conditions.length) {
             sql += " WHERE " + conditions.join(" AND ");
-
         }
-
-
 
         sql += " ORDER BY s.created_at DESC";
 
-
-
-        const [rows] = await db.query(
-
-            sql,
-
-            values
-
-        );
-
-
+        const [rows] = await db.query(sql, values);
 
         res.json({
-
-            success:true,
-
-            count:rows.length,
-
-            data:rows
-
+            success: true,
+            count: rows.length,
+            data: rows,
+            rows
         });
-
-
-
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
     }
-    catch(error){
-
-
-        res.status(500).json({
-
-            success:false,
-
-            message:error.message
-
-        });
-
-    }
-
 };
 
-
-
-
-
-
-
 // ==============================
-// Get Single Stay To Buy
+// Get Single Stay To Rent
 // ==============================
 
-
-export const getStayToBuyById = async(req,res)=>{
-
-
+export const getStayToRentById = async (req, res) => {
     try {
-
-
-        const {id}=req.params;
-
-
-
-        const [rows]=await db.query(
-
-            `
-
-            SELECT
-
-            s.*,
-
-            c.full_name,
-            c.email,
-            c.phone_number
-
-
-            FROM stays_to_buy s
-
-
-            LEFT JOIN clients c
-
-            ON s.client_id=c.id
-
-
-            WHERE s.id=?
-
-
-            `,
-
+        const { id } = req.params;
+        const [rows] = await db.query(
+            `SELECT s.*, c.full_name, c.email, c.phone_number FROM stays_to_rent s LEFT JOIN clients c ON s.client_id = c.id WHERE s.id = ?`,
             [id]
-
         );
 
-
-
-        if(rows.length===0){
-
-            return res.status(404).json({
-
-                success:false,
-
-                message:"Property not found"
-
-            });
-
+        if (!rows.length) {
+            return res.status(404).json({ success: false, message: "Property not found" });
         }
 
-
-
-        res.json({
-
-            success:true,
-
-            data:rows[0]
-
-        });
-
-
+        res.json({ success: true, data: rows[0] });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
     }
-    catch(error){
-
-
-        res.status(500).json({
-
-            success:false,
-
-            message:error.message
-
-        });
-
-    }
-
 };
 
-
-
-
-
-
-
-
 // ==============================
-// Update Stay To Buy
+// Update Stay To Rent
 // ==============================
 
-
-export const updateStayToBuy = async(req,res)=>{
-
-
+export const updateStayToRent = async (req, res) => {
     try {
-
-
-        const {id}=req.params;
-
-
+        const { id } = req.params;
         const {
-
             title,
             description,
             price,
@@ -475,209 +178,79 @@ export const updateStayToBuy = async(req,res)=>{
             area_sqft,
             city,
             map_address,
+            Location,
             location,
-            status,
-            duration
+            price_period,
+            status
+        } = req.body;
 
-        }=req.body;
-
-
-
-
-        let mainImage=null;
-
-        let mainVideo=null;
-
-        let images=null;
-
-
-
-        if(req.files?.main_image?.length){
-
-            mainImage=req.files.main_image[0].path;
-
-        }
-
-
-
-        if(req.files?.main_video?.length){
-
-            mainVideo=req.files.main_video[0].path;
-
-        }
-
-
-
-        if(req.files?.images?.length){
-
-            images = JSON.stringify(
-
-                req.files.images.map(
-
-                    img=>img.path
-
-                )
-
-            );
-
-        }
-
-
+        const loc = Location || location || city;
 
         await db.query(
-
             `
-
-            UPDATE stays_to_buy
-
+            UPDATE stays_to_rent
             SET
-
-            title=?,
-            description=?,
-            price=?,
-            property_type=?,
-            highlights=?,
-            area_sqft=?,
-            city=?,
-            map_address=?,
-            location=?,
-            status=?,
-            duration=?,
-            main_image=COALESCE(?,main_image),
-            main_video=COALESCE(?,main_video),
-            images=COALESCE(?,images)
-
-
-            WHERE id=?
-
-
+                title = ?,
+                description = ?,
+                price = ?,
+                property_type = ?,
+                Highlights = ?,
+                area_sqft = ?,
+                city = ?,
+                map_address = ?,
+                Location = ?,
+                price_period = ?,
+                status = ?
+            WHERE id = ?
             `,
-
             [
-
                 title,
-                description,
-                price,
-                property_type,
-
-                highlights
-                ? JSON.stringify(JSON.parse(highlights))
-                : JSON.stringify([]),
-
-                area_sqft,
-                city,
-                map_address,
-                location,
-                status,
-                duration || "month",
-
-                mainImage,
-                mainVideo,
-                images,
-
+                description || null,
+                price || 0,
+                property_type || "Apartment",
+                highlights ? JSON.stringify(highlights) : JSON.stringify([]),
+                area_sqft || null,
+                city || "Colombo",
+                map_address || null,
+                loc,
+                price_period || "monthly",
+                status || "active",
                 id
-
             ]
-
         );
 
-
-
-        res.json({
-
-            success:true,
-
-            message:"Property updated successfully"
-
-        });
-
-
-
+        res.json({ success: true, message: "Property updated successfully" });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
     }
-    catch(error){
-
-
-        res.status(500).json({
-
-            success:false,
-
-            message:error.message
-
-        });
-
-    }
-
 };
 
-
-
-
-
-
-
-
 // ==============================
-// Delete Stay To Buy
+// Delete Stay To Rent
 // ==============================
 
+export const deleteStayToRent = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const [result] = await db.query(`DELETE FROM stays_to_rent WHERE id = ?`, [id]);
 
-export const deleteStayToBuy = async(req,res)=>{
-
-
-    try{
-
-
-        const {id}=req.params;
-
-
-
-        const [result]=await db.query(
-
-            `DELETE FROM stays_to_buy WHERE id=?`,
-
-            [id]
-
-        );
-
-
-
-        if(result.affectedRows===0){
-
-
-            return res.status(404).json({
-
-                success:false,
-
-                message:"Property not found"
-
-            });
-
+        if (!result.affectedRows) {
+            return res.status(404).json({ success: false, message: "Property not found" });
         }
 
-
-
-        res.json({
-
-            success:true,
-
-            message:"Property deleted successfully"
-
-        });
-
-
-
+        res.json({ success: true, message: "Property deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
     }
-    catch(error){
+};
 
-
-        res.status(500).json({
-
-            success:false,
-
-            message:error.message
-
-        });
-
+export const updateStayToRentStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+        await db.query(`UPDATE stays_to_rent SET status = ? WHERE id = ?`, [status, id]);
+        res.json({ success: true, message: "Status updated" });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
     }
-
 };

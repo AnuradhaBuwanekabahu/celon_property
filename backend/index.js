@@ -6,6 +6,8 @@ import clientrouter from "./client/routers/clientRoutes.js";
 import adsrouter from "./client/routers/adsRoutes.js";
 import hotsalerouter from './client/routers/hotsaleRoutes.js'
 import paymentrouter from "./client/routers/paymentRoutes.js";
+import adminRouter from "./superAdmin/routers/adminRoutes.js";
+import superAdminRouter from "./superAdmin/routers/superAdminRoutes.js";
 
 dotenv.config();
 
@@ -13,14 +15,21 @@ const app = express();
 
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 
 
 app.use("/api/clients", clientrouter);
 app.use('/api/ads' ,adsrouter);
 app.use('/api/hotsales',hotsalerouter);
-app.use('/api/payment',paymentrouter)
+app.use('/api/payment',paymentrouter);
+app.use('/api/admin', adminRouter);
+app.use('/api/super-admin', superAdminRouter);
 // Test API
 app.get("/", (req, res) => {
   

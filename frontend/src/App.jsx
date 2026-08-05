@@ -9,7 +9,9 @@ import "react-toastify/dist/ReactToastify.css";
 import DashnoardAddHotSales from './client/pages/dashboard/HotSales/DashnoardAddHotSales';
 import DashboardPayment from './client/Routes/DashboardPayment';
 import PaymentSuccess from './client/components/PaymentSuccess';
-function  App(){
+import SuperAdminApp from './superAdmin/App';
+
+function App(){
   return(
     <div>
 
@@ -34,6 +36,9 @@ function  App(){
 
            <Route element={<DashboardPayment/>} path="/dashboard/payment"/>
            <Route path="/payment-success" element={<PaymentSuccess />} />
+
+           {/* Super Admin */}
+           <Route path="/admin/*" element={<SuperAdminApp />} />
          </Routes>
     </div>
   )

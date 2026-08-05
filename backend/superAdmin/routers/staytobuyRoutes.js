@@ -1,4 +1,5 @@
 import express from "express";
+import db from "../../configuration/db.js";
 
 import {
     addStayToBuy,
@@ -6,7 +7,7 @@ import {
     getStayToBuyById,
     updateStayToBuy,
     deleteStayToBuy
-} from "../controllers/staytobuyController.js";
+} from "../Controllers/staytobuyController.js";
 
 
 const stayToBuyRouter = express.Router();
@@ -14,29 +15,39 @@ const stayToBuyRouter = express.Router();
 
 // ==========================
 // Add Stay To Buy Property
-// POST /api/superadmin/stays-to-buy/add
 // ==========================
+stayToBuyRouter.post(
+    "/",
+    addStayToBuy
+);
+
 stayToBuyRouter.post(
     "/add",
     addStayToBuy
 );
 
 
-
 // ==========================
 // Get All Stay To Buy Properties
-// GET /api/superadmin/stays-to-buy
 // ==========================
 stayToBuyRouter.get(
     "/",
     getAllStayToBuy
 );
 
+stayToBuyRouter.get(
+    "/status/:status",
+    getAllStayToBuy
+);
+
+stayToBuyRouter.get(
+    "/search",
+    getAllStayToBuy
+);
 
 
 // ==========================
 // Get Single Property
-// GET /api/superadmin/stays-to-buy/:id
 // ==========================
 stayToBuyRouter.get(
     "/:id",
@@ -44,27 +55,36 @@ stayToBuyRouter.get(
 );
 
 
-
 // ==========================
 // Update Property
-// PUT /api/superadmin/stays-to-buy/:id
 // ==========================
 stayToBuyRouter.put(
     "/:id",
     updateStayToBuy
 );
 
+stayToBuyRouter.patch(
+    "/:id/status",
+    async (req, res) => {
+        try {
+            const { id } = req.params;
+            const { status } = req.body;
+            await db.query("UPDATE stays_to_buy SET status = ? WHERE id = ?", [status, id]);
+            res.json({ success: true, data: { id, status } });
+        } catch (error) {
+            res.status(500).json({ success: false, message: error.message });
+        }
+    }
+);
 
 
 // ==========================
 // Delete Property
-// DELETE /api/superadmin/stays-to-buy/:id
 // ==========================
 stayToBuyRouter.delete(
     "/:id",
     deleteStayToBuy
 );
-
 
 
 export default stayToBuyRouter;

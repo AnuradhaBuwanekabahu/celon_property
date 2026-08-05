@@ -1,5 +1,5 @@
 import express from "express";
-
+import db from "../../configuration/db.js";
 
 import {
 
@@ -24,6 +24,11 @@ const landsRouter = express.Router();
 // ===============================
 
 landsRouter.post(
+    "/",
+    addLands
+);
+
+landsRouter.post(
     "/add",
     addLands
 );
@@ -39,6 +44,16 @@ landsRouter.post(
 
 landsRouter.get(
     "/",
+    getlands
+);
+
+landsRouter.get(
+    "/status/:status",
+    getlands
+);
+
+landsRouter.get(
+    "/search",
     getlands
 );
 
@@ -68,6 +83,20 @@ landsRouter.get(
 landsRouter.put(
     "/:id",
     updateLand
+);
+
+landsRouter.patch(
+    "/:id/status",
+    async (req, res) => {
+        try {
+            const { id } = req.params;
+            const { status } = req.body;
+            await db.query("UPDATE land SET status = ? WHERE id = ?", [status, id]);
+            res.json({ success: true, data: { id, status } });
+        } catch (error) {
+            res.status(500).json({ success: false, message: error.message });
+        }
+    }
 );
 
 

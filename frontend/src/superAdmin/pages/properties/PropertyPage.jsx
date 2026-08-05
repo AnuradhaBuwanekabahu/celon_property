@@ -132,7 +132,11 @@ export default function PropertyPage({ config }) {
             <tbody>
               {rows.map((r) => (
                 <tr key={r.id} className={trHover}>
-                  {config.columns.map((c) => <td key={c.key} className={td}>{c.cell(r)}</td>)}
+                  {config.columns.map((c) => (
+                    <td key={c.key} className={td}>
+                      {c.cell ? c.cell(r) : r[c.key]}
+                    </td>
+                  ))}
                   <td className={td}><StatusBadge status={r.status} /></td>
                   <td className={td}>
                     <div className={actionsCell}>

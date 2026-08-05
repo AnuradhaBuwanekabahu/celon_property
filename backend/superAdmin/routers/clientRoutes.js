@@ -1,31 +1,28 @@
 import express from "express";
 
 import {
-    registerClient,
-    loginClient
-} from "../controllers/clientController.js";
-
+    getAllClients,
+    getClientsByStatus,
+    searchClients,
+    updateClient,
+    deleteClient
+} from "../Controllers/clientController.js";
 
 const clientRouter = express.Router();
 
+// Get all clients
+clientRouter.get("/", getAllClients);
 
+// Get clients by status
+clientRouter.get("/status/:status", getClientsByStatus);
 
-// Client Register
+// Search clients
+clientRouter.get("/search", searchClients);
 
-clientRouter.post(
-    "/register",
-    registerClient
-);
+// Update client
+clientRouter.put("/:id", updateClient);
 
-
-
-// Client Login
-
-clientRouter.post(
-    "/login",
-    loginClient
-);
-
-
+// Delete client
+clientRouter.delete("/:id", deleteClient);
 
 export default clientRouter;

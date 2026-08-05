@@ -7,74 +7,42 @@ import db from "../../configuration/db.js";
 // ADD LAND
 // ===============================
 
+const getValidClientId = async (reqClientId) => {
+    if (reqClientId) {
+        const [found] = await db.query("SELECT id FROM clients WHERE id = ?", [reqClientId]);
+        if (found.length) return found[0].id;
+    }
+    const [first] = await db.query("SELECT id FROM clients LIMIT 1");
+    if (first.length) return first[0].id;
+    throw new Error("No client account found. Please create a client account first.");
+};
+
 export const addLands = async (req, res) => {
-
-
-    const connection = await db.getConnection();
-
-
     try {
-
-
-        await connection.beginTransaction();
-
-
-
         const {
-
             client_id,
             title,
             description,
             price,
             land_size,
             size_unit,
+            Location,
             location,
             city,
             status,
-            duration
-
+            main_image
         } = req.body;
 
-
-
-
-        if (!req.files?.main_image?.length) {
-
-
-            return res.status(400).json({
-
-                message:"Main image is required"
-
-            });
-
-
+        if (!title) {
+            return res.status(400).json({ success: false, message: "Title is required" });
         }
 
+        const clientId = await getValidClientId(client_id);
+        const loc = Location || location || city || 'Sri Lanka';
+        const mainImg = req.files?.main_image?.[0]?.path || req.files?.main_image?.[0]?.buffer?.toString('base64') || main_image || "https://images.unsplash.com/photo-1500382017468-9049fed747ef";
+        const extraImages = req.files?.images ? req.files.images.map(img => img.path || img.buffer?.toString('base64')) : [];
 
-
-
-
-        const mainImage = req.files.main_image[0].path;
-
-
-
-        let mainVideo = null;
-
-
-        if(req.files?.main_video?.length){
-
-
-            mainVideo = req.files.main_video[0].path;
-
-
-        }
-
-
-
-
-
-        const [result] = await connection.query(
-
+        const [result] = await db.query(
             `
             INSERT INTO land
             (
@@ -86,134 +54,40 @@ export const addLands = async (req, res) => {
                 size_unit,
                 location,
                 city,
-                status,
-                duration,
                 main_image,
-                main_video
+                images,
+                status
             )
-
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
-
+            VALUES (?,?,?,?,?,?,?,?,?,?,?)
             `,
-
-
             [
-
-                client_id,
+                clientId,
                 title,
                 description || null,
-                price,
-                land_size,
-                size_unit,
-                location,
-                city,
-                status || "available",
-                duration || "month",
-                mainImage,
-                mainVideo
-
+                price || 0,
+                land_size || 0,
+                size_unit || "perches",
+                loc,
+                city || "Colombo",
+                mainImg,
+                JSON.stringify(extraImages),
+                status || "active"
             ]
-
         );
 
-
-
-
-
-        const landId = result.insertId;
-
-
-
-
-
-        if(req.files?.images?.length){
-
-
-            for(const image of req.files.images){
-
-
-                await connection.query(
-
-                    `
-                    INSERT INTO land_images
-                    (
-                        land_id,
-                        image
-                    )
-
-                    VALUES (?,?)
-
-                    `,
-
-
-                    [
-
-                        landId,
-                        image.path
-
-                    ]
-
-                );
-
-
-            }
-
-
-        }
-
-
-
-
-
-        await connection.commit();
-
-
-
-
         res.status(201).json({
-
-            success:true,
-
-            message:"Land added successfully",
-
-            id:landId
-
+            success: true,
+            message: "Land added successfully",
+            id: result.insertId
         });
-
-
-
-
-    }catch(error){
-
-
-        await connection.rollback();
-
-
-        console.log(error);
-
-
-
+    } catch (error) {
+        console.error("addLands error:", error);
         res.status(500).json({
-
-            success:false,
-
-            message:"Internal server error",
-
-            error:error.message
-
+            success: false,
+            message: "Internal server error: " + error.message,
+            error: error.message
         });
-
-
-
-    }finally{
-
-
-        connection.release();
-
-
     }
-
-
 };
 
 
@@ -232,26 +106,37 @@ export const getlands = async(req,res)=>{
 
     try{
 
+        const status = req.params?.status || req.query?.status;
+        const search = req.query?.search;
 
-        const [lands] = await db.query(
-
-            `
+        let query = `
             SELECT *
 
             FROM land
+        `;
+        const values = [];
 
-            ORDER BY created_at DESC
+        if (status) {
+            query += ` WHERE status = ?`;
+            values.push(status);
+        }
 
-            `
+        if (search) {
+            const clause = status ? ' AND ' : ' WHERE ';
+            query += `${clause} (title LIKE ? OR city LIKE ? OR location LIKE ?)`;
+            values.push(`%${search}%`, `%${search}%`, `%${search}%`);
+        }
 
-        );
+        query += ` ORDER BY created_at DESC`;
+
+        const [lands] = await db.query(query, values);
 
 
 
         res.json({
 
             success:true,
-
+            data: lands,
             lands
 
         });
@@ -399,7 +284,6 @@ export const updateLand = async(req,res)=>{
 
 
         const {
-
             title,
             description,
             price,
@@ -407,9 +291,7 @@ export const updateLand = async(req,res)=>{
             size_unit,
             location,
             city,
-            status,
-            duration
-
+            status
         } = req.body;
 
 
@@ -420,24 +302,17 @@ export const updateLand = async(req,res)=>{
 
             `
             UPDATE land SET
-
-            title=?,
-            description=?,
-            price=?,
-            land_size=?,
-            size_unit=?,
-            location=?,
-            city=?,
-            status=?,
-            duration=?
-
-            WHERE id=?
-
+                title = ?,
+                description = ?,
+                price = ?,
+                land_size = ?,
+                size_unit = ?,
+                location = ?,
+                city = ?,
+                status = ?
+            WHERE id = ?
             `,
-
-
             [
-
                 title,
                 description,
                 price,
@@ -446,9 +321,7 @@ export const updateLand = async(req,res)=>{
                 location,
                 city,
                 status,
-                duration,
                 id
-
             ]
 
         );

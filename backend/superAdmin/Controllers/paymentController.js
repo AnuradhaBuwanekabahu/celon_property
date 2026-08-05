@@ -1,5 +1,16 @@
 import db from "../../configuration/db.js";
 
+// Helper to get a valid client ID or fallback to first client
+const getValidClientId = async (reqClientId) => {
+    if (reqClientId) {
+        const [found] = await db.query("SELECT id FROM clients WHERE id = ?", [reqClientId]);
+        if (found.length) return found[0].id;
+    }
+    const [first] = await db.query("SELECT id FROM clients LIMIT 1");
+    if (first.length) return first[0].id;
+    throw new Error("No client account found. Please create a client account first.");
+};
+
 
 
 // ======================================
@@ -10,7 +21,7 @@ export const getAllPayments = async (req, res) => {
 
     try {
 
-        const { status } = req.query;
+        const status = req.params?.status || req.query?.status;
 
 
         let query = `
@@ -23,13 +34,11 @@ export const getAllPayments = async (req, res) => {
             p.property_id,
             p.amount,
             p.status,
-            p.payment_gateway,
             p.payment_method,
             p.transaction_ref,
-            p.paid_at,
             p.created_at,
 
-            c.name AS client_name,
+            c.full_name AS client_name,
             c.email AS client_email
 
             FROM payments p
@@ -69,7 +78,7 @@ export const getAllPayments = async (req, res) => {
             success: true,
 
             count: payments.length,
-
+            data: payments,
             payments
 
         });
@@ -247,15 +256,7 @@ export const updatePaymentStatus = async(req,res)=>{
 
             SET
 
-            status=?,
-
-            paid_at =
-            CASE
-                WHEN ?='paid'
-                THEN NOW()
-                ELSE paid_at
-            END
-
+            status=?
 
             WHERE id=?
 
@@ -263,8 +264,6 @@ export const updatePaymentStatus = async(req,res)=>{
 
 
             [
-
-                status,
 
                 status,
 
@@ -389,7 +388,12 @@ export const paymentStats = async(req,res)=>{
         res.json({
 
             success:true,
-
+            data: {
+                total_revenue: Number(stats[0]?.totalRevenue || 0),
+                total_payments: Number(stats[0]?.totalPayments || 0),
+                pending_payments: Number(stats[0]?.pendingPayments || 0),
+                failed_payments: Number(stats[0]?.failedPayments || 0)
+            },
             stats:stats[0]
 
         });
@@ -467,31 +471,50 @@ export const deletePayment = async(req,res)=>{
 
 
         res.json({
-
             success:true,
-
             message:"Payment deleted successfully"
-
         });
-
-
-
-    }catch(error){
-
-
+    } catch(error) {
         console.log(error);
-
-
         res.status(500).json({
-
             success:false,
-
             message:error.message
-
         });
-
-
     }
+};
 
 
+
+export const createPayment = async (req, res) => {
+    try {
+        const {
+            client_id,
+            property_type,
+            property_id,
+            amount,
+            payment_method,
+            transaction_ref,
+            status
+        } = req.body;
+
+        const clientId = await getValidClientId(client_id);
+        const pType = property_type || "hot_sales";
+        const pId = Number(property_id) || 1;
+        const amt = Number(amount) || 0;
+
+        const [result] = await db.query(
+            `INSERT INTO payments (client_id, property_type, property_id, amount, payment_method, transaction_ref, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [clientId, pType, pId, amt, payment_method || "Bank Transfer", transaction_ref || `TRX-${Date.now()}`, status || "paid"]
+        );
+
+        res.status(201).json({
+            success: true,
+            message: "Payment created successfully",
+            data: { id: result.insertId }
+        });
+    } catch (error) {
+        console.error("createPayment error:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
 };
