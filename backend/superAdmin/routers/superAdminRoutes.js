@@ -9,6 +9,7 @@ import paymentRouter from "./paymentRoutes.js";
 import staytobuyRouter from "./staytobuyRoutes.js";
 import staytorentRouter from "./staytorentRoutes.js";
 import wantedRouter from "./wantedRoutes.js";
+import offersRouter from "./offersRoutes.js";
 
 const superAdminRouter = express.Router();
 
@@ -34,5 +35,8 @@ superAdminRouter.use("/properties/land", landsRouter);
 superAdminRouter.use("/properties/stays-to-buy", staytobuyRouter);
 superAdminRouter.use("/properties/stays-to-rent", staytorentRouter);
 superAdminRouter.use("/properties/wanted", wantedRouter);
+
+// Offers routes
+superAdminRouter.use("/offers", offersRouter);
 
 export default superAdminRouter;

@@ -8,6 +8,7 @@ import Clients from './pages/Clients';
 import Payments from './pages/Payments';
 import Ads from './pages/Ads';
 import PropertyPage from './pages/properties/PropertyPage';
+import Offers from './pages/Offers';
 import { propertyConfigs } from './config/propertyConfigs';
 
 export default function App() {
@@ -20,6 +21,7 @@ export default function App() {
         <Route path="payments" element={<RequireAuth><Payments /></RequireAuth>} />
         <Route path="ads" element={<RequireAuth><Ads /></RequireAuth>} />
         <Route path="admins" element={<RequireSuperAdmin><Admins /></RequireSuperAdmin>} />
+        <Route path="offers" element={<RequireSuperAdmin><Offers /></RequireSuperAdmin>} />
 
         {Object.values(propertyConfigs).map((config) => (
           <Route

@@ -18,7 +18,8 @@ const NAV = [
     { to: '/admin/ads', label: 'Ads',  }
   ]},
   { group: 'Administration', links: [
-    { to: '/admin/admins', label: 'Admins',  superOnly: true }
+    { to: '/admin/admins', label: 'Admins',  superOnly: true },
+    { to: '/admin/offers', label: '🎁 Offers', superOnly: true }
   ]}
 ];
 
