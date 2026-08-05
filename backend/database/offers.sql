@@ -1,7 +1,3 @@
--- ================================================
--- Offers Table
--- Super Admin විසින් special offers create කරන්නට
--- ================================================
 
 CREATE TABLE IF NOT EXISTS offers (
     id INT AUTO_INCREMENT PRIMARY KEY,
