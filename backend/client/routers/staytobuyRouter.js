@@ -4,8 +4,9 @@ import {
     addStayToBuy,
     getAllStayToBuy,
     updateStayToBuy,
-    deleteStayToBuy
-} from "../Controllers/staysToBuyController.js";
+    deleteStayToBuy,
+    getStayToBuyById
+} from "../Controllers/salestobuyController.js";
 
 import upload from "../Middleware/upload.js";
 
@@ -13,11 +14,15 @@ const staystobuyrouter = express.Router();
 
 // Add Stay To Buy
 staystobuyrouter.post(
-    "/stays-to-buy",
+    "/add",
     upload.fields([
         {
             name: "main_image",
             maxCount: 1
+        },
+        {
+            name:"main_video",
+            maxCount:1
         },
         {
             name: "images",
@@ -49,9 +54,14 @@ staystobuyrouter.put(
     updateStayToBuy
 );
 
+staystobuyrouter.get(
+    "/show/:id",
+    getStayToBuyById
+);
+
 // Delete Stay To Buy
 staystobuyrouter.delete(
-    "/:id",
+    "/delete/:id",
     deleteStayToBuy
 );
 

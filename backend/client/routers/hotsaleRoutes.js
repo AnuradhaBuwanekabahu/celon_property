@@ -1,5 +1,5 @@
 import express from "express"
-import { addHotSale ,getHotSales , editHotSale,deleteHotSale} from "../Controllers/hotsalesController.js";
+import { addHotSale, getHotSales, getHotSaleById, editHotSale, deleteHotSale } from "../Controllers/hotsalesController.js";
 import upload from "../Middleware/upload.js";
 
 const hotsalerouter = express.Router();
@@ -11,6 +11,10 @@ hotsalerouter.post(
             maxCount:1
         },
         {
+            name:"main_video",
+            maxCount:1
+        },
+        {
             name:"images",
             maxCount:10
         }
@@ -19,10 +23,15 @@ hotsalerouter.post(
 );
 
 hotsalerouter.get( "/show",  getHotSales);
+hotsalerouter.get("/show/:id", getHotSaleById);
 
-hotsalerouter.put("show/:id", upload.fields([
+hotsalerouter.put("/edit/:id", upload.fields([
         {
             name:"main_image",
+            maxCount:1
+        },
+        {
+            name:"main_video",
             maxCount:1
         },
         {
@@ -33,5 +42,5 @@ hotsalerouter.put("show/:id", upload.fields([
     editHotSale
 );
 
-hotsalerouter.delete( "/:id", deleteHotSale);
+hotsalerouter.delete( "/delete/:id", deleteHotSale);
 export default hotsalerouter;

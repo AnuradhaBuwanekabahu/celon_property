@@ -6,7 +6,8 @@ import clientrouter from "./client/routers/clientRoutes.js";
 import adsrouter from "./client/routers/adsRoutes.js";
 import hotsalerouter from './client/routers/hotsaleRoutes.js'
 import paymentrouter from "./client/routers/paymentRoutes.js";
-
+import StayToBuyRouter from "./client/routers/staytobuyRouter.js";
+import staystorentrouter from "./client/routers/staytorentRouter.js";
 dotenv.config();
 
 const app = express();
@@ -21,6 +22,8 @@ app.use("/api/clients", clientrouter);
 app.use('/api/ads' ,adsrouter);
 app.use('/api/hotsales',hotsalerouter);
 app.use('/api/payment',paymentrouter)
+app.use('/api/staystobuy',StayToBuyRouter)
+app.use('/api/staystorent', staystorentrouter)
 // Test API
 app.get("/", (req, res) => {
   

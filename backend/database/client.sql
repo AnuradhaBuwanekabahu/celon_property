@@ -10,6 +10,8 @@ CREATE TABLE clients (
 
     phone_number VARCHAR(20) ,
 
+    avatar LONGBLOB,
+
     whatsapp_number VARCHAR(20),
 
     full_name VARCHAR(100) NOT NULL,

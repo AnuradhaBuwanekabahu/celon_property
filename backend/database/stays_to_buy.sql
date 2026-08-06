@@ -24,13 +24,13 @@ CREATE TABLE stays_to_buy (
 
     map_address VARCHAR(255),
 
-    rate DECIMAL(2,1) DEFAULT 0.0
+    rate DECIMAL(2,1) DEFAULT 0.0,
 
 
     location VARCHAR(255),
 
     main_image  longblob NOT NULL,
-     main_video LONGBLOB NULL,
+   
 
     images JSON,
 
