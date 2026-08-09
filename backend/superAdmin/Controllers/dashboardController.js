@@ -71,10 +71,21 @@ export const getRecentActivity = async (req, res) => {
         let recent_properties = [];
         try {
             const [rows] = await db.query(
-                `SELECT h.id, h.title, h.city, h.price, COALESCE(c.full_name, 'Client') as client_name 
-                 FROM hot_sales h 
-                 LEFT JOIN clients c ON h.client_id = c.id 
-                 ORDER BY h.id DESC LIMIT 5`
+                `SELECT p.id, p.title, p.city, p.price, p.type, COALESCE(c.full_name, 'Client') as client_name
+                 FROM (
+                   SELECT id, title, city, price, 'Hot Sale' AS type, client_id, created_at FROM hot_sales
+                   UNION ALL
+                   SELECT id, title, city, price, 'Stay to Buy' AS type, client_id, created_at FROM stays_to_buy
+                   UNION ALL
+                   SELECT id, title, city, price, 'Stay to Rent' AS type, client_id, created_at FROM stays_to_rent
+                   UNION ALL
+                   SELECT id, title, city, price, 'Land' AS type, client_id, created_at FROM land
+                   UNION ALL
+                   SELECT id, title, preferred_city AS city, budget AS price, 'Wanted' AS type, client_id, created_at FROM wanted
+                 ) p
+                 LEFT JOIN clients c ON p.client_id = c.id
+                 ORDER BY p.created_at DESC
+                 LIMIT 5`
             );
             recent_properties = rows;
         } catch (e) {}

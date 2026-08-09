@@ -61,24 +61,27 @@ export default function Dashboard() {
               <h2>Recently listed properties</h2>
               <span className={panelHeaderMeta}>{activity.recent_properties.length} entries</span>
             </div>
-            <table className={dataTable}>
-              <thead>
-                <tr><th className={th}>Title</th><th className={th}>Client</th><th className={th}>City</th><th className={th}>Price</th></tr>
-              </thead>
-              <tbody>
-                {activity.recent_properties.map((p) => (
-                  <tr key={p.id} className={trHover}>
-                    <td className={`${td} ${cellTitle}`}>{p.title}</td>
-                    <td className={td}>{p.client_name}</td>
-                    <td className={td}>{p.city}</td>
-                    <td className={`${td} ${cellMono}`}>Rs {Number(p.price).toLocaleString()}</td>
-                  </tr>
-                ))}
-                {activity.recent_properties.length === 0 && (
-                  <tr><td colSpan={4} className={emptyState}>No properties yet.</td></tr>
-                )}
-              </tbody>
-            </table>
+            <div className="overflow-x-auto">
+              <table className={`${dataTable} min-w-[680px]`}>
+                <thead>
+                  <tr><th className={th}>Title</th><th className={th}>Type</th><th className={th}>Client</th><th className={th}>City</th><th className={th}>Price</th></tr>
+                </thead>
+                <tbody>
+                  {activity.recent_properties.map((p) => (
+                    <tr key={`${p.type}-${p.id}`} className={trHover}>
+                      <td className={`${td} ${cellTitle}`}>{p.title}</td>
+                      <td className={td}>{p.type}</td>
+                      <td className={td}>{p.client_name}</td>
+                      <td className={td}>{p.city}</td>
+                      <td className={`${td} ${cellMono}`}>Rs {Number(p.price || 0).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                  {activity.recent_properties.length === 0 && (
+                    <tr><td colSpan={5} className={emptyState}>No properties yet.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <div className={panel}>
@@ -86,23 +89,25 @@ export default function Dashboard() {
               <h2>Recently joined clients</h2>
               <span className={panelHeaderMeta}>{activity.recent_clients.length} entries</span>
             </div>
-            <table className={dataTable}>
-              <thead>
-                <tr><th className={th}>Full name</th><th className={th}>Email</th><th className={th}>Phone</th></tr>
-              </thead>
-              <tbody>
-                {activity.recent_clients.map((c) => (
-                  <tr key={c.id} className={trHover}>
-                    <td className={`${td} ${cellTitle}`}>{c.full_name}</td>
-                    <td className={td}>{c.email}</td>
-                    <td className={`${td} ${cellMono}`}>{c.phone_number}</td>
-                  </tr>
-                ))}
-                {activity.recent_clients.length === 0 && (
-                  <tr><td colSpan={3} className={emptyState}>No clients yet.</td></tr>
-                )}
-              </tbody>
-            </table>
+            <div className="overflow-x-auto">
+              <table className={`${dataTable} min-w-[520px]`}>
+                <thead>
+                  <tr><th className={th}>Full name</th><th className={th}>Email</th><th className={th}>Phone</th></tr>
+                </thead>
+                <tbody>
+                  {activity.recent_clients.map((c) => (
+                    <tr key={c.id} className={trHover}>
+                      <td className={`${td} ${cellTitle}`}>{c.full_name}</td>
+                      <td className={td}>{c.email}</td>
+                      <td className={`${td} ${cellMono}`}>{c.phone_number}</td>
+                    </tr>
+                  ))}
+                  {activity.recent_clients.length === 0 && (
+                    <tr><td colSpan={3} className={emptyState}>No clients yet.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </>
       )}

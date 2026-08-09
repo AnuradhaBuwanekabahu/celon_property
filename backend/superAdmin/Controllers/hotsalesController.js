@@ -409,9 +409,11 @@ export const updatePropertyStatus = async(req,res)=>{
 
         if(
             ![
+                "pending",
+                "active",
                 "approved",
                 "rejected",
-                "pending"
+                "sold"
             ].includes(status)
         ){
 

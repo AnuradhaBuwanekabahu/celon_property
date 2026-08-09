@@ -16,7 +16,7 @@ export const propertyConfigs = {
     slug: 'hot-sales',
     title: 'Hot Sales',
     basePath: '/properties/hot-sales',
-    statuses: ['pending', 'active', 'sold'],
+    statuses: ['pending', 'active', 'approved', 'rejected', 'sold'],
     fields: [...commonFields, { name: 'images', label: 'Extra Images (comma‑separated URLs)', type: 'textarea', help: 'Enter URLs separated by commas' }],
     columns: [
       { key: 'title', label: 'Title', cell: (r) => <div><div className="font-medium text-teal-deep">{r.title}</div><div className="text-[11.5px] text-ink-soft">{r.property_type}</div></div> },

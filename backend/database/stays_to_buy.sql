@@ -33,7 +33,7 @@ CREATE TABLE stays_to_buy (
 
     city VARCHAR(100) NOT NULL,
 
-    map_address VARCHAR(255),
+    map_address TEXT,
 
     rate DECIMAL(2,1) DEFAULT 0.0
 

@@ -24,7 +24,7 @@ function App(){
         draggables
       />
          <Routes>
-          <Route element={<Home/>} path="/"/>
+          <Route element={<DashboardHome/>} path="/"/>
           <Route element={<Login/>} path="/client-login"/>
           <Route element={<Register/>} path="/client-register"/>
           <Route element={<DashboardHome/>} path="/dashboard"/>
