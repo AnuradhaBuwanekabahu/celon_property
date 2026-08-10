@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(150) NOT NULL UNIQUE,
     password VARCHAR(255) NULL,
     auth_type ENUM('email', 'google') NOT NULL DEFAULT 'email',
-    picture VARCHAR(500) NULL,
     is_active TINYINT(1) NOT NULL DEFAULT 1,
     rate INT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

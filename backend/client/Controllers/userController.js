@@ -118,7 +118,7 @@ export const loginUserWithEmail = async (req, res) => {
 
 export const loginUserWithGoogle = async (req, res) => {
   try {
-    const { google_id, email, full_name, picture } = req.body || {};
+    const { google_id, email, full_name } = req.body || {};
 
     if (!google_id || !email) {
       return res.status(400).json({ success: false, message: "Google account details are required" });
@@ -143,11 +143,6 @@ export const loginUserWithGoogle = async (req, res) => {
         values.push(full_name);
       }
 
-      if (!existingUser.picture && picture) {
-        updateFields.push("picture = ?");
-        values.push(picture);
-      }
-
       if (updateFields.length > 0) {
         await db.query(`UPDATE users SET ${updateFields.join(", ")} WHERE id = ?`, [...values, existingUser.id]);
       }
@@ -169,8 +164,8 @@ export const loginUserWithGoogle = async (req, res) => {
     }
 
     const [result] = await db.query(
-      `INSERT INTO users (full_name, email, google_id, auth_type, picture, is_active) VALUES (?, ?, ?, 'google', ?, 1)`,
-      [full_name || "Google User", normalizedEmail, google_id, picture || null]
+      `INSERT INTO users (full_name, email, google_id, auth_type, is_active) VALUES (?, ?, ?, 'google', 1)`,
+      [full_name || "Google User", normalizedEmail, google_id]
     );
 
     const user = {
