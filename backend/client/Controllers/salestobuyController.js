@@ -157,7 +157,7 @@ export const addStayToBuy = async (req, res) => {
 };
 
 
-export const getAllStayToBuy = async (req, res) => {
+export const showAllStayToBuy = async (req, res) => {
   try {
     const [rows] = await db.query(`
       SELECT
@@ -183,6 +183,10 @@ export const getAllStayToBuy = async (req, res) => {
       message: error.message,
     });
   }
+};
+
+export const getAllStayToBuy = async (req, res) => {
+  return showAllStayToBuy(req, res);
 };
 
 // ==============================

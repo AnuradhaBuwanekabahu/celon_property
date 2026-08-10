@@ -129,7 +129,7 @@ export const addHotSale = async (req, res) => {
 };
 
 // Get All Hot Sales
-export const getHotSales = async (req, res) => {
+export const showallhotsales = async (req, res) => {
     try {
         const [hotSales] = await db.query(
             `
@@ -188,6 +188,10 @@ export const getHotSales = async (req, res) => {
         console.log(error);
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
+};
+
+export const getHotSales = async (req, res) => {
+    return showallhotsales(req, res);
 };
 
 // Get Single Hot Sale Property

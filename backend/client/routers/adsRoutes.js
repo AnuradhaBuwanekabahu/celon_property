@@ -4,7 +4,8 @@ import {
     addAds,
     getAdImage,
     editAds,
-    getAds
+    getAds,
+    showAllAds
 } from "../controllers/adsController.js";
 
 import upload from "../Middleware/upload.js"
@@ -33,6 +34,11 @@ adsrouter.put(
 adsrouter.get(
     "/ads",
     getAds
+);
+
+adsrouter.get(
+    "/showall",
+    showAllAds
 );
 
 export default adsrouter;

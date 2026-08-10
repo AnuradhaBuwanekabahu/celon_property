@@ -20,6 +20,17 @@ CREATE TABLE stays_to_buy (
 
     area_sqft DECIMAL(10,2),
 
+     main_video LONGBLOB,
+
+
+    duration  ENUM (
+        'permanent',
+        'month',
+        'year',
+        'week',
+        'day'
+    ),
+
     city VARCHAR(100) NOT NULL,
 
     map_address VARCHAR(255),
@@ -40,11 +51,7 @@ CREATE TABLE stays_to_buy (
         'sold'
     ) DEFAULT 'pending',
 
-    duration ENUM(
-       'year',
-       'month',
-       'day'
-    ) DEFAULT 'month',
+
 
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

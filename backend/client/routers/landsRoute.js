@@ -1,25 +1,28 @@
 import express from "express";
 
 import {
-    addStayToRent,
-    getAllStayToRent,
-    showAllStayToRent,
-    updateStayToRent,
-    deleteStayToRent,
-    getStayToRentById
-} from "../Controllers/staystorentController.js";
+    addLands,
+    getAllLands,
+    showAllLands,
+    updateLand,
+    deleteLand,
+    getLandById,
+    getLandMainImage,
+    getLandMainVideo,
+    getLandImage
+} from "../Controllers/landsController.js";
 
 import upload from "../Middleware/upload.js";
 
 
-const staystorentrouter = express.Router();
+const landsrouter = express.Router();
 
 
 // ==========================
-// Add Stay To Rent
+// Add Land
 // ==========================
 
-staystorentrouter.post(
+landsrouter.post(
     "/add",
     upload.fields([
         {
@@ -35,43 +38,53 @@ staystorentrouter.post(
             maxCount: 10
         }
     ]),
-    addStayToRent
+    addLands
 );
 
 
 
 // ==========================
-// Get All Stay To Rent
+// Get All Lands
 // ==========================
 
-staystorentrouter.get(
+landsrouter.get(
     "/show",
-    getAllStayToRent
-);
-
-staystorentrouter.get(
-    "/showall",
-    showAllStayToRent
+    getAllLands
 );
 
 
 
 // ==========================
-// Get Single Stay To Rent
+// Get Single Land
 // ==========================
 
-staystorentrouter.get(
+landsrouter.get(
     "/show/:id",
-    getStayToRentById
+    getLandById
+);
+
+landsrouter.get(
+    "/main-image/:id",
+    getLandMainImage
+);
+
+landsrouter.get(
+    "/main-video/:id",
+    getLandMainVideo
+);
+
+landsrouter.get(
+    "/image/:id",
+    getLandImage
 );
 
 
 
 // ==========================
-// Update Stay To Rent
+// Update Land
 // ==========================
 
-staystorentrouter.put(
+landsrouter.put(
     "/edit/:id",
     upload.fields([
         {
@@ -87,20 +100,20 @@ staystorentrouter.put(
             maxCount: 10
         }
     ]),
-    updateStayToRent
+    updateLand
 );
 
 
 
 // ==========================
-// Delete Stay To Rent
+// Delete Land
 // ==========================
 
-staystorentrouter.delete(
+landsrouter.delete(
     "/delete/:id",
-    deleteStayToRent
+    deleteLand
 );
 
 
 
-export default staystorentrouter;
+export default landsrouter;

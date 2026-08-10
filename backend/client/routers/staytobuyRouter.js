@@ -3,6 +3,7 @@ import express from "express";
 import {
     addStayToBuy,
     getAllStayToBuy,
+    showAllStayToBuy,
     updateStayToBuy,
     deleteStayToBuy,
     getStayToBuyById
@@ -36,6 +37,11 @@ staystobuyrouter.post(
 staystobuyrouter.get(
     "/show",
     getAllStayToBuy
+);
+
+staystobuyrouter.get(
+    "/showall",
+    showAllStayToBuy
 );
 
 // Update Stay To Buy

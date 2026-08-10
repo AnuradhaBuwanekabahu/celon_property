@@ -1,5 +1,5 @@
 import express from "express"
-import { addHotSale, getHotSales, getHotSaleById, editHotSale, deleteHotSale } from "../Controllers/hotsalesController.js";
+import { addHotSale, getHotSales, getHotSaleById, editHotSale, deleteHotSale, showallhotsales } from "../Controllers/hotsalesController.js";
 import upload from "../Middleware/upload.js";
 
 const hotsalerouter = express.Router();
@@ -23,6 +23,7 @@ hotsalerouter.post(
 );
 
 hotsalerouter.get( "/show",  getHotSales);
+hotsalerouter.get("/showall", showallhotsales);
 hotsalerouter.get("/show/:id", getHotSaleById);
 
 hotsalerouter.put("/edit/:id", upload.fields([

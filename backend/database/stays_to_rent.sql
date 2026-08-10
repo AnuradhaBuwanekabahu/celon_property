@@ -14,12 +14,16 @@ CREATE TABLE stays_to_rent (
 
     overview JSON,
     
-     duration ENUM(
-       'year',
-       'month',
-       'day'
-    ) DEFAULT 'month',
+     main_video LONGBLOB,
 
+
+    duration  ENUM (
+        'permanent',
+        'month',
+        'year',
+        'week',
+        'day'
+    ),
 
     property_type VARCHAR(50) NOT NULL,
 

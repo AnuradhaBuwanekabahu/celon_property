@@ -325,7 +325,7 @@ connection.release();
 // GET ALL
 
 
-export const getAllStayToRent = async(req,res)=>{
+export const showAllStayToRent = async(req,res)=>{
 
 
 try{
@@ -368,6 +368,9 @@ message:error.message
 
 
 
+export const getAllStayToRent = async(req,res)=>{
+  return showAllStayToRent(req,res);
+};
 
 // GET SINGLE
 
