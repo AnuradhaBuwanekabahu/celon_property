@@ -1,86 +1,121 @@
-import React, { useState } from 'react';
-import API from '../api/clientapi.js';
+import React from 'react';
 import { toast } from 'react-toastify';
-import { overviewOptions, highlightOptions, cityOptions } from '../Assets/data.js'
+import { overviewOptions, highlightOptions, cityOptions } from '../Assets/data.js';
 import { Upload, X, ImagePlus } from 'lucide-react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useContext } from 'react';
 import { clientContext } from '../context/ClientContext.jsx';
 
-
-const AddHotSales = () => {
-
+const AddStayToBuy = ({ clientID }) => {
 
     const navigate = useNavigate();
     const {
-        formData,
-        handleChange,
-        handleSubmit,
+        stayFormData,
+        handleStayChange,
 
-        handleOverviewChange,
-        addOverview,
-        removeOverview,
+        addStayOverview,
+        removeStayOverview,
+        handleStayOverviewChange,
 
-        handleHighlightChange,
+        handleStayHighlightChange,
 
-        mainImage,
-        mainImagePreview,
-        handleMainImage,
-        removeMainImage,
+        stayMainImage,
+        stayMainImagePreview,
+        handleStayMainImage,
+        removeStayMainImage,
 
-        mainVideo,
-        mainVideoPreview,
-        handleMainVideo,
-        setMainVideo,
-        setMainVideoPreview,
+        stayMainVideo,
+        stayMainVideoPreview,
+        handleStayMainVideo,
+        removeStayMainVideo,
 
-        galleryImages,
-        MAX_GALLERY_IMAGES,
-        galleryDragActive,
-        setGalleryDragActive,
-        handleImages,
-        handleGalleryDrop,
-        removeGalleryImage,
+        stayGalleryImages,
+        STAY_MAX_GALLERY_IMAGES,
+        stayGalleryDragActive,
+        setStayGalleryDragActive,
+        handleStayImages,
+        handleStayGalleryDrop,
+        removeStayGalleryImage,
+
+        handleStaySubmit,
     } = useContext(clientContext);
+
+    const handleFormSubmit = (e) => {
+        e.preventDefault();
+
+        const resolvedClientId = clientID || localStorage.getItem("clientId");
+
+        if (!resolvedClientId) {
+            toast.error("Unable to identify the client. Please try again.");
+            return;
+        }
+
+        const requiredFields = [
+            stayFormData.title,
+            stayFormData.price,
+            stayFormData.description,
+            stayFormData.property_type,
+            stayFormData.city,
+            stayFormData.area_sqft,
+            stayFormData.map_address,
+            stayFormData.location,
+        ];
+
+        const hasEmptyOverview = stayFormData.overview.some((item) => !item.title || !item.value);
+
+        if (requiredFields.some((field) => !field) || hasEmptyOverview || !stayMainImage) {
+            toast.error("Please fill all required fields.");
+            return;
+        }
+
+        handleStaySubmit(e, resolvedClientId);
+    };
 
     return (
         <div className="max-w-6xl mt-8 mx-auto p-4 sm:p-6">
             <h2 className="text-xl sm:text-2xl font-bold text-[#14213D] mb-5">
-                Add New Property
+                Add Stay To Buy Property
             </h2>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleFormSubmit} className="space-y-5">
 
                 {/* Basic details */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <input
                         type="text"
                         name="title"
-                        onChange={handleChange}
+                        value={stayFormData.title}
+                        onChange={handleStayChange}
                         placeholder="Property title"
+                        required
                         className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
                     />
                     <input
                         type="number"
                         name="price"
-                        onChange={handleChange}
+                        value={stayFormData.price}
+                        onChange={handleStayChange}
                         placeholder="Price (RS)"
+                        required
                         className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
                     />
                 </div>
 
                 <textarea
                     name="description"
-                    onChange={handleChange}
+                    value={stayFormData.description}
+                    onChange={handleStayChange}
                     placeholder="Enter description here..."
                     rows={4}
+                    required
                     className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
                 />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <select
                         name="property_type"
-                        onChange={handleChange}
+                        value={stayFormData.property_type}
+                        onChange={handleStayChange}
                         className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
                     >
                         <option value="">Select property type</option>
@@ -95,8 +130,8 @@ const AddHotSales = () => {
 
                     <select
                         name="city"
-                        value={formData.city}
-                        onChange={handleChange}
+                        value={stayFormData.city}
+                        onChange={handleStayChange}
                         className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
                     >
                         <option value="">Select City</option>
@@ -111,13 +146,15 @@ const AddHotSales = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <select
                         name="duration"
-                        value={formData.duration}
-                        onChange={handleChange}
+                        value={stayFormData.duration}
+                        onChange={handleStayChange}
                         className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
                     >
-                        <option value="year">Year</option>
-                        <option value="month">Month</option>
                         <option value="day">Day</option>
+                        <option value="week">Week</option>
+                        <option value="month">Month</option>
+                        <option value="year">Year</option>
+                        <option value="permanent">Permanent</option>
                     </select>
                 </div>
 
@@ -126,11 +163,11 @@ const AddHotSales = () => {
                     <h3 className="font-semibold text-lg text-[#14213D]">Overview</h3>
                     <p className="text-xs text-gray-500">Choose a title from the list and enter only the value.</p>
 
-                    {formData.overview.map((item, index) => (
+                    {stayFormData.overview.map((item, index) => (
                         <div key={index} className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                             <select
                                 value={item.title}
-                                onChange={(e) => handleOverviewChange(index, 'title', e.target.value)}
+                                onChange={(e) => handleStayOverviewChange(index, 'title', e.target.value)}
                                 className="border border-gray-300 p-3 rounded-xl text-sm w-full sm:w-1/2"
                             >
                                 {overviewOptions.map((option) => (
@@ -144,13 +181,13 @@ const AddHotSales = () => {
                                 type="text"
                                 placeholder="Enter value"
                                 value={item.value}
-                                onChange={(e) => handleOverviewChange(index, 'value', e.target.value)}
+                                onChange={(e) => handleStayOverviewChange(index, 'value', e.target.value)}
                                 className="border border-gray-300 p-3 rounded-xl text-sm w-full sm:w-1/2"
                             />
 
                             <button
                                 type="button"
-                                onClick={() => removeOverview(index)}
+                                onClick={() => removeStayOverview(index)}
                                 className="bg-red-500 text-white px-4 py-2 rounded-xl text-sm shrink-0"
                             >
                                 Remove
@@ -160,7 +197,7 @@ const AddHotSales = () => {
 
                     <button
                         type="button"
-                        onClick={addOverview}
+                        onClick={addStayOverview}
                         className="bg-[#FCA311] px-4 py-2 rounded-xl text-sm font-medium w-full sm:w-auto"
                     >
                         + Add Overview
@@ -180,8 +217,8 @@ const AddHotSales = () => {
                             >
                                 <input
                                     type="checkbox"
-                                    checked={formData.highlights.includes(highlight)}
-                                    onChange={() => handleHighlightChange(highlight)}
+                                    checked={stayFormData.highlights.includes(highlight)}
+                                    onChange={() => handleStayHighlightChange(highlight)}
                                 />
                                 <span>{highlight}</span>
                             </label>
@@ -193,15 +230,19 @@ const AddHotSales = () => {
                     <input
                         type="number"
                         name="area_sqft"
-                        onChange={handleChange}
+                        value={stayFormData.area_sqft}
+                        onChange={handleStayChange}
                         placeholder="Area (sqft)"
+                        required
                         className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
                     />
                     <input
                         type="text"
                         name="map_address"
-                        onChange={handleChange}
+                        value={stayFormData.map_address}
+                        onChange={handleStayChange}
                         placeholder="Map address"
+                        required
                         className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
                     />
                 </div>
@@ -209,22 +250,24 @@ const AddHotSales = () => {
                 <input
                     type="text"
                     name="location"
-                    onChange={handleChange}
+                    value={stayFormData.location}
+                    onChange={handleStayChange}
                     placeholder="Enter your location address"
+                    required
                     className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
                 />
 
-                {/* Main Image & Video upload (separate) */}
+                {/* Main Image & Video upload */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {/* Main Image */}
                     <div className="space-y-2">
                         <label className="block text-sm font-semibold text-[#14213D]">Main Image</label>
 
                         <div
-                            onClick={() => document.getElementById('mainImageInput').click()}
-                            className={`relative w-full h-44 sm:h-56 rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer overflow-hidden transition-colors border-gray-300 hover:border-[#FCA311]`}
+                            onClick={() => document.getElementById('stayMainImageInput').click()}
+                            className="relative w-full h-44 sm:h-56 rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer overflow-hidden transition-colors border-gray-300 hover:border-[#FCA311]"
                         >
-                            {!mainImagePreview ? (
+                            {!stayMainImagePreview ? (
                                 <>
                                     <Upload className="w-7 h-7 text-[#FCA311] mb-2" />
                                     <span className="text-gray-600 text-sm font-medium">Tap to upload main image</span>
@@ -232,14 +275,14 @@ const AddHotSales = () => {
                                 </>
                             ) : (
                                 <>
-                                    <img src={mainImagePreview} alt="main preview" className="h-full w-full object-cover" />
-                                    <button type="button" onClick={removeMainImage} className="absolute top-2 right-2 bg-[#14213D]/80 text-white rounded-full p-1.5">
+                                    <img src={stayMainImagePreview} alt="main preview" className="h-full w-full object-cover" />
+                                    <button type="button" onClick={removeStayMainImage} className="absolute top-2 right-2 bg-[#14213D]/80 text-white rounded-full p-1.5">
                                         <X className="w-4 h-4" />
                                     </button>
                                 </>
                             )}
 
-                            <input id="mainImageInput" type="file" accept="image/*" onChange={handleMainImage} className="hidden" />
+                            <input id="stayMainImageInput" type="file" accept="image/*" onChange={handleStayMainImage} className="hidden" />
                         </div>
                     </div>
 
@@ -248,10 +291,10 @@ const AddHotSales = () => {
                         <label className="block text-sm font-semibold text-[#14213D]">Main Video</label>
 
                         <div
-                            onClick={() => document.getElementById('mainVideoInput').click()}
-                            className={`relative w-full h-44 sm:h-56 rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer overflow-hidden transition-colors border-gray-300 hover:border-[#FCA311]`}
+                            onClick={() => document.getElementById('stayMainVideoInput').click()}
+                            className="relative w-full h-44 sm:h-56 rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer overflow-hidden transition-colors border-gray-300 hover:border-[#FCA311]"
                         >
-                            {!mainVideoPreview ? (
+                            {!stayMainVideoPreview ? (
                                 <>
                                     <Upload className="w-7 h-7 text-[#FCA311] mb-2" />
                                     <span className="text-gray-600 text-sm font-medium">Tap to upload main video (optional)</span>
@@ -259,10 +302,10 @@ const AddHotSales = () => {
                                 </>
                             ) : (
                                 <>
-                                    <video src={mainVideoPreview} controls className="h-full w-full object-cover" />
+                                    <video src={stayMainVideoPreview} controls className="h-full w-full object-cover" />
                                     <button
                                         type="button"
-                                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMainVideo(null); setMainVideoPreview(null); }}
+                                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); removeStayMainVideo(); }}
                                         className="absolute top-2 right-2 bg-[#14213D]/80 text-white rounded-full p-1.5"
                                     >
                                         <X className="w-4 h-4" />
@@ -270,7 +313,7 @@ const AddHotSales = () => {
                                 </>
                             )}
 
-                            <input id="mainVideoInput" type="file" accept="video/*" onChange={handleMainVideo} className="hidden" />
+                            <input id="stayMainVideoInput" type="file" accept="video/*" onChange={handleStayMainVideo} className="hidden" />
                         </div>
                     </div>
                 </div>
@@ -278,17 +321,17 @@ const AddHotSales = () => {
                 {/* Gallery images upload */}
                 <div className="space-y-2">
                     <label className="block text-sm font-semibold text-[#14213D]">
-                        Gallery Images ({galleryImages.length}/{MAX_GALLERY_IMAGES})
+                        Gallery Images ({stayGalleryImages.length}/{STAY_MAX_GALLERY_IMAGES})
                     </label>
 
                     <div
-                        onDragOver={(e) => { e.preventDefault(); setGalleryDragActive(true); }}
-                        onDragLeave={() => setGalleryDragActive(false)}
-                        onDrop={handleGalleryDrop}
-                        onClick={() => galleryImages.length < MAX_GALLERY_IMAGES && document.getElementById('galleryInput').click()}
+                        onDragOver={(e) => { e.preventDefault(); setStayGalleryDragActive(true); }}
+                        onDragLeave={() => setStayGalleryDragActive(false)}
+                        onDrop={handleStayGalleryDrop}
+                        onClick={() => stayGalleryImages.length < STAY_MAX_GALLERY_IMAGES && document.getElementById('stayGalleryInput').click()}
                         className={`flex flex-col items-center justify-center gap-1.5 border-2 border-dashed rounded-xl p-5 sm:p-6 cursor-pointer transition-colors
-                            ${galleryDragActive ? 'border-[#FCA311] bg-orange-50' : 'border-gray-300 hover:border-[#FCA311]'}
-                            ${galleryImages.length >= MAX_GALLERY_IMAGES ? 'opacity-50 pointer-events-none' : ''}
+                            ${stayGalleryDragActive ? 'border-[#FCA311] bg-orange-50' : 'border-gray-300 hover:border-[#FCA311]'}
+                            ${stayGalleryImages.length >= STAY_MAX_GALLERY_IMAGES ? 'opacity-50 pointer-events-none' : ''}
                         `}
                     >
                         <Upload className="w-6 h-6 text-[#FCA311]" />
@@ -296,22 +339,22 @@ const AddHotSales = () => {
                             Tap to upload, or drag & drop images here
                         </p>
                         <p className="text-xs text-gray-400">
-                            JPG, PNG, WEBP — up to {MAX_GALLERY_IMAGES} images
+                            JPG, PNG, WEBP — up to {STAY_MAX_GALLERY_IMAGES} images
                         </p>
 
                         <input
-                            id="galleryInput"
+                            id="stayGalleryInput"
                             type="file"
                             accept="image/*"
                             multiple
-                            onChange={handleImages}
+                            onChange={handleStayImages}
                             className="hidden"
                         />
                     </div>
 
-                    {galleryImages.length > 0 && (
+                    {stayGalleryImages.length > 0 && (
                         <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5 sm:gap-3 mt-3">
-                            {galleryImages.map((img) => (
+                            {stayGalleryImages.map((img) => (
                                 <div
                                     key={img.id}
                                     className="relative group aspect-square rounded-xl overflow-hidden border border-gray-200"
@@ -323,7 +366,7 @@ const AddHotSales = () => {
                                     />
                                     <button
                                         type="button"
-                                        onClick={(e) => removeGalleryImage(e, img.id)}
+                                        onClick={(e) => removeStayGalleryImage(e, img.id)}
                                         className="absolute top-1 right-1 bg-[#14213D]/80 text-white rounded-full p-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                                     >
                                         <X className="w-3.5 h-3.5" />
@@ -331,9 +374,9 @@ const AddHotSales = () => {
                                 </div>
                             ))}
 
-                            {galleryImages.length < MAX_GALLERY_IMAGES && (
+                            {stayGalleryImages.length < STAY_MAX_GALLERY_IMAGES && (
                                 <div
-                                    onClick={() => document.getElementById('galleryInput').click()}
+                                    onClick={() => document.getElementById('stayGalleryInput').click()}
                                     className="flex items-center justify-center aspect-square rounded-xl border border-dashed border-gray-300 text-[#FCA311] cursor-pointer hover:border-[#FCA311]"
                                 >
                                     <ImagePlus className="w-5 h-5" />
@@ -343,7 +386,6 @@ const AddHotSales = () => {
                     )}
                 </div>
 
-                {/* Submit */}
                 {/* Submit */}
                 <div className="sticky bottom-0 bg-white pt-3 pb-1 -mx-4 px-4 flex justify-center sm:static sm:bg-transparent sm:mx-0 sm:px-0">
                     <button
@@ -359,4 +401,4 @@ const AddHotSales = () => {
     );
 };
 
-export default AddHotSales;
+export default AddStayToBuy;

@@ -5,7 +5,8 @@ import {
     getAdImage,
     editAds,
     getAds,
-    showAllAds
+    showAllAds,
+    deleteAds
 } from "../controllers/adsController.js";
 
 import upload from "../Middleware/upload.js"
@@ -40,5 +41,8 @@ adsrouter.get(
     "/showall",
     showAllAds
 );
+
+// Delete ad
+adsrouter.delete('/delete/:id', deleteAds);
 
 export default adsrouter;

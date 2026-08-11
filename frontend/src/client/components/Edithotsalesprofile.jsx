@@ -1,61 +1,60 @@
-import React, { useState } from 'react';
-import API from '../api/clientapi.js';
-import { toast } from 'react-toastify';
+import React, { useEffect, useContext } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { clientContext } from '../context/ClientContext.jsx';
 import { overviewOptions, highlightOptions, cityOptions } from '../Assets/data.js'
 import { Upload, X, ImagePlus } from 'lucide-react';
-import { Navigate, useNavigate } from 'react-router-dom';
-import { useContext } from 'react';
-import { clientContext } from '../context/ClientContext.jsx';
 
-
-const AddHotSales = () => {
-
-
+const EditHotSalesProfile = () => {
+    const { id } = useParams();
     const navigate = useNavigate();
     const {
         formData,
         handleChange,
-        handleSubmit,
+        handleHotSalesEditSubmit,
+        fetchHotSaleForEdit,
 
         handleOverviewChange,
-        addOverview,
         removeOverview,
+        addOverview,
 
         handleHighlightChange,
 
-        mainImage,
         mainImagePreview,
-        handleMainImage,
         removeMainImage,
+        handleMainImage,
 
-        mainVideo,
         mainVideoPreview,
-        handleMainVideo,
         setMainVideo,
         setMainVideoPreview,
+        handleMainVideo,
 
         galleryImages,
         MAX_GALLERY_IMAGES,
         galleryDragActive,
         setGalleryDragActive,
-        handleImages,
         handleGalleryDrop,
+        handleImages,
         removeGalleryImage,
     } = useContext(clientContext);
+
+    useEffect(() => {
+        if (id) fetchHotSaleForEdit(id);
+    }, [id]);
 
     return (
         <div className="max-w-6xl mt-8 mx-auto p-4 sm:p-6">
             <h2 className="text-xl sm:text-2xl font-bold text-[#14213D] mb-5">
-                Add New Property
+                Edit Property
             </h2>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-
-                {/* Basic details */}
+            <form onSubmit={(e) => handleHotSalesEditSubmit(e, id)} className="space-y-5">
+              
+                    {/* Basic details */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <input
                         type="text"
                         name="title"
+                        value={formData.title}
                         onChange={handleChange}
                         placeholder="Property title"
                         className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
@@ -63,6 +62,7 @@ const AddHotSales = () => {
                     <input
                         type="number"
                         name="price"
+                        value={formData.price}
                         onChange={handleChange}
                         placeholder="Price (RS)"
                         className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
@@ -71,6 +71,7 @@ const AddHotSales = () => {
 
                 <textarea
                     name="description"
+                    value={formData.description}
                     onChange={handleChange}
                     placeholder="Enter description here..."
                     rows={4}
@@ -80,6 +81,7 @@ const AddHotSales = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <select
                         name="property_type"
+                        value={formData.property_type}
                         onChange={handleChange}
                         className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
                     >
@@ -126,7 +128,7 @@ const AddHotSales = () => {
                     <h3 className="font-semibold text-lg text-[#14213D]">Overview</h3>
                     <p className="text-xs text-gray-500">Choose a title from the list and enter only the value.</p>
 
-                    {formData.overview.map((item, index) => (
+                    {Array.isArray(formData.overview) && formData.overview.map((item, index) => (
                         <div key={index} className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                             <select
                                 value={item.title}
@@ -180,7 +182,7 @@ const AddHotSales = () => {
                             >
                                 <input
                                     type="checkbox"
-                                    checked={formData.highlights.includes(highlight)}
+                                    checked={Array.isArray(formData.highlights) && formData.highlights.includes(highlight)}
                                     onChange={() => handleHighlightChange(highlight)}
                                 />
                                 <span>{highlight}</span>
@@ -193,6 +195,7 @@ const AddHotSales = () => {
                     <input
                         type="number"
                         name="area_sqft"
+                        value={formData.area_sqft}
                         onChange={handleChange}
                         placeholder="Area (sqft)"
                         className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
@@ -200,6 +203,7 @@ const AddHotSales = () => {
                     <input
                         type="text"
                         name="map_address"
+                        value={formData.map_address}
                         onChange={handleChange}
                         placeholder="Map address"
                         className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
@@ -209,6 +213,7 @@ const AddHotSales = () => {
                 <input
                     type="text"
                     name="location"
+                    value={formData.location}
                     onChange={handleChange}
                     placeholder="Enter your location address"
                     className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
@@ -350,13 +355,14 @@ const AddHotSales = () => {
                         type="submit"
                         className="w-full sm:w-auto bg-[#14213D] text-white px-6 py-3 rounded-xl text-sm font-semibold hover:bg-[#1c2c52] transition-colors"
                     >
-                        Submit Property
+                        Edit Property
                     </button>
                 </div>
 
+              
             </form>
         </div>
     );
 };
 
-export default AddHotSales;
+export default EditHotSalesProfile;

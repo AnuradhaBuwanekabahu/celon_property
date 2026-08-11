@@ -1,26 +1,23 @@
-import React, { useContext, useEffect, useState } from 'react';
+﻿import React, { useContext, useEffect, useState } from 'react';
 import { clientContext } from '../context/ClientContext';
 import { FaStar } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
-const ShowHotSales = ({ clientID }) => {
+const ShowStayToBuy = ({ clientID }) => {
     const navigate = useNavigate();
-    const { hotSales, loading, getHotSales } = useContext(clientContext);
+    const { stayToBuy, getStayToBuy } = useContext(clientContext);
     const [search, setSearch] = useState("");
+    const stayToBuyList = Array.isArray(stayToBuy) ? stayToBuy : [];
 
     useEffect(() => {
-        getHotSales();
+        getStayToBuy();
     }, []);
 
-    if (loading) {
-        return <div className="min-h-screen bg-[#F5F7FB] px-3 py-6 text-center text-sm text-slate-500 sm:px-6">Loading...</div>;
-    }
-
-    const clientHotSales = hotSales.filter(
+    const clientStayToBuy = stayToBuyList.filter(
         (item) => Number(item.client_id) === Number(clientID)
     );
 
-    const filteredHotSales = clientHotSales.filter((item) => {
+    const filteredStayToBuy = clientStayToBuy.filter((item) => {
         const searchText = search.toLowerCase();
         return (
             item.title?.toLowerCase().includes(searchText) ||
@@ -55,16 +52,16 @@ const ShowHotSales = ({ clientID }) => {
                     </button>
                 </div>
 
-                {filteredHotSales.length === 0 ? (
+                {filteredStayToBuy.length === 0 ? (
                     <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500 shadow-sm">
                         No properties found
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                        {filteredHotSales.map((item) => (
+                        {filteredStayToBuy.map((item) => (
                             <div key={item.id}>
                                 <div
-                                    onClick={() => navigate(`/dashboard/hot-sales/profile/${item.id}`)}
+                                    onClick={() => navigate(`/dashboard/stays-buy/profile/${item.id}`)}
                                     className="relative mx-auto h-[320px] w-full max-w-[320px] overflow-hidden rounded-xl shadow-md transition duration-200 hover:-translate-y-1 hover:shadow-xl sm:h-[340px] sm:max-w-none"
                                 >
                                     <img src={item.main_image} alt={item.title} className="h-full w-full object-cover" />
@@ -99,4 +96,4 @@ const ShowHotSales = ({ clientID }) => {
     );
 };
 
-export default ShowHotSales;
+export default ShowStayToBuy;

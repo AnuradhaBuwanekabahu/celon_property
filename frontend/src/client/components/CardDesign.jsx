@@ -1,7 +1,7 @@
 import React from "react";
 import { FaStar } from "react-icons/fa6";
 
-const CardDesign = ({title , main_image ,property_type , location ,price,rate,duration}) => {
+const CardDesign = ({ title, main_image, property_type, location, price, rate, duration }) => {
   return (
     <div className="relative left-24  w-[300px] h-[350px] rounded-xl overflow-hidden shadow-md hover:shadow-xl">
 

@@ -46,11 +46,10 @@ export default function Login() {
 
       const clientData = response.data.client || { id: response.data.clientId };
 
-      localStorage.setItem(
-        "client",
-        JSON.stringify(clientData)
-      );
-      navigate('/dashboard')
+      localStorage.setItem("clientToken", response.data.token);
+      localStorage.setItem("clientId", clientData.id);
+      localStorage.setItem("client", JSON.stringify(clientData));
+      navigate(`/dashboard/${clientData.id}`);
 
     }
 
