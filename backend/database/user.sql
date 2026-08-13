@@ -1,14 +1,14 @@
 USE ceylone_property;
 
-CREATE TABLE users (
-
+CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
-
-    google_id VARCHAR(100) NOT NULL UNIQUE,
-    
-    rate int,
-    
-
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
+    full_name VARCHAR(150) NULL,
+    google_id VARCHAR(100) NULL UNIQUE,
+    email VARCHAR(150) NOT NULL UNIQUE,
+    password VARCHAR(255) NULL,
+    auth_type ENUM('email', 'google') NOT NULL DEFAULT 'email',
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    rate INT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );

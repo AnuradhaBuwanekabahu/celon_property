@@ -136,6 +136,26 @@ export const payhereNotify = async (req, res) => {
     }
 };
 
+// -------------------- get all payments --------------------
+export const showAllPayments = async (req, res) => {
+    try {
+        const [rows] = await db.query(
+            "SELECT * FROM payments ORDER BY id DESC"
+        );
+
+        return res.json({
+            success: true,
+            payments: rows
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            success: false,
+            message: "server error"
+        });
+    }
+};
+
 // -------------------- get payment by id --------------------
 export const getPayment = async (req, res) => {
     try {

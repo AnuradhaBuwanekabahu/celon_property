@@ -26,9 +26,7 @@ const authMiddleware = (req,res,next)=>{
             process.env.JWT_SECRET
         );
 
-
-        req.admin = decoded;
-
+        req.client = decoded;
 
         next();
 

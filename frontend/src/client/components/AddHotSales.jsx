@@ -4,212 +4,45 @@ import { toast } from 'react-toastify';
 import { overviewOptions, highlightOptions, cityOptions } from '../Assets/data.js'
 import { Upload, X, ImagePlus } from 'lucide-react';
 import { Navigate, useNavigate } from 'react-router-dom';
+import { useContext } from 'react';
+import { clientContext } from '../context/ClientContext.jsx';
 
-const MAX_GALLERY_IMAGES = 9;
 
 const AddHotSales = () => {
 
 
     const navigate = useNavigate();
+    const {
+        formData,
+        handleChange,
+        handleSubmit,
 
-    const [formData, setFormData] = useState({
-        title: '',
-        description: '',
-        price: '',
-        property_type: '',
-        duration: 'month',
-        rate: '',
-        overview: [{ title: 'Bedrooms', value: '' }],
-        highlights: [],
-        area_sqft: '',
-        city: '',
-        map_address: '',
-        location: '',
-    });
+        handleOverviewChange,
+        addOverview,
+        removeOverview,
 
-    const [mainImage, setMainImage] = useState(null);
-    const [mainImagePreview, setMainImagePreview] = useState(null);
-    const [mainDragActive, setMainDragActive] = useState(false);
+        handleHighlightChange,
 
-    const [galleryImages, setGalleryImages] = useState([]); // [{file, preview, id}]
-    const [galleryDragActive, setGalleryDragActive] = useState(false);
+        mainImage,
+        mainImagePreview,
+        handleMainImage,
+        removeMainImage,
 
-    const handleHighlightChange = (highlight) => {
-        setFormData((prev) => ({
-            ...prev,
-            highlights: prev.highlights.includes(highlight)
-                ? prev.highlights.filter((item) => item !== highlight)
-                : [...prev.highlights, highlight],
-        }));
-    };
+        mainVideo,
+        mainVideoPreview,
+        handleMainVideo,
+        setMainVideo,
+        setMainVideoPreview,
 
-    const handleOverviewChange = (index, field, value) => {
-        const updatedOverview = [...formData.overview];
-        updatedOverview[index][field] = value;
-        setFormData({ ...formData, overview: updatedOverview });
-    };
+        galleryImages,
+        MAX_GALLERY_IMAGES,
+        galleryDragActive,
+        setGalleryDragActive,
+        handleImages,
+        handleGalleryDrop,
+        removeGalleryImage,
+    } = useContext(clientContext);
 
-    const addOverview = () => {
-        const usedTitles = formData.overview.map((item) => item.title);
-        const nextTitle = overviewOptions.find((option) => !usedTitles.includes(option.value))?.value || overviewOptions[0].value;
-
-        setFormData({
-            ...formData,
-            overview: [...formData.overview, { title: nextTitle, value: '' }],
-        });
-    };
-
-    const removeOverview = (index) => {
-        const updatedOverview = formData.overview.filter((_, i) => i !== index);
-        if (updatedOverview.length > 0) {
-            setFormData({ ...formData, overview: updatedOverview });
-        }
-    };
-
-    const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value,
-        });
-    };
-
-    // ---- Main image handlers ----
-    const setMainFile = (file) => {
-        if (file && file.type.startsWith('image/')) {
-            setMainImage(file);
-            setMainImagePreview(URL.createObjectURL(file));
-        }
-    };
-
-    const handleMainImage = (e) => {
-        setMainFile(e.target.files[0]);
-    };
-
-    const handleMainDrop = (e) => {
-        e.preventDefault();
-        setMainDragActive(false);
-        setMainFile(e.dataTransfer.files[0]);
-    };
-
-    const removeMainImage = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setMainImage(null);
-        setMainImagePreview(null);
-    };
-
-    // ---- Gallery image handlers ----
-    const addGalleryFiles = (fileList) => {
-        const incoming = Array.from(fileList).filter((file) =>
-            file.type.startsWith('image/')
-        );
-
-        const remainingSlots = MAX_GALLERY_IMAGES - galleryImages.length;
-        const filesToAdd = incoming.slice(0, remainingSlots);
-
-        const newImages = filesToAdd.map((file) => ({
-            file,
-            preview: URL.createObjectURL(file),
-            id: `${file.name}-${Date.now()}-${Math.random()}`
-        }));
-
-        setGalleryImages((prev) => [...prev, ...newImages]);
-    };
-
-    const handleImages = (e) => {
-        addGalleryFiles(e.target.files);
-        e.target.value = null;
-    };
-
-    const handleGalleryDrop = (e) => {
-        e.preventDefault();
-        setGalleryDragActive(false);
-        addGalleryFiles(e.dataTransfer.files);
-    };
-
-    const removeGalleryImage = (e, id) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setGalleryImages((prev) => {
-            const target = prev.find((img) => img.id === id);
-            if (target) URL.revokeObjectURL(target.preview);
-            return prev.filter((img) => img.id !== id);
-        });
-    };
-
-   const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    let client = null;
-    const storedClient = localStorage.getItem('client');
-
-    if (storedClient && storedClient !== 'undefined') {
-        try {
-            client = JSON.parse(storedClient);
-        } catch {
-            client = null;
-        }
-    }
-
-    const clientId = client?.id ?? client?.clientId ?? client?.client_id ?? '';
-
-    if (!clientId) {
-        toast.error('You must be logged in to add a property');
-        return;
-    }
-
-    try {
-        const data = new FormData();
-        data.append('client_id', clientId);
-
-        Object.keys(formData).forEach((key) => {
-            if (key === 'overview' || key === 'highlights') {
-                data.append(key, JSON.stringify(formData[key]));
-            } else {
-                data.append(key, formData[key]);
-            }
-        });
-
-        if (mainImage) {
-            data.append('main_image', mainImage);
-        }
-
-        galleryImages.forEach((img) => {
-            data.append('images', img.file);
-        });
-
-        const response = await API.post('/api/hotsales/add', data, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        });
-
-       
-        const newPropertyId = response.data.property?.id ?? response.data.id;
-
-        if (!newPropertyId) {
-            console.error('No property id returned from add endpoint:', response.data);
-            toast.error('Property saved, but could not proceed to payment. Contact support.');
-            return;
-        }
-
-        toast.success('Data Added Successfully');
-
-        navigate("/dashboard/payment", {
-            state: {
-                clientId: Number(clientId),
-                propertyType: "hot_sales",
-                propertyId: newPropertyId,
-                amount: 2500,               // your fixed listing fee — see note below
-                listingLabel: formData.title || "Property Listing"
-            }
-        });
-
-    } catch (error) {
-        console.error(error);
-        toast.error('Something went wrong');
-    }
-};
     return (
         <div className="max-w-6xl mt-8 mx-auto p-4 sm:p-6">
             <h2 className="text-xl sm:text-2xl font-bold text-[#14213D] mb-5">
@@ -381,55 +214,64 @@ const AddHotSales = () => {
                     className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
                 />
 
-                {/* Main image upload */}
-                <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-[#14213D]">
-                        Main Image
-                    </label>
+                {/* Main Image & Video upload (separate) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Main Image */}
+                    <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-[#14213D]">Main Image</label>
 
-                    <div
-                        onDragOver={(e) => { e.preventDefault(); setMainDragActive(true); }}
-                        onDragLeave={() => setMainDragActive(false)}
-                        onDrop={handleMainDrop}
-                        onClick={() => document.getElementById('mainImageInput').click()}
-                        className={`relative w-full h-44 sm:h-56 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-colors
-                            ${mainDragActive ? 'border-[#FCA311] bg-orange-50' : 'border-gray-300 hover:border-[#FCA311]'}
-                        `}
-                    >
-                        {!mainImagePreview ? (
-                            <>
-                                <Upload className="w-7 h-7 text-[#FCA311] mb-2" />
-                                <span className="text-gray-600 text-sm font-medium">
-                                    Tap to upload main image
-                                </span>
-                                <span className="text-xs text-gray-400 mt-1">
-                                    or drag & drop • JPG, PNG, WEBP
-                                </span>
-                            </>
-                        ) : (
-                            <>
-                                <img
-                                    src={mainImagePreview}
-                                    alt="main preview"
-                                    className="h-full w-full object-cover"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={removeMainImage}
-                                    className="absolute top-2 right-2 bg-[#14213D]/80 text-white rounded-full p-1.5"
-                                >
-                                    <X className="w-4 h-4" />
-                                </button>
-                            </>
-                        )}
+                        <div
+                            onClick={() => document.getElementById('mainImageInput').click()}
+                            className={`relative w-full h-44 sm:h-56 rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer overflow-hidden transition-colors border-gray-300 hover:border-[#FCA311]`}
+                        >
+                            {!mainImagePreview ? (
+                                <>
+                                    <Upload className="w-7 h-7 text-[#FCA311] mb-2" />
+                                    <span className="text-gray-600 text-sm font-medium">Tap to upload main image</span>
+                                    <span className="text-xs text-gray-400 mt-1">JPG, PNG, WEBP</span>
+                                </>
+                            ) : (
+                                <>
+                                    <img src={mainImagePreview} alt="main preview" className="h-full w-full object-cover" />
+                                    <button type="button" onClick={removeMainImage} className="absolute top-2 right-2 bg-[#14213D]/80 text-white rounded-full p-1.5">
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </>
+                            )}
 
-                        <input
-                            id="mainImageInput"
-                            type="file"
-                            accept="image/*"
-                            onChange={handleMainImage}
-                            className="hidden"
-                        />
+                            <input id="mainImageInput" type="file" accept="image/*" onChange={handleMainImage} className="hidden" />
+                        </div>
+                    </div>
+
+                    {/* Main Video */}
+                    <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-[#14213D]">Main Video</label>
+
+                        <div
+                            onClick={() => document.getElementById('mainVideoInput').click()}
+                            className={`relative w-full h-44 sm:h-56 rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer overflow-hidden transition-colors border-gray-300 hover:border-[#FCA311]`}
+                        >
+                            {!mainVideoPreview ? (
+                                <>
+                                    <Upload className="w-7 h-7 text-[#FCA311] mb-2" />
+                                    <span className="text-gray-600 text-sm font-medium">Tap to upload main video (optional)</span>
+                                    <span className="text-xs text-gray-400 mt-1">MP4</span>
+                                </>
+                            ) : (
+                                <>
+                                    <video src={mainVideoPreview} controls className="h-full w-full object-cover" />
+                                    <button
+                                        type="button"
+                                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMainVideo(null); setMainVideoPreview(null); }}
+                                        className="absolute top-2 right-2 bg-[#14213D]/80 text-white rounded-full p-1.5"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </>
+                            )}
+
+                            <input id="mainVideoInput" type="file" accept="video/*" onChange={handleMainVideo} className="hidden" />
+                        </div>
                     </div>
                 </div>
 
