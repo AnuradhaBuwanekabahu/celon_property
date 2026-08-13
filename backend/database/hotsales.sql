@@ -21,7 +21,18 @@ CREATE TABLE hot_sales (
 
     city VARCHAR(100) NOT NULL,
 
-    map_address TEXT,
+    map_address VARCHAR(255),
+
+    main_video LONGBLOB,
+
+
+    duration  ENUM (
+        'permanent',
+        'month',
+        'year',
+        'week',
+        'day'
+    ),
 
     location VARCHAR(255) NOT NULL,
 

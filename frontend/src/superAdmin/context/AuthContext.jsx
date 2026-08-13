@@ -23,6 +23,10 @@ export function AuthProvider({ children }) {
     if (!newToken) {
       throw new Error(res.message || 'Login failed');
     }
+    // Block normal admins from using the Super Admin portal
+    if (adminData?.role === 'admin') {
+      throw new Error('Normal Admins must use the Admin Portal (/admin-portal/login)');
+    }
     localStorage.setItem('ceylone_token', newToken);
     localStorage.setItem('ceylone_admin', JSON.stringify(adminData));
     setToken(newToken);

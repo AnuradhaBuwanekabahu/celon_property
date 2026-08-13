@@ -43,7 +43,7 @@ export default function Sidebar({ open, onClose }) {
         className={`fixed inset-y-0 left-0 z-50 w-64 flex flex-col py-6 bg-[#14213D] text-[#E9E4D6] shrink-0 min-h-screen overflow-y-auto transition-transform duration-300 md:static md:translate-x-0 md:flex ${open ? 'translate-x-0' : '-translate-x-full'}`}
       >
         <div className="px-[22px] pb-6 mb-[18px] border-b border-[#E9E4D6]/[0.14] flex items-center justify-between">
-          <div className="font-display text-[20px] font-bold text-[#F6F1E6] tracking-[0.01em]">Super Admin</div>
+          <div className="font-display text-[20px] font-bold text-[#F6F1E6] tracking-[0.01em]">{isSuperAdmin ? 'Super Admin' : 'Admin Portal'}</div>
           <button
             type="button"
             onClick={onClose}

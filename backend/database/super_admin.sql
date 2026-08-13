@@ -1,0 +1,17 @@
+USE ceylone_property;
+
+CREATE TABLE super_admins (
+
+    id INT AUTO_INCREMENT PRIMARY KEY,
+
+    name VARCHAR(50) NOT NULL,
+
+    password VARCHAR(255) NOT NULL,
+
+    email VARCHAR(150) NOT NULL UNIQUE,
+
+    is_approved BOOLEAN DEFAULT FALSE,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+);

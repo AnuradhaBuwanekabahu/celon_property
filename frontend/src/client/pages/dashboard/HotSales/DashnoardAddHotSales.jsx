@@ -4,6 +4,8 @@ import DashboardSidebar from "../../../components/DashboardSidebar";
 import AddHotSales from "../../../components/AddHotSales";
 
 const DashnoardAddHotSales = () => {
+
+  
   return (
     <div className="w-full min-h-screen bg-gray-50">
 
@@ -11,10 +13,14 @@ const DashnoardAddHotSales = () => {
 
       <div className="flex mt-6">
 
-        {/* Sidebar */}
-        <aside className="w-72 shrink-0 h-[calc(100vh-80px)]">
-          <DashboardSidebar />
-        </aside>
+      <aside className="hidden sm:block w-72 shrink-0 h-[calc(100vh-80px)]">
+                <DashboardSidebar />
+              </aside>
+      
+              {/* Mobile-only mount so the fixed top bar + drawer still render */}
+              <div className="sm:hidden">
+                <DashboardSidebar />
+              </div>
 
 
         {/* Content */}

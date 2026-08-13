@@ -1,29 +1,39 @@
-import mysql from "mysql2";
+import mysql from "mysql2/promise";
 import dotenv from "dotenv";
-
-dotenv.config();
-
-const pool = mysql.createPool({
-    host: process.env.DB_HOST || "localhost",
-    user: process.env.DB_USER || "root",
-    password: process.env.DB_PASSWORD || "",
-    database: process.env.DB_NAME || "ceylone_property",
-    port: process.env.DB_PORT || 3306,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
+import path from "path";
+import { fileURLToPath } from "url";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, "..", ".env") });
+// Debug: show which DB env vars were loaded
+console.log('🔎 Loaded DB env:', {
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD ? '***' : undefined,
+  database: process.env.DB_NAME,
+  port: process.env.DB_PORT,
 });
 
-const db = pool.promise();
+const db = mysql.createPool({
+    host: process.env.DB_HOST || "localhost",
+    user: process.env.DB_USER || "root",
+    password: process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : "",
+    database: process.env.DB_NAME || "ceylone_property",
+    port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 3306
+});
 
-export const testConnection = async () => {
+// Check Database Connection
+const checkDatabaseConnection = async () => {
     try {
-        await db.query("SELECT 1");
-        console.log("Database Connected");
-    } catch (err) {
-        console.log(err);
+        const connection = await db.getConnection();
+        console.log("✅ MySQL Database Connected Successfully!");
+        connection.release();
+    } catch (error) {
+        console.error("❌ MySQL Database Connection Failed!");
+        console.error(error.message);
     }
 };
 
+checkDatabaseConnection();
+
 export default db;
-export { pool };

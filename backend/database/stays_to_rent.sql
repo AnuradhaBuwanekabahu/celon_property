@@ -35,7 +35,7 @@ CREATE TABLE stays_to_rent (
 
     city VARCHAR(100) NOT NULL,
 
-    map_address TEXT,
+    map_address VARCHAR(255),
 
     location VARCHAR(255),
 

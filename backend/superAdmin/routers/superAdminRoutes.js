@@ -20,6 +20,7 @@ superAdminRouter.get("/recent-activity", getRecentActivity);
 
 // Mount Admin Specific Resources
 superAdminRouter.use("/admin", adminRouter);
+superAdminRouter.use("/admins", adminRouter);
 superAdminRouter.use("/ads", adsRouter);
 superAdminRouter.use("/clients", clientRouter);
 superAdminRouter.use("/payments", paymentRouter);

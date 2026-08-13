@@ -3,19 +3,45 @@ import Layout from '../components/Layout';
 import Modal from '../components/Modal';
 import RecordForm from '../components/RecordForm';
 import { api } from '../api/client';
-import { btn, panel, panelHeader, dataTable, th, td, trHover, cellTitle, cellSub, cellMono, actionsCell, emptyState, loadingState, tabs, tabBtn, stamp } from '../lib/ui';
 
 const TABS = [
-  { key: 'all', label: 'All admins', path: '/admin' },
-  { key: 'pending', label: 'Pending', path: '/admin/pending' },
-  { key: 'approved', label: 'Approved', path: '/admin/approved' }
+  { key: 'all',      label: 'All admins',  path: '/admin' },
+  { key: 'pending',  label: 'Pending',     path: '/admin/pending' },
+  { key: 'approved', label: 'Approved',    path: '/admin/approved' },
 ];
 
 const CREATE_FIELDS = [
-  { name: 'Name', label: 'Admin name', required: true },
-  { name: 'email', label: 'Email', type: 'email', required: true },
-  { name: 'password', label: 'Password', type: 'password', required: true }
+  { name: 'Name',     label: 'Admin name', required: true },
+  { name: 'email',    label: 'Email',      type: 'email',    required: true },
+  { name: 'password', label: 'Password',   type: 'password', required: true },
 ];
+
+function RoleBadge({ role }) {
+  const isSuper = role === 'super_admin';
+  return (
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border
+      ${isSuper
+        ? 'bg-violet-50 text-violet-700 border-violet-200'
+        : 'bg-slate-100 text-slate-600 border-slate-200'
+      }`}>
+      {role || 'admin'}
+    </span>
+  );
+}
+
+function StatusPill({ approved }) {
+  return approved ? (
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border bg-emerald-50 text-emerald-700 border-emerald-200">
+      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+      Approved
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border bg-amber-50 text-amber-700 border-amber-200">
+      <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+      Pending
+    </span>
+  );
+}
 
 export default function Admins() {
   const [tab, setTab] = useState('all');
@@ -27,13 +53,15 @@ export default function Admins() {
   const [saving, setSaving] = useState(false);
   const [actioningId, setActioningId] = useState(null);
 
+  const isApproved = (a) => a.is_approved === 1 || a.is_approved === true || a.is_approved === '1';
+
   const load = async () => {
     setLoading(true);
     setError('');
     try {
       const path = TABS.find((t) => t.key === tab).path;
       const res = await api.get(path);
-      setRows(res.data);
+      setRows(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -96,76 +124,163 @@ export default function Admins() {
     }
   };
 
+  const pendingCount = rows.filter((a) => !isApproved(a)).length;
+
   return (
     <Layout title="Admins">
-      <div className={panel}>
-        <div className={panelHeader}>
-          <h2>Admin accounts</h2>
-          <button className={btn('accent')} onClick={() => setShowCreate(true)}>+ New admin</button>
-        </div>
-        <div className={tabs}>
-          {TABS.map((t) => (
-            <button
-              key={t.key}
-              className={tabBtn(tab === t.key)}
-              onClick={() => setTab(t.key)}
-            >
-              {t.label}
-            </button>
-          ))}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+
+        {/* ── Header ── */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-5 py-4 border-b border-slate-200 bg-slate-50/60">
+          <div>
+            <h2 className="text-base font-bold text-slate-900 m-0">Admin accounts</h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              {loading ? 'Loading…' : `${rows.length} admin${rows.length !== 1 ? 's' : ''}`}
+            </p>
+          </div>
+          <button
+            className="px-4 py-2 text-sm font-semibold text-white bg-[#14213D] rounded-xl hover:bg-[#1c2c52] transition"
+            onClick={() => { setForm({}); setShowCreate(true); }}
+          >
+            + New admin
+          </button>
         </div>
 
+        {/* ── Tabs ── */}
+        <div className="flex overflow-x-auto gap-1 px-4 border-b border-slate-200 bg-white">
+          {TABS.map((t) => {
+            const isActive = tab === t.key;
+            return (
+              <button
+                key={t.key}
+                onClick={() => setTab(t.key)}
+                className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 text-[13px] font-medium border-b-2 -mb-px transition-colors
+                  ${isActive
+                    ? 'border-amber-500 text-amber-700'
+                    : 'border-transparent text-slate-500 hover:text-slate-800'
+                  }`}
+              >
+                {t.label}
+                {t.key === 'pending' && pendingCount > 0 && !loading && (
+                  <span className="px-1.5 py-0.5 text-[10px] font-bold bg-amber-500 text-white rounded-full leading-none">
+                    {pendingCount}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* ── Content ── */}
         {loading ? (
-          <div className={loadingState}>Loading admins…</div>
+          <div className="px-6 py-16 text-center text-slate-400 text-sm">Loading admins…</div>
         ) : error ? (
-          <div className="bg-danger-bg text-danger rounded-radius px-3 py-2.5 text-[12.5px]" style={{ margin: 20 }}>{error}</div>
+          <div className="m-5 px-4 py-3 bg-red-50 text-red-700 rounded-xl text-sm border border-red-200">{error}</div>
         ) : (
-          <table className={dataTable}>
-            <thead>
-              <tr><th className={th}>Name</th><th className={th}>Email</th><th className={th}>Role</th><th className={th}>Status</th><th className={th}>Joined</th><th className={th}></th></tr>
-            </thead>
-            <tbody>
-              {rows.map((a) => (
-                <tr key={a.id} className={trHover}>
-                  <td className={`${td} ${cellTitle}`}>{a.Name || a.name}</td>
-                  <td className={td}>{a.email}</td>
-                  <td className={td}>{a.role || 'admin'}</td>
-                  <td className={td}>
-                    <span className={stamp(a.is_approved ? 'approved' : 'pending')}>
-                      {a.is_approved ? 'approved' : 'pending'}
-                    </span>
-                  </td>
-                  <td className={`${td} ${cellSub} ${cellMono}`}>{a.created_at ? new Date(a.created_at).toLocaleDateString() : '—'}</td>
-                  <td className={td}>
-                    <div className={actionsCell}>
-                      {!a.is_approved && (
-                        <button className={btn('primary', { sm: true })} disabled={actioningId === a.id} onClick={() => approve(a.id)}>Approve</button>
-                      )}
-                      {!a.is_approved ? (
-                        <button className={btn('danger', { sm: true })} disabled={actioningId === a.id} onClick={() => reject(a.id)}>Reject</button>
-                      ) : (
-                        <button className={btn('danger', { sm: true })} disabled={actioningId === a.id} onClick={() => remove(a.id)}>Delete</button>
-                      )}
-                    </div>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[700px] border-collapse text-[13px]">
+              <thead>
+                <tr className="bg-slate-50/80">
+                  {['Name', 'Email', 'Role', 'Status', 'Joined', ''].map((h) => (
+                    <th
+                      key={h}
+                      className="text-left text-[11px] font-semibold uppercase tracking-widest text-slate-500 px-5 py-3 border-b border-slate-200 whitespace-nowrap"
+                    >
+                      {h}
+                    </th>
+                  ))}
                 </tr>
-              ))}
-              {rows.length === 0 && (
-                <tr><td colSpan={6}><div className={emptyState}>No admins in this view.</div></td></tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {rows.map((a) => {
+                  const approved = isApproved(a);
+                  const busy = actioningId === a.id;
+                  return (
+                    <tr
+                      key={a.id}
+                      className="hover:bg-amber-50/40 border-b border-slate-100 last:border-b-0 transition-colors"
+                    >
+                      <td className="px-5 py-3.5 align-middle">
+                        <span className="font-semibold text-slate-900">{a.Name || a.name}</span>
+                      </td>
+                      <td className="px-5 py-3.5 align-middle text-slate-600 whitespace-nowrap">{a.email}</td>
+                      <td className="px-5 py-3.5 align-middle">
+                        <RoleBadge role={a.role} />
+                      </td>
+                      <td className="px-5 py-3.5 align-middle">
+                        <StatusPill approved={approved} />
+                      </td>
+                      <td className="px-5 py-3.5 align-middle text-slate-500 text-xs font-mono whitespace-nowrap">
+                        {a.created_at ? new Date(a.created_at).toLocaleDateString() : '—'}
+                      </td>
+                      <td className="px-5 py-3.5 align-middle">
+                        <div className="flex items-center gap-2 justify-end">
+                          {!approved ? (
+                            <>
+                              <button
+                                disabled={busy}
+                                onClick={() => approve(a.id)}
+                                className="px-3.5 py-1.5 text-xs font-semibold text-white bg-emerald-600 rounded-lg border border-emerald-500 hover:bg-emerald-500 disabled:opacity-50 transition"
+                              >
+                                ✓ Approve
+                              </button>
+                              <button
+                                disabled={busy}
+                                onClick={() => reject(a.id)}
+                                className="px-3.5 py-1.5 text-xs font-semibold text-red-600 bg-red-50 rounded-lg border border-red-200 hover:bg-red-100 disabled:opacity-50 transition"
+                              >
+                                ✕ Reject
+                              </button>
+                            </>
+                          ) : (
+                            a.role !== 'super_admin' && (
+                              <button
+                                disabled={busy}
+                                onClick={() => remove(a.id)}
+                                className="px-3.5 py-1.5 text-xs font-semibold text-red-600 bg-red-50 rounded-lg border border-red-200 hover:bg-red-100 disabled:opacity-50 transition"
+                              >
+                                Delete
+                              </button>
+                            )
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {rows.length === 0 && (
+                  <tr>
+                    <td colSpan={6}>
+                      <div className="px-6 py-16 text-center text-slate-400 text-sm">
+                        No admins found in this view.
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
+      {/* ── Create Admin Modal ── */}
       {showCreate && (
         <Modal
-          title="New admin"
+          title="New admin account"
           onClose={() => setShowCreate(false)}
           footer={
             <>
-              <button className={btn('ghost')} onClick={() => setShowCreate(false)}>Cancel</button>
-              <button className={btn('primary')} disabled={saving} onClick={createAdmin}>
+              <button
+                className="px-4 py-2 text-sm font-medium text-slate-700 border border-slate-300 rounded-xl hover:bg-slate-50 transition"
+                onClick={() => setShowCreate(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-5 py-2 text-sm font-semibold text-white bg-[#14213D] rounded-xl hover:bg-[#1c2c52] disabled:opacity-50 transition"
+                disabled={saving}
+                onClick={createAdmin}
+              >
                 {saving ? 'Creating…' : 'Create admin'}
               </button>
             </>

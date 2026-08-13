@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { btn } from '../lib/ui';
 
@@ -81,8 +81,15 @@ export default function Login() {
             type="submit"
             disabled={loading}
           >
-            {loading ? 'Signing in…' : 'Sign in'}
+            {loading ? 'Logging in…' : 'Login'}
           </button>
+
+          <p className="mt-5 text-center text-[13px] text-ink-soft">
+            Need an admin account?{' '}
+            <Link to="/admin-portal/register" className="text-teal font-medium hover:underline">
+              Register here
+            </Link>
+          </p>
         </form>
       </div>
     </div>

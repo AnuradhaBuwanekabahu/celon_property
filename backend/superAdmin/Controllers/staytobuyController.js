@@ -1,10 +1,8 @@
 import db from "../../configuration/db.js";
 
-
-// ==========================================
-// ADD STAY TO BUY (SUPER ADMIN)
-// ==========================================
-
+// ──────────────────────────────────────────────
+// Helper: resolve a valid client_id
+// ──────────────────────────────────────────────
 const getValidClientId = async (reqClientId) => {
     if (reqClientId) {
         const [found] = await db.query("SELECT id FROM clients WHERE id = ?", [reqClientId]);
@@ -15,67 +13,84 @@ const getValidClientId = async (reqClientId) => {
     throw new Error("No client account found. Please create a client account first.");
 };
 
+const bufToBase64 = (buf, mime = 'image/jpeg') =>
+    `data:${mime};base64,${buf.toString('base64')}`;
+
+
+// ══════════════════════════════════════════════
+// ADD Stay To Buy
+// ══════════════════════════════════════════════
 export const addStayToBuy = async (req, res) => {
     try {
         const {
-            client_id,
-            title,
-            description,
-            price,
-            property_type,
-            highlights,
-            area_sqft,
-            city,
-            map_address,
-            Location,
-            location,
-            status,
-            main_image
+            client_id, title, description, price,
+            property_type, area_sqft, city,
+            map_address, Location, location,
+            duration, status, main_image,
+            overview, highlights
         } = req.body;
 
-        if (!title) {
-            return res.status(400).json({ success: false, message: "Title is required" });
-        }
+        if (!title) return res.status(400).json({ success: false, message: "Title is required" });
 
         const clientId = await getValidClientId(client_id);
-        const loc = Location || location || city || 'Sri Lanka';
-        const mainImg = req.files?.main_image?.[0]?.path || req.files?.main_image?.[0]?.buffer?.toString('base64') || main_image || "https://images.unsplash.com/photo-1600585154340-be6161a56a0c";
-        const extraImages = req.files?.images ? req.files.images.map(img => img.path || img.buffer?.toString('base64')) : [];
+        const loc      = Location || location || city || 'Sri Lanka';
+
+        // ── Main image
+        let mainImg = null;
+        if (req.files?.main_image?.[0]) {
+            const f = req.files.main_image[0];
+            mainImg = bufToBase64(f.buffer, f.mimetype);
+        } else if (main_image) {
+            mainImg = main_image;
+        } else {
+            mainImg = "https://images.unsplash.com/photo-1600585154340-be6161a56a0c";
+        }
+
+        // ── Main video
+        let mainVid = null;
+        if (req.files?.main_video?.[0]) {
+            const f = req.files.main_video[0];
+            mainVid = bufToBase64(f.buffer, f.mimetype);
+        }
+
+        // ── Gallery images
+        const galleryImgs = req.files?.images
+            ? req.files.images.map(f => bufToBase64(f.buffer, f.mimetype))
+            : [];
+
+        const overviewJson   = overview
+            ? (typeof overview === 'string' ? overview : JSON.stringify(overview))
+            : '[]';
+        const highlightsJson = highlights
+            ? (typeof highlights === 'string' ? highlights : JSON.stringify(highlights))
+            : '[]';
 
         const sql = `
             INSERT INTO stays_to_buy
-            (
-                client_id,
-                title,
-                description,
-                price,
-                property_type,
-                Highlights,
-                area_sqft,
-                city,
-                map_address,
-                Location,
-                main_image,
-                images,
-                status
-            )
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+            (client_id, title, description, price, property_type,
+             Highlights, area_sqft, city, map_address, Location,
+             main_image, main_video, images,
+             overview, duration, status)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         `;
 
         const [result] = await db.query(sql, [
             clientId,
             title,
-            description || null,
-            price || 0,
+            description   || null,
+            price         || 0,
             property_type || "House",
-            highlights ? JSON.stringify(highlights) : JSON.stringify([]),
-            area_sqft || null,
-            city || "Colombo",
-            map_address || null,
+            highlightsJson,
+            area_sqft     || null,
+            city          || "Colombo",
+            map_address   || null,
             loc,
             mainImg,
-            JSON.stringify(extraImages),
-            status || "active"
+            mainVid,
+            JSON.stringify(galleryImgs),
+            overviewJson,
+            duration      || "month",
+            status        || "pending"
         ]);
 
         res.status(201).json({
@@ -85,496 +100,152 @@ export const addStayToBuy = async (req, res) => {
         });
     } catch (error) {
         console.error("addStayToBuy error:", error);
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
 
+// ══════════════════════════════════════════════
+// GET ALL Stay To Buy
+// ══════════════════════════════════════════════
+export const getAllStayToBuy = async (req, res) => {
+    try {
+        const { status, city, property_type } = req.query;
 
-
-
-
-// ==========================================
-// GET ALL STAY TO BUY
-// ==========================================
-
-
-export const getAllStayToBuy = async(req,res)=>{
-
-
-    try{
-
-
-        const {
-
-            status,
-            city,
-            property_type
-
-
-        }=req.query;
-
-
-
-
-        let sql=`
-
-        SELECT
-
-        s.*,
-
-        c.full_name,
-        c.email,
-        c.phone_number
-
-
-        FROM stays_to_buy s
-
-
-        LEFT JOIN clients c
-
-        ON s.client_id=c.id
-
-
+        let sql = `
+            SELECT s.*, c.full_name, c.email, c.phone_number
+            FROM stays_to_buy s
+            LEFT JOIN clients c ON s.client_id = c.id
         `;
+        let conditions = [];
+        let values     = [];
 
+        if (status)        { conditions.push("s.status=?");        values.push(status); }
+        if (city)          { conditions.push("s.city=?");           values.push(city); }
+        if (property_type) { conditions.push("s.property_type=?");  values.push(property_type); }
 
+        // Allow status from params too (for /status/:status route)
+        if (req.params?.status) { conditions.push("s.status=?"); values.push(req.params.status); }
 
-        let conditions=[];
-
-        let values=[];
-
-
-
-        if(status){
-
-            conditions.push("s.status=?");
-
-            values.push(status);
-
+        // Allow search from query
+        if (req.query?.search) {
+            const like = `%${req.query.search}%`;
+            conditions.push("(s.title LIKE ? OR s.city LIKE ? OR s.property_type LIKE ?)");
+            values.push(like, like, like);
         }
 
-
-
-        if(city){
-
-            conditions.push("s.city=?");
-
-            values.push(city);
-
-        }
-
-
-
-        if(property_type){
-
-            conditions.push("s.property_type=?");
-
-            values.push(property_type);
-
-        }
-
-
-
-
-        if(conditions.length){
-
-            sql += " WHERE " + conditions.join(" AND ");
-
-        }
-
-
-
+        if (conditions.length) sql += " WHERE " + conditions.join(" AND ");
         sql += " ORDER BY s.created_at DESC";
 
-
-
-
-        const [rows]=await db.query(
-
-            sql,
-
-            values
-
-        );
-
-
-
-
-        res.json({
-
-            success:true,
-
-            count:rows.length,
-
-            data:rows
-
-        });
-
-
-
+        const [rows] = await db.query(sql, values);
+        res.json({ success: true, count: rows.length, data: rows });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
     }
-    catch(error){
-
-
-        res.status(500).json({
-
-            success:false,
-
-            message:error.message
-
-        });
-
-
-    }
-
-
 };
 
 
-
-
-
-
-
-// ==========================================
-// GET SINGLE PROPERTY
-// ==========================================
-
-
-export const getStayToBuyById=async(req,res)=>{
-
-
-    try{
-
-
-        const {id}=req.params;
-
-
-
-        const [rows]=await db.query(
-
-            `
-
-            SELECT
-
-            s.*,
-
-            c.full_name,
-            c.email,
-            c.phone_number
-
-
-            FROM stays_to_buy s
-
-
-            LEFT JOIN clients c
-
-            ON s.client_id=c.id
-
-
-            WHERE s.id=?
-
-
-            `,
-
+// ══════════════════════════════════════════════
+// GET SINGLE Stay To Buy
+// ══════════════════════════════════════════════
+export const getStayToBuyById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const [rows] = await db.query(
+            `SELECT s.*, c.full_name, c.email, c.phone_number
+             FROM stays_to_buy s LEFT JOIN clients c ON s.client_id = c.id
+             WHERE s.id = ?`,
             [id]
-
         );
-
-
-
-        if(!rows.length){
-
-
-            return res.status(404).json({
-
-                success:false,
-
-                message:"Property not found"
-
-            });
-
-
-        }
-
-
-
-
-        res.json({
-
-            success:true,
-
-            data:rows[0]
-
-        });
-
-
-
+        if (!rows.length) return res.status(404).json({ success: false, message: "Property not found" });
+        res.json({ success: true, data: rows[0] });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
     }
-    catch(error){
-
-
-        res.status(500).json({
-
-            success:false,
-
-            message:error.message
-
-        });
-
-
-    }
-
-
 };
 
 
-
-
-
-
-
-
-// ==========================================
-// UPDATE PROPERTY
-// ==========================================
-
-
-export const updateStayToBuy=async(req,res)=>{
-
-
-    try{
-
-
-        const {id}=req.params;
-
-
-
+// ══════════════════════════════════════════════
+// UPDATE Stay To Buy
+// ══════════════════════════════════════════════
+export const updateStayToBuy = async (req, res) => {
+    try {
+        const { id } = req.params;
         const {
+            title, description, price, property_type,
+            highlights, area_sqft, city, map_address,
+            Location, location, duration, status, overview
+        } = req.body;
 
-            title,
-            description,
-            price,
-            property_type,
-            highlights,
-            area_sqft,
-            city,
-            map_address,
-            location,
-            status
-        }=req.body;
+        const [existing] = await db.query("SELECT * FROM stays_to_buy WHERE id=?", [id]);
+        if (!existing.length) return res.status(404).json({ success: false, message: "Property not found" });
 
+        const loc = Location || location || city || existing[0].Location;
 
-
-
-        let mainImage=null;
-
-        let mainVideo=null;
-
-        let images=null;
-
-
-
-
-        if(req.files?.main_image?.length){
-
-            mainImage=req.files.main_image[0].path;
-
+        // ── Files
+        let mainImg = null;
+        if (req.files?.main_image?.[0]) {
+            const f = req.files.main_image[0];
+            mainImg = bufToBase64(f.buffer, f.mimetype);
         }
-
-
-
-        if(req.files?.main_video?.length){
-
-            mainVideo=req.files.main_video[0].path;
-
+        let mainVid = null;
+        if (req.files?.main_video?.[0]) {
+            const f = req.files.main_video[0];
+            mainVid = bufToBase64(f.buffer, f.mimetype);
         }
-
-
-
-        if(req.files?.images?.length){
-
-            images=JSON.stringify(
-
-                req.files.images.map(
-
-                    img=>img.path
-
-                )
-
+        let galleryJson = null;
+        if (req.files?.images?.length) {
+            galleryJson = JSON.stringify(
+                req.files.images.map(f => bufToBase64(f.buffer, f.mimetype))
             );
-
         }
 
-
-
+        const overviewJson   = overview
+            ? (typeof overview === 'string' ? overview : JSON.stringify(overview))
+            : existing[0].overview || '[]';
+        const highlightsJson = highlights
+            ? (typeof highlights === 'string' ? highlights : JSON.stringify(highlights))
+            : existing[0].Highlights || '[]';
 
         await db.query(
-
-        `
-
-        UPDATE stays_to_buy
-
-        SET
-
-        title=?,
-        description=?,
-        price=?,
-        property_type=?,
-        highlights=?,
-        area_sqft=?,
-        city=?,
-        map_address=?,
-        location=?,
-        status=?,
-        main_image=COALESCE(?,main_image),
-        main_video=COALESCE(?,main_video),
-        images=COALESCE(?,images)
-
-
-        WHERE id=?
-
-
-        `,
-
-
-        [
-
-            title,
-            description,
-            price,
-            property_type,
-
-            highlights
-            ? JSON.stringify(JSON.parse(highlights))
-            : JSON.stringify([]),
-
-            area_sqft,
-            city,
-            map_address,
-            location,
-            status,
-
-            mainImage,
-            mainVideo,
-            images,
-
-            id
-
-        ]
-
-
+            `UPDATE stays_to_buy
+             SET title=?, description=?, price=?,
+                 property_type=?, Highlights=?,
+                 area_sqft=?, city=?, map_address=?,
+                 Location=?, duration=?, status=?,
+                 overview=?,
+                 main_image=COALESCE(?, main_image),
+                 main_video=COALESCE(?, main_video),
+                 images=COALESCE(?, images)
+             WHERE id=?`,
+            [
+                title, description, price,
+                property_type, highlightsJson,
+                area_sqft, city, map_address,
+                loc, duration || existing[0].duration, status || existing[0].status,
+                overviewJson,
+                mainImg, mainVid, galleryJson,
+                id
+            ]
         );
 
-
-
-
-        res.json({
-
-            success:true,
-
-            message:"Property updated successfully"
-
-        });
-
-
-
+        res.json({ success: true, message: "Property updated successfully" });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
     }
-    catch(error){
-
-
-        res.status(500).json({
-
-            success:false,
-
-            message:error.message
-
-        });
-
-
-    }
-
-
 };
 
 
-
-
-
-
-
-
-// ==========================================
-// DELETE PROPERTY
-// ==========================================
-
-
-export const deleteStayToBuy=async(req,res)=>{
-
-
-    try{
-
-
-        const {id}=req.params;
-
-
-
-        const [result]=await db.query(
-
-            `DELETE FROM stays_to_buy WHERE id=?`,
-
-            [id]
-
-        );
-
-
-
-
-        if(!result.affectedRows){
-
-
-            return res.status(404).json({
-
-                success:false,
-
-                message:"Property not found"
-
-            });
-
-
-        }
-
-
-
-
-        res.json({
-
-            success:true,
-
-            message:"Property deleted successfully"
-
-        });
-
-
-
+// ══════════════════════════════════════════════
+// DELETE Stay To Buy
+// ══════════════════════════════════════════════
+export const deleteStayToBuy = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const [result] = await db.query("DELETE FROM stays_to_buy WHERE id=?", [id]);
+        if (!result.affectedRows) return res.status(404).json({ success: false, message: "Property not found" });
+        res.json({ success: true, message: "Property deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
     }
-    catch(error){
-
-
-        res.status(500).json({
-
-            success:false,
-
-            message:error.message
-
-        });
-
-
-    }
-
-
 };

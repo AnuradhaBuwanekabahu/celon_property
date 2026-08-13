@@ -20,11 +20,21 @@ const hotSaleRouter = express.Router();
 // ============================================================
 hotSaleRouter.post(
     "/",
+    upload.fields([
+        { name: "main_image", maxCount: 1 },
+        { name: "main_video", maxCount: 1 },
+        { name: "images",     maxCount: 9 }
+    ]),
     addHotSale
 );
 
 hotSaleRouter.post(
     "/add",
+    upload.fields([
+        { name: "main_image", maxCount: 1 },
+        { name: "main_video", maxCount: 1 },
+        { name: "images",     maxCount: 9 }
+    ]),
     addHotSale
 );
 
@@ -55,8 +65,9 @@ hotSaleRouter.get(
         try {
             const { status } = req.params;
             const [rows] = await db.query(
-                `SELECT id, title, description, price, property_type, city, status, created_at
-                 FROM hot_sales WHERE status = ? ORDER BY created_at DESC`,
+                `SELECT h.*, c.full_name as client_name, c.email as client_email
+                 FROM hot_sales h LEFT JOIN clients c ON h.client_id = c.id
+                 WHERE h.status = ? ORDER BY h.created_at DESC`,
                 [status]
             );
             res.status(200).json({ success: true, data: rows });
@@ -79,10 +90,10 @@ hotSaleRouter.get(
             const { search = "" } = req.query;
             const like = `%${search}%`;
             const [rows] = await db.query(
-                `SELECT id, title, description, price, property_type, city, status, created_at
-                 FROM hot_sales
-                 WHERE title LIKE ? OR city LIKE ? OR property_type LIKE ?
-                 ORDER BY created_at DESC`,
+                `SELECT h.*, c.full_name as client_name, c.email as client_email
+                 FROM hot_sales h LEFT JOIN clients c ON h.client_id = c.id
+                 WHERE h.title LIKE ? OR h.city LIKE ? OR h.property_type LIKE ?
+                 ORDER BY h.created_at DESC`,
                 [like, like, like]
             );
             res.status(200).json({ success: true, data: rows });

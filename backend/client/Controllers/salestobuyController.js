@@ -1,19 +1,89 @@
 import db from "../../configuration/db.js";
 
-// ==============================
-// Add Stay To Buy
-// ==============================
+const toImageDataUrl = (value, mimeType = "image/jpeg") => {
+  if (!value) return null;
+
+  if (typeof value === "string") {
+    if (value.startsWith("data:")) return value;
+    return `data:${mimeType};base64,${value}`;
+  }
+
+  if (Buffer.isBuffer(value)) {
+    return `data:${mimeType};base64,${value.toString("base64")}`;
+  }
+
+  if (value?.type === "Buffer" && Array.isArray(value.data)) {
+    return `data:${mimeType};base64,${Buffer.from(value.data).toString("base64")}`;
+  }
+
+  return null;
+};
+
+const parseJsonField = (value) => {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+
+  try {
+    return JSON.parse(value);
+  } catch {
+    return [];
+  }
+};
+
+const serializeStayToBuyRow = (row) => {
+  const parsedImages = parseJsonField(row.images);
+
+  return {
+    ...row,
+    main_image: toImageDataUrl(row.main_image),
+    main_video: row.main_video ? toImageDataUrl(row.main_video, "video/mp4") : null,
+    images: Array.isArray(parsedImages)
+      ? parsedImages.map((image) => toImageDataUrl(image))
+      : [],
+  };
+};
+
+const ensureStayToBuyTable = async (connection) => {
+  await connection.query(`
+    CREATE TABLE IF NOT EXISTS stays_to_buy (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      client_id INT NOT NULL,
+      title VARCHAR(150) NOT NULL,
+      description TEXT,
+      overview JSON,
+      price DECIMAL(12,2) NOT NULL,
+      property_type VARCHAR(50) NOT NULL,
+      highlights JSON,
+      area_sqft DECIMAL(10,2),
+      main_video LONGBLOB,
+      duration ENUM('permanent','month','year','week','day'),
+      city VARCHAR(100) NOT NULL,
+      map_address VARCHAR(255),
+      rate DECIMAL(2,1) DEFAULT 0.0,
+      location VARCHAR(255),
+      main_image LONGBLOB NOT NULL,
+      images JSON,
+      status ENUM('pending','active','sold') DEFAULT 'pending',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      FOREIGN KEY(client_id) REFERENCES clients(id) ON DELETE CASCADE
+    )
+  `);
+};
+
 export const addStayToBuy = async (req, res) => {
   let connection;
 
   try {
     connection = await db.getConnection();
     await connection.beginTransaction();
+    await ensureStayToBuyTable(connection);
 
     const {
       client_id,
       title,
       description,
+      overview,
       price,
       property_type,
       highlights,
@@ -24,70 +94,43 @@ export const addStayToBuy = async (req, res) => {
       duration,
     } = req.body;
 
-    // Validation
-    if (
-      !client_id ||
-      !title ||
-      !price ||
-      !property_type ||
-      !city
-    ) {
+    if (!client_id || !title || !price || !property_type || !city) {
       return res.status(400).json({
         success: false,
         message: "Please fill all required fields.",
       });
     }
 
-    // Main Image
-    let mainImage = null;
-    let mainVideo = null;
-    if (req.files?.main_image?.length > 0) {
-      mainImage = req.files.main_image[0].path;
-    }
+    const mainImageBuffer = req.files?.main_image?.[0]?.buffer ?? null;
+    const mainVideoBuffer = req.files?.main_video?.[0]?.buffer ?? null;
 
-    if (req.files?.main_video?.length > 0) {
-      mainVideo = req.files.main_video[0].path;
-    }
-
-    if (!mainImage) {
+    if (!mainImageBuffer) {
       return res.status(400).json({
         success: false,
         message: "Main image is required.",
       });
     }
 
-    // Additional Images
-    let images = [];
-
+    let imageBuffers = [];
     if (req.files?.images?.length > 0) {
-      images = req.files.images.map((img) => img.filename);
+      imageBuffers = req.files.images.map((img) => img.buffer);
     }
 
     const sql = `
       INSERT INTO stays_to_buy
       (
-        client_id,
-        title,
-        description,
-        price,
-        property_type,
-        highlights,
-        area_sqft,
-        city,
-        map_address,
-        location,
-        main_image,
-        main_video,
-        images,
-        duration
+        client_id, title, description, overview, price, property_type,
+        highlights, area_sqft, city, map_address, location,
+        main_image, main_video, images, duration
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     await connection.query(sql, [
       client_id,
       title,
       description,
+      overview ? JSON.stringify(JSON.parse(overview)) : JSON.stringify([]),
       price,
       property_type,
       highlights ? JSON.stringify(JSON.parse(highlights)) : JSON.stringify([]),
@@ -95,36 +138,26 @@ export const addStayToBuy = async (req, res) => {
       city,
       map_address,
       location,
-      mainImage,
-      mainVideo,
-      JSON.stringify(images),
-      duration || 'month',
+      mainImageBuffer,
+      mainVideoBuffer,
+      JSON.stringify(imageBuffers),
+      duration || 'permanent',
     ]);
 
     await connection.commit();
+    res.status(201).json({ success: true, message: "Stay To Buy added successfully." });
 
-    res.status(201).json({
-      success: true,
-      message: "Stay To Buy added successfully.",
-    });
   } catch (error) {
     if (connection) await connection.rollback();
-
     console.error(error);
-
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    res.status(500).json({ success: false, message: error.message });
   } finally {
     if (connection) connection.release();
   }
 };
 
-// ==============================
-// Get All Stay To Buy
-// ==============================
-export const getAllStayToBuy = async (req, res) => {
+
+export const showAllStayToBuy = async (req, res) => {
   try {
     const [rows] = await db.query(`
       SELECT
@@ -140,7 +173,7 @@ export const getAllStayToBuy = async (req, res) => {
 
     res.json({
       success: true,
-      data: rows,
+      data: rows.map(serializeStayToBuyRow),
     });
   } catch (error) {
     console.log(error);
@@ -150,6 +183,10 @@ export const getAllStayToBuy = async (req, res) => {
       message: error.message,
     });
   }
+};
+
+export const getAllStayToBuy = async (req, res) => {
+  return showAllStayToBuy(req, res);
 };
 
 // ==============================
@@ -173,7 +210,7 @@ export const getStayToBuyById = async (req, res) => {
 
     res.json({
       success: true,
-      data: rows[0],
+      data: serializeStayToBuyRow(rows[0]),
     });
   } catch (error) {
     console.log(error);

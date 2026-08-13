@@ -1,6 +1,7 @@
 import express from "express";
 import { 
     loginAdmin, 
+    registerAdmin,
     getAdmins, 
     getPendingAdmins, 
     getApprovedAdmins, 
@@ -12,6 +13,7 @@ import {
 const adminRouter = express.Router();
 
 adminRouter.post("/login", loginAdmin);
+adminRouter.post("/register", registerAdmin);
 adminRouter.get("/", getAdmins);
 adminRouter.get("/pending", getPendingAdmins);
 adminRouter.get("/approved", getApprovedAdmins);

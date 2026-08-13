@@ -30,6 +30,14 @@ export const loginAdmin = async (req, res) => {
 
         const admin = rows[0];
 
+        // Approval check for non-super admins
+        if (admin.role !== 'super_admin' && !admin.is_approved) {
+            return res.status(403).json({
+                success: false,
+                message: "Your admin account is pending Super Admin approval"
+            });
+        }
+
         // Verify password (check plain text or bcrypt)
         let isMatch = false;
         if (admin.password === password) {
@@ -81,6 +89,36 @@ export const loginAdmin = async (req, res) => {
             success: false,
             message: "Server error during login"
         });
+    }
+};
+
+// Self-service registration for standard admins
+export const registerAdmin = async (req, res) => {
+    try {
+        const { Name, name, email, password } = req.body;
+        const adminName = Name || name;
+        if (!adminName || !email || !password) {
+            return res.status(400).json({ success: false, message: "Name, email and password are required" });
+        }
+
+        const [existing] = await db.query("SELECT * FROM admins WHERE email = ?", [email]);
+        if (existing.length > 0) {
+            return res.status(400).json({ success: false, message: "Email already registered" });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await db.query(
+            "INSERT INTO admins (Name, email, password, role, is_approved) VALUES (?, ?, ?, 'admin', 0)",
+            [adminName, email, hashedPassword]
+        );
+
+        return res.status(201).json({
+            success: true,
+            message: "Registration successful. Waiting for Super Admin approval."
+        });
+    } catch (error) {
+        console.error("Register Admin Error:", error);
+        return res.status(500).json({ success: false, message: error.message || "Failed to register admin" });
     }
 };
 
