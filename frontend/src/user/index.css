@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #0B3D2E;
+  --color-secondary: #E5A93B;
+  --color-logo: #7B7FD4;
+  --color-navy: #161B33;
+  --font-heading: "Poppins", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-logo: "Dancing Script", cursive;
+  --font-hero: "Playfair Display", serif;
+}
+
+@layer base {
+  body {
+    @apply text-neutral-900 bg-white;
+    font-family: var(--font-body);
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-heading);
+    font-weight: 500;
+  }
+}
+
+@layer utilities {
+  aside::-webkit-scrollbar {
+    width: 6px;
+  }
+  aside::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 10px;
+  }
+  aside::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+

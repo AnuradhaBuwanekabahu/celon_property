@@ -16,7 +16,7 @@ CREATE TABLE wanted (
 
     phone_number VARCHAR(20) NOT NULL,
 
-    main_image VARCHAR(255),
+    main_image LONGBLOB,
 
     images JSON,
 
@@ -24,7 +24,7 @@ CREATE TABLE wanted (
         'pending',
         'active',
         'closed'
-    ) DEFAULT 'pending',
+    ) DEFAULT 'active',
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 

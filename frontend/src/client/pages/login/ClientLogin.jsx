@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import API from "../../api/clientapi.js";
 
 
-export default function Login() {
+export default function ClientLogin() {
 
 
   const navigate = useNavigate();
