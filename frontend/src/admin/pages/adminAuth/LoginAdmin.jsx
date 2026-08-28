@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
-import { FiEye, FiEyeOff, FiLock, FiUser } from "react-icons/fi";
-import { loginAdmin } from "../../api/adminAuth";
 
-export default function LoginAdmin() {
+import { FiEye, FiEyeOff, FiLock, FiUser } from "react-icons/fi";
+import { loginAdmins } from "../../api/adminAuth";
+import { toast, ToastContainer } from "react-toastify";
+
+
+export default function LoginAdmins() {
     const [Name, setUserName] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
@@ -12,7 +14,7 @@ export default function LoginAdmin() {
 
 function handleLogin() {
 
-    loginAdmin({
+    loginAdmins({
         Name,
         password
     })

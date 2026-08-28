@@ -1,7 +1,4 @@
-USE ceylone_property;
-
 CREATE TABLE admins (
-
     id INT AUTO_INCREMENT PRIMARY KEY,
 
     name VARCHAR(50) NOT NULL,
@@ -10,8 +7,9 @@ CREATE TABLE admins (
 
     email VARCHAR(150) NOT NULL UNIQUE,
 
+    role VARCHAR(50) NOT NULL,
+
     is_approved BOOLEAN DEFAULT FALSE,
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
 );

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { MapPin, Phone, Mail, Clock, Send } from 'lucide-react'
-import contactHero from '../assets/hero/hero.png'
+import contactHero from '../assets/hero/hero.jpeg'
 
 function Contact() {
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', message: '' })

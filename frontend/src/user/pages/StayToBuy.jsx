@@ -1,18 +1,24 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { Home as HomeIcon, MapPin, Ruler, Tag, ChevronLeft, ChevronRight } from 'lucide-react'
 import PropertyCard from '../components/property/PropertyCard'
 import PropertyPreviewPanel from '../components/property/PropertyPreviewPanel'
 import { getStayToBuy } from '../Routers'
 import {cityOptions} from '../../client/Assets/data.js'
 function StayToBuy() {
+  const location = useLocation()
+  const queryParams = new URLSearchParams(location.search)
+  const typeFromURL = queryParams.get('type') || ''
+  const locationFromURL = queryParams.get('location') || ''
+  const priceFromURL = queryParams.get('price') || ''
+
   const [propertyTypes] = useState(['Apartment', 'Bungalow', 'Villa', 'House', 'Land'])
 
   const [hoveredProperty, setHoveredProperty] = useState(null)
   const [openFilter, setOpenFilter] = useState(null)
-  const [selectedType, setSelectedType] = useState('')
-  const [selectedLocations, setSelectedLocations] = useState([])
-  const [selectedPriceRange, setSelectedPriceRange] = useState('')
+  const [selectedType, setSelectedType] = useState(typeFromURL)
+  const [selectedLocations, setSelectedLocations] = useState(locationFromURL ? [locationFromURL] : [])
+  const [selectedPriceRange, setSelectedPriceRange] = useState(priceFromURL)
   const [properties, setProperties] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -24,21 +30,46 @@ function StayToBuy() {
       .finally(() => setLoading(false))
   }, [])
 
+  // Sync URL param changes
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    setSelectedType(params.get('type') || '')
+    const loc = params.get('location')
+    if (loc) setSelectedLocations([loc])
+    const pr = params.get('price')
+    if (pr) setSelectedPriceRange(pr)
+  }, [location.search])
+
   const filteredProperties = properties.filter((property) => {
-    const matchesType = selectedType ? property.tag === selectedType : true
+    const propType = (property.property_type || property.tag || property.category || '').toLowerCase()
+    const matchesType = selectedType
+      ? propType === selectedType.toLowerCase() || (selectedType.toLowerCase() === 'house' && propType.includes('house'))
+      : true
+
+    const propLoc = `${property.location || ''} ${property.city || ''}`.toLowerCase()
     const matchesLocation = selectedLocations.length > 0
-      ? selectedLocations.some((loc) => property.location?.includes(loc))
+      ? selectedLocations.some((loc) => propLoc.includes(loc.toLowerCase()))
       : true
+
     const priceValue = Number(property.priceRs || property.price || 0)
-    const matchesPrice = selectedPriceRange
-      ? selectedPriceRange === 'under-50'
-        ? priceValue < 50000000
-        : selectedPriceRange === '50-150'
-          ? priceValue >= 50000000 && priceValue <= 150000000
-          : selectedPriceRange === 'above-150'
-            ? priceValue > 150000000
-            : true
-      : true
+    let matchesPrice = true
+    if (selectedPriceRange) {
+      if (selectedPriceRange === 'under-10' || selectedPriceRange === 'Under Rs 10M') {
+        matchesPrice = priceValue < 10000000
+      } else if (selectedPriceRange === '10-30' || selectedPriceRange === 'Rs 10M - 30M') {
+        matchesPrice = priceValue >= 10000000 && priceValue <= 30000000
+      } else if (selectedPriceRange === '30-60' || selectedPriceRange === 'Rs 30M - 60M') {
+        matchesPrice = priceValue >= 30000000 && priceValue <= 60000000
+      } else if (selectedPriceRange === 'above-60' || selectedPriceRange === 'Rs 60M+') {
+        matchesPrice = priceValue > 60000000
+      } else if (selectedPriceRange === 'under-50') {
+        matchesPrice = priceValue < 50000000
+      } else if (selectedPriceRange === '50-150') {
+        matchesPrice = priceValue >= 50000000 && priceValue <= 150000000
+      } else if (selectedPriceRange === 'above-150') {
+        matchesPrice = priceValue > 150000000
+      }
+    }
 
     return matchesType && matchesLocation && matchesPrice
   })

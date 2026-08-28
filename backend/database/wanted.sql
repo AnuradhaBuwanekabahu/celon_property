@@ -18,7 +18,6 @@ CREATE TABLE wanted (
 
     main_image LONGBLOB,
 
-    images JSON,
 
     status ENUM(
         'pending',
@@ -35,6 +34,25 @@ CREATE TABLE wanted (
     FOREIGN KEY(client_id)
 
     REFERENCES clients(id)
+
+    ON DELETE CASCADE
+
+);
+
+CREATE TABLE wanted_images (
+
+    id INT AUTO_INCREMENT PRIMARY KEY,
+
+    wanted_id INT NOT NULL,
+
+    image LONGBLOB NOT NULL,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+
+    FOREIGN KEY(wanted_id)
+
+    REFERENCES wanted(id)
 
     ON DELETE CASCADE
 

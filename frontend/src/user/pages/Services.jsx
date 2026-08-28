@@ -4,7 +4,7 @@ import {
   ClipboardCheck, MessageSquare, Building2, ShieldCheck,
   Users, Award, ArrowRight
 } from 'lucide-react'
-import servicesHero from '../assets/hero/hero.png'
+import servicesHero from '../assets/hero/hero.jpeg'
 
 function Services() {
   const services = [

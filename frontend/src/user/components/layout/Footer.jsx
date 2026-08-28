@@ -1,74 +1,186 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Mail, ShieldCheck } from 'lucide-react'
+import { Mail, Phone, MapPin, CheckCircle2 } from 'lucide-react'
+import { FaFacebookF, FaInstagram, FaYoutube, FaLinkedinIn } from 'react-icons/fa'
 import logoImg from '../../assets/logo.png'
 
 function Footer() {
+  const [email, setEmail] = useState('')
+  const [subscribed, setSubscribed] = useState(false)
+
+  const handleSubscribe = (e) => {
+    e.preventDefault()
+    if (email.trim()) {
+      setSubscribed(true)
+      setEmail('')
+      setTimeout(() => setSubscribed(false), 5000)
+    }
+  }
+
+  const propertiesLinks = [
+    { name: 'Hot Sales', path: '/hot-sales' },
+    { name: 'Lands for Sale', path: '/lands' },
+    { name: 'Stays To Buy', path: '/stay-to-buy' },
+    { name: 'Stays To Rent', path: '/stay-to-rent' },
+    { name: 'Wanted Listings', path: '/wanted' },
+  ]
+
+  const aboutUsLinks = [
+    { name: 'Our Services', path: '/services' },
+    { name: 'History', path: '/history' },
+    { name: 'Terms And Conditions', path: '/terms' },
+  ]
+
   return (
-    <footer className="bg-black text-white pt-16 pb-8 overflow-x-hidden">
-      <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-10">
+    <footer className="bg-[#050C1A] text-slate-300 font-sans border-t border-slate-800/80">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-8">
         
-        {/* Logo Section */}
-        <div className="flex flex-col items-center md:items-start">
-          {/* Exact Logo Image */}
-          <div className="mb-3">
-            <img 
-              src={logoImg} 
-              alt="Ceylon Property Logo" 
-              className="w-28 h-auto object-contain" // Size එක ඔයාගේ Image එක අනුව Adjust කරගන්න (e.g. w-24, w-32)
-            />
+        {/* Main Grid Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 items-start mb-12">
+          
+          {/* Col 1: Logo & Brand Description (lg:col-span-3) */}
+          <div className="lg:col-span-3 space-y-4">
+            <Link to="/" className="inline-flex items-center gap-3">
+              <img
+                src={logoImg}
+                alt="Ceylon Properties Logo"
+                className="w-10 h-10 object-contain"
+              />
+              <span className="text-xl font-bold text-white tracking-tight">
+                Ceylon Properties
+              </span>
+            </Link>
+            
+            <p className="text-xs text-slate-400 leading-relaxed max-w-xs">
+              Your trusted partner for buying, selling & renting properties across Sri Lanka.
+            </p>
+
+            {/* Circular Social Buttons */}
+            <div className="flex items-center gap-2.5 pt-1">
+              {[
+                { icon: FaFacebookF, href: '#', label: 'Facebook' },
+                { icon: FaInstagram, href: '#', label: 'Instagram' },
+                { icon: FaYoutube, href: '#', label: 'YouTube' },
+                { icon: FaLinkedinIn, href: '#', label: 'LinkedIn' },
+              ].map((social, idx) => (
+                <a
+                  key={idx}
+                  href={social.href}
+                  aria-label={social.label}
+                  className="w-8 h-8 rounded-full border border-slate-700/80 bg-slate-900/60 text-slate-300 hover:text-black hover:bg-[#FBBF24] hover:border-[#FBBF24] flex items-center justify-center transition-all duration-200"
+                >
+                  <social.icon size={13} />
+                </a>
+              ))}
+            </div>
           </div>
-          <p className="text-sm text-gray-300">Ceylon Property</p>
+
+          {/* Col 2: Properties (lg:col-span-2) */}
+          <div className="lg:col-span-2 space-y-3">
+            <h4 className="text-sm font-semibold text-white tracking-wide">
+              Properties
+            </h4>
+            <ul className="space-y-2 text-xs text-slate-400">
+              {propertiesLinks.map((link, idx) => (
+                <li key={idx}>
+                  <Link
+                    to={link.path}
+                    className="hover:text-white transition duration-200 block"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Col 3: About Us / Company (lg:col-span-2) */}
+          <div className="lg:col-span-2 space-y-3">
+            <h4 className="text-sm font-semibold text-white tracking-wide">
+              About Us
+            </h4>
+            <ul className="space-y-2 text-xs text-slate-400">
+              {aboutUsLinks.map((link, idx) => (
+                <li key={idx}>
+                  <Link
+                    to={link.path}
+                    className="hover:text-white transition duration-200 block"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Col 4: Contact Us (lg:col-span-2) */}
+          <div className="lg:col-span-2 space-y-3">
+            <h4 className="text-sm font-semibold text-white tracking-wide">
+              Contact Us
+            </h4>
+            <ul className="space-y-2.5 text-xs text-slate-400">
+              <li className="flex items-start gap-2">
+                <MapPin size={15} className="text-slate-300 shrink-0 mt-0.5" />
+                <span>123, Galle Road, Colombo 03, Sri Lanka</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <Phone size={15} className="text-slate-300 shrink-0" />
+                <a href="tel:+94771234567" className="hover:text-white transition">
+                  +94 77 123 4567
+                </a>
+              </li>
+              <li className="flex items-center gap-2">
+                <Mail size={15} className="text-slate-300 shrink-0" />
+                <a href="mailto:info@ceylonproperties.lk" className="hover:text-white transition">
+                  info@ceylonproperties.lk
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Col 5: Subscribe Newsletter Box (lg:col-span-3) */}
+          <div className="lg:col-span-3 bg-[#0A192F] border border-slate-800 p-5 rounded-2xl shadow-xl">
+            <h4 className="text-sm font-semibold text-[#FBBF24] mb-1">
+              Subscribe Newsletter
+            </h4>
+            <p className="text-xs text-slate-400 mb-4 leading-relaxed">
+              Get the latest property listings and market updates.
+            </p>
+
+            {subscribed ? (
+              <div className="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-950/40 p-3 rounded-lg border border-emerald-500/30">
+                <CheckCircle2 size={16} />
+                <span>Subscribed successfully!</span>
+              </div>
+            ) : (
+              <form onSubmit={handleSubscribe} className="space-y-2.5">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  required
+                  className="w-full bg-white text-slate-900 placeholder-slate-400 text-xs px-3.5 py-2.5 rounded-lg outline-none focus:ring-2 focus:ring-[#FBBF24]"
+                />
+                <button
+                  type="submit"
+                  className="w-full bg-[#FBBF24] hover:bg-amber-400 text-slate-950 font-semibold text-xs py-2.5 rounded-lg transition duration-200 shadow-md cursor-pointer"
+                >
+                  Subscribe
+                </button>
+              </form>
+            )}
+          </div>
+
         </div>
 
-        {/* Properties Links */}
-        <div>
-          <h4 className="text-lg mb-4">Properties</h4>
-          <ul className="space-y-3 text-sm text-gray-300">
-            <li><Link to="/hot-sales" className="hover:text-secondary transition">Hot Sales</Link></li>
-            <li><Link to="/lands" className="hover:text-secondary transition">Lands</Link></li>
-            <li><Link to="/stay-to-buy" className="hover:text-secondary transition">Stays To Buy</Link></li>
-            <li><Link to="/stay-to-rent" className="hover:text-secondary transition">Stays To Rent</Link></li>
-          </ul>
-        </div>
-
-        {/* About Us Links */}
-        <div>
-          <h4 className="text-lg mb-4">About Us</h4>
-          <ul className="space-y-3 text-sm text-gray-300">
-            <li><Link to="/services" className="hover:text-secondary transition">Our Services</Link></li>
-            <li><Link to="/history" className="hover:text-secondary transition">History</Link></li>
-            <li><Link to="/terms" className="hover:text-secondary transition">Terms And Conditions</Link></li>
-          </ul>
-        </div>
-
-        {/* Newsletter + Social */}
-        <div>
-          <div className="flex mb-6 max-w-sm">
-  <input 
-    type="email" 
-    placeholder="" 
-    className="flex-1 min-w-0 bg-white text-black px-4 py-3 rounded-l-md border-2 border-secondary outline-none"
-  />
-  <button className="bg-secondary text-black font-semibold px-6 py-3 rounded-r-md hover:opacity-90 transition whitespace-nowrap">
-    Subscribe
-  </button>
-</div>
-
-          <div className="flex items-center gap-3">
-            <span className="text-sm">Follow Us On :</span>
-            <a href="#" className="w-9 h-9 rounded-full bg-white flex items-center justify-center hover:opacity-90 transition">
-              <Mail size={18} className="text-black" />
-            </a>
-            <a href="#" className="w-9 h-9 rounded-full bg-white flex items-center justify-center hover:opacity-90 transition">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="black">
-            <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"/>
-            </svg>
-            </a>
-            <a href="#" className="w-9 h-9 rounded-full bg-white flex items-center justify-center hover:opacity-90 transition">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="black">
-            <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"/>
-            </svg>
-            </a>
+        {/* Bottom Bar Divider & Copyright */}
+        <div className="pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+          <p>© {new Date().getFullYear()} Ceylon Properties. All rights reserved.</p>
+          <div className="flex items-center gap-4 text-xs">
+            <Link to="/terms" className="hover:text-slate-400 transition">Terms & Conditions</Link>
+            <span>|</span>
+            <Link to="/terms" className="hover:text-slate-400 transition">Privacy Policy</Link>
           </div>
         </div>
 

@@ -11,7 +11,8 @@ export const addAds = async (req, res) => {
             client_id,
             title,
             link_url,
-            position
+            position,
+            is_active
         } = req.body;
 
 
@@ -32,9 +33,10 @@ export const addAds = async (req, res) => {
                 title,
                 image,
                 link_url,
-                position
+                position,
+                is_active
             )
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?)
         `;
 
 
@@ -48,7 +50,9 @@ export const addAds = async (req, res) => {
 
             link_url || null,
 
-            position || 0
+            position || 'sub_pages',
+
+            is_active === undefined || is_active === null || is_active === '' ? 1 : is_active
 
         ]);
 
@@ -81,6 +85,51 @@ export const addAds = async (req, res) => {
 
 
 
+
+// Get All Advertisements (show all without client filtering)
+
+export const showAllAds = async (req, res) => {
+
+    try {
+
+        const [ads] = await db.query(
+            `
+            SELECT 
+                id,
+                client_id,
+                title,
+                link_url,
+                position,
+                is_active,
+                created_at
+            FROM ads
+            ORDER BY CASE position
+                WHEN 'front_page_top' THEN 1
+                WHEN 'front_page_bottom' THEN 2
+                WHEN 'sub_pages' THEN 3
+                ELSE 4
+            END, id ASC
+            `
+        );
+
+        const adsWithImage = ads.map((ad) => ({
+            ...ad,
+            image: `/api/ads/image/${ad.id}`
+        }));
+
+        res.status(200).json({
+            message: "Advertisements fetched successfully",
+            ads: adsWithImage
+        });
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            message: "Internal server error",
+            error: error.message
+        });
+    }
+};
 
 // Get Advertisement Image
 
@@ -145,7 +194,8 @@ export const editAds = async (req, res) => {
             client_id,
             title,
             link_url,
-            position
+            position,
+            is_active
         } = req.body;
 
 
@@ -179,7 +229,8 @@ export const editAds = async (req, res) => {
                     title = ?,
                     image = ?,
                     link_url = ?,
-                    position = ?
+                    position = ?,
+                    is_active = ?
                 WHERE id = ?
             `;
 
@@ -194,7 +245,9 @@ export const editAds = async (req, res) => {
 
                 link_url || null,
 
-                position || 0,
+                position || 'sub_pages',
+
+                is_active === undefined || is_active === null || is_active === '' ? 1 : is_active,
 
                 id
 
@@ -212,7 +265,8 @@ export const editAds = async (req, res) => {
                     client_id = ?,
                     title = ?,
                     link_url = ?,
-                    position = ?
+                    position = ?,
+                    is_active = ?
                 WHERE id = ?
             `;
 
@@ -225,7 +279,9 @@ export const editAds = async (req, res) => {
 
                 link_url || null,
 
-                position || 0,
+                position || 'sub_pages',
+
+                is_active === undefined || is_active === null || is_active === '' ? 1 : is_active,
 
                 id
 
@@ -267,57 +323,7 @@ export const editAds = async (req, res) => {
 // Get All Advertisements
 
 export const getAds = async (req, res) => {
-
-    try {
-
-        const [ads] = await db.query(
-            `
-            SELECT 
-                id,
-                client_id,
-                title,
-                link_url,
-                position,
-                created_at
-            FROM ads
-            ORDER BY position ASC
-            `
-        );
-
-
-        const adsWithImage = ads.map((ad) => ({
-
-            ...ad,
-
-            image: `/api/ads/image/${ad.id}`
-
-        }));
-
-
-        res.status(200).json({
-
-            message: "Advertisements fetched successfully",
-
-            ads: adsWithImage
-
-        });
-
-
-    } catch (error) {
-
-        console.log(error);
-
-
-        res.status(500).json({
-
-            message: "Internal server error",
-
-            error: error.message
-
-        });
-
-    }
-
+    return showAllAds(req, res);
 };
 
 

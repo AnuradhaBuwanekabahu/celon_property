@@ -1,29 +1,20 @@
-import { createContext, useState } from "react";
+import { createContext, useState ,useCallback} from "react";
 import API from "../api/clientapi";
 import { toast } from "react-toastify";
-
+import { useNavigate } from "react-router-dom";
+import { overviewOptions } from "../Assets/data.js";
 export const clientContext = createContext();
 
 export function ClientProvider({ children }) {
   const [hotSales, setHotSales] = useState([]);
   const [selectedProperty, setSelectedProperty] = useState(null);
+  const [client, setClient] = useState(null);
   const [loading, setLoading] = useState(false);
-
-  const getHotSales = async () => {
-    try {
-      setLoading(true);
-      const response = await API.get("/api/hotsales/show");
-      setHotSales(response.data?.hotSales || response.data);
-    } catch (error) {
-      toast.error("Fail to load data");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [stayToBuy, setStayToBuy] = useState([]);
+  const [staytoBuySelectedProperty, setStayToBuySelectedProperty] = useState(null);
+  const [stayToRent, setStayToRent] = useState([]);
 
 
-<<<<<<< Updated upstream
-=======
 
    const navigate = useNavigate();
 const MAX_GALLERY_IMAGES = 9;
@@ -252,7 +243,6 @@ const MAX_GALLERY_IMAGES = 9;
           
 
 
->>>>>>> Stashed changes
   const getHotSaleById = async (id) => {
     try {
       const response = await API.get(`/api/hotsales/show/${id}`);
@@ -260,10 +250,6 @@ const MAX_GALLERY_IMAGES = 9;
     } catch (error) {
       toast.error("Cannot load property");
     }
-<<<<<<< Updated upstream
-  };
-
-=======
   };
 
   // --- EDIT MODE: fetch existing hot sale and populate form ---
@@ -555,7 +541,7 @@ const handleStaySubmit = async (e, clientIdOverride) => {
         });
 
         toast.success("Stay to buy property added successfully");
-        navigate("/dashboard/staystobuy");
+        navigate(`/dashboard/${resolvedClientId}`);
 
     } catch (error) {
         console.log(error);
@@ -760,6 +746,7 @@ const [staytorentFormData, setStaytorentFormData] = useState({
   map_address: "",
   location: "",
   duration: "month",
+  price_period: "monthly",
   status: "pending",
 });
 
@@ -940,6 +927,7 @@ const handleStaytorentSubmit = async (e, clientIdOverride) => {
     data.append("map_address", staytorentFormData.map_address);
     data.append("location", staytorentFormData.location);
     data.append("duration", staytorentFormData.duration);
+    data.append("price_period", staytorentFormData.price_period);
     data.append("status", staytorentFormData.status);
 
     data.append(
@@ -972,7 +960,7 @@ const handleStaytorentSubmit = async (e, clientIdOverride) => {
 
     resetStaytorentForm();
 
-    navigate("/dashboard/staystorent");
+    navigate(`/dashboard/${resolvedClientId}`);
   } catch (error) {
     console.log(error);
 
@@ -998,6 +986,7 @@ const resetStaytorentForm = () => {
     map_address: "",
     location: "",
     duration: "month",
+    price_period: "monthly",
     status: "pending",
   });
 
@@ -1097,6 +1086,7 @@ const fetchStayTorentForEdit = useCallback(async (id) => {
         map_address: data?.map_address || '',
         location: data?.location || '',
         duration: data?.duration || 'month',
+        price_period: data?.price_period || 'monthly',
         status: data?.status || 'pending',
       });
 
@@ -1131,6 +1121,7 @@ const fetchStayTorentForEdit = useCallback(async (id) => {
       data.append('price', staytorentFormData.price);
       data.append('property_type', staytorentFormData.property_type);
       data.append('duration', staytorentFormData.duration);
+      data.append('price_period', staytorentFormData.price_period);
       data.append('area_sqft', staytorentFormData.area_sqft);
       data.append('city', staytorentFormData.city);
       data.append('map_address', staytorentFormData.map_address);
@@ -1152,7 +1143,7 @@ const fetchStayTorentForEdit = useCallback(async (id) => {
       });
 
       toast.success('Property updated successfully');
-      navigate(`/dashboard/staystorent/profile/${id}`);
+      navigate(`/dashboard/stays-rent/profile/${id}`);
     } catch (error) {
       console.log(error);
       toast.error(error?.response?.data?.message || 'Failed to update property');
@@ -1470,10 +1461,162 @@ const getlands = async () => {
     }
 
   }
->>>>>>> Stashed changes
   return (
-    <clientContext.Provider value={{ hotSales, selectedProperty, loading, getHotSales, getHotSaleById }}>
-      {children}
-    </clientContext.Provider>
+  <clientContext.Provider
+  value={{
+    hotSales,
+    selectedProperty,
+    client,
+    loading,
+
+    getHotSales,
+    getHotSaleById,
+    getclientdata,
+
+    formData,
+    setFormData,
+
+    handleChange,
+    handleSubmit,
+
+    handleOverviewChange,
+    addOverview,
+    removeOverview,
+
+    handleHighlightChange,
+
+    mainImage,
+    setMainImage,
+    mainImagePreview,
+    setMainImagePreview,
+    mainDragActive,
+    setMainDragActive,
+
+    mainVideo,
+    setMainVideo,
+    mainVideoPreview,
+    setMainVideoPreview,
+
+    handleMainImage,
+    handleMainVideo,
+    handleMainDrop,
+    removeMainImage,
+
+    galleryImages,
+    setGalleryImages,
+    MAX_GALLERY_IMAGES,
+    galleryDragActive,
+    setGalleryDragActive,
+
+    handleImages,
+    handleGalleryDrop,
+    removeGalleryImage,
+
+     handleHotSalesEditSubmit ,
+     fetchHotSaleForEdit,
+     handleDeleteHotSale,
+
+      stayFormData,
+    handleStayChange,
+
+    addStayOverview,
+    removeStayOverview,
+    handleStayOverviewChange,
+
+    handleStayHighlightChange,
+
+    stayMainImage,
+    stayMainImagePreview,
+    handleStayMainImage,
+    removeStayMainImage,
+
+    stayMainVideo,
+    stayMainVideoPreview,
+    handleStayMainVideo,
+    removeStayMainVideo,
+
+    stayGalleryImages,
+    STAY_MAX_GALLERY_IMAGES,
+    stayGalleryDragActive,
+    setStayGalleryDragActive,
+    handleStayImages,
+    handleStayGalleryDrop,
+    removeStayGalleryImage,
+
+    handleStaySubmit,
+    resetStayForm,
+    getStayToBuy,
+    fetchStayToBuyForEdit,
+    stayToBuy,
+    getStayToBuyById,
+    staytoBuySelectedProperty,
+    getStayToRent,
+    stayToRent,
+
+    handleStayToBuyEditSubmit,
+    fetchHotSaleForEdit,
+    handlestaytobuydelete,
+
+    staytorentFormData,
+    staytorentImage,
+    staytorentMainImagePreview,
+    staytorentMainVideo,
+    staytorentMainVideoPreview,
+    staytorentGalleryImages,
+    staytorentGalleryImagesActive,
+    handleStaytorentmainImage,
+    removeStaytorentMainImage,
+    handlestaytorentMainVideo,
+    removestaytorentmainVideo,
+    handleStaytorentImages,
+    removeStaytorentGalleryImages,
+    handleStaytorentOverviewChange,
+    addStaytoRentoverview,
+    removeStayToRentOverview,
+    handleStaytorentHighlightschanges,
+    handleStayToRentChange,
+    handleStaytorentSubmit,
+    fetchStayTorentForEdit,
+    handleStaytorentEditSubmit,
+    staytorentpropterty,
+    getStayTorentById,
+    handleDeleteStaysToRent,
+    landFormData,
+        handleLandChange,
+        handleLandSubmit,
+
+        handleLandOverviewChange,
+        addLandOverview,
+        removeLandOverview,
+
+        landMainImage,
+        landMainImagePreview,
+        handleLandMainImage,
+        removeLandMainImage,
+
+        landMainVideo,
+        landMainVideoPreview,
+        handleLandMainVideo,
+        setLandMainVideo,
+        setLandMainVideoPreview,
+
+        landGalleryImages,
+        MAX_LAND_GALLERY_IMAGES,
+        landGalleryDragActive,
+        setLandGalleryDragActive,
+        handleLandImages,
+        handleLandGalleryDrop,
+        removeLandGalleryImage,
+        lands,
+        getlands,
+        landsSelectedProperty,
+        getlandsById,
+        deleteLands
+
+  }}
+>
+  {children}
+</clientContext.Provider>
   );
 }
+

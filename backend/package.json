@@ -6,7 +6,10 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "migrate:user-otp": "node migrations/add_user_otp.js",
+    "migrate:client-google": "node migrations/add_client_google_auth.js"
+    ,"migrate:stay-rent": "node migrations/add_stay_rent_schema.js"
   },
   "keywords": [],
   "author": "",
@@ -21,7 +24,9 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.2.0",
     "mysql2": "^3.22.6",
-    "react-toastify": "^11.1.0"
+    "nodemailer": "^9.0.5",
+    "react-toastify": "^11.1.0",
+    "socket.io": "^4.8.3"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

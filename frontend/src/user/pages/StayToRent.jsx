@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { Home as HomeIcon, MapPin, Ruler, Tag, ChevronLeft, ChevronRight } from 'lucide-react'
 import PropertyCard from '../components/property/PropertyCard'
 import PropertyPreviewPanel from '../components/property/PropertyPreviewPanel'
@@ -7,11 +7,19 @@ import { getStayToRent } from '../Routers'
 import {cityOptions} from '../../client/Assets/data.js'
 
 function StayToRent() {
-  const [propertyTypes] = useState(['Apartment', 'Bungalow', 'Villa', 'Single Family Home', 'Land'])
+  const location = useLocation()
+  const queryParams = new URLSearchParams(location.search)
+  const typeFromURL = (queryParams.get('type') || '').toLowerCase()
+  const locationFromURL = queryParams.get('location') || ''
+  const priceFromURL = queryParams.get('price') || ''
+
+  const [propertyTypes] = useState(['Apartment', 'Bungalow', 'Villa', 'Hotel', 'Single Family Home', 'Land'])
  
   const [hoveredProperty, setHoveredProperty] = useState(null)
   const [openFilter, setOpenFilter] = useState(null)
-  const [selectedType, setSelectedType] = useState('')
+  const [selectedType, setSelectedType] = useState(typeFromURL)
+  const [selectedLocations, setSelectedLocations] = useState(locationFromURL ? [locationFromURL] : [])
+  const [selectedPriceRange, setSelectedPriceRange] = useState(priceFromURL)
   const [properties, setProperties] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -23,9 +31,42 @@ function StayToRent() {
       .finally(() => setLoading(false))
   }, [])
 
-  const filteredProperties = selectedType
-    ? properties.filter((property) => property.tag === selectedType)
-    : properties
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    setSelectedType((params.get('type') || '').toLowerCase())
+    const loc = params.get('location')
+    if (loc) setSelectedLocations([loc])
+    const pr = params.get('price')
+    if (pr) setSelectedPriceRange(pr)
+  }, [location.search])
+
+  const filteredProperties = properties.filter((p) => {
+    const fields = [p.property_type || '', p.tag || '', p.category || '', p.type || ''].map(f => f.toLowerCase())
+    const matchesType = selectedType
+      ? fields.some(f => f.includes(selectedType))
+      : true
+
+    const propLoc = `${p.location || ''} ${p.city || ''}`.toLowerCase()
+    const matchesLocation = selectedLocations.length > 0
+      ? selectedLocations.some((loc) => propLoc.includes(loc.toLowerCase()))
+      : true
+
+    const priceValue = Number(p.priceRs || p.price || 0)
+    let matchesPrice = true
+    if (selectedPriceRange) {
+      if (selectedPriceRange === 'under-10' || selectedPriceRange === 'Under Rs 10M') {
+        matchesPrice = priceValue < 10000000
+      } else if (selectedPriceRange === '10-30' || selectedPriceRange === 'Rs 10M - 30M') {
+        matchesPrice = priceValue >= 10000000 && priceValue <= 30000000
+      } else if (selectedPriceRange === '30-60' || selectedPriceRange === 'Rs 30M - 60M') {
+        matchesPrice = priceValue >= 30000000 && priceValue <= 60000000
+      } else if (selectedPriceRange === 'above-60' || selectedPriceRange === 'Rs 60M+') {
+        matchesPrice = priceValue > 60000000
+      }
+    }
+
+    return matchesType && matchesLocation && matchesPrice
+  })
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, Search } from 'lucide-react'
 import LandCard from '../components/property/LandCard'
 import { getLands } from '../Routers'
-import landsHero from '../assets/properties/landHero.jpg'
+import landsHero from '../assets/properties/landHero.jpeg'
 
 function Lands() {
   const [propertyTypes] = useState(['Apartment', 'Bungalow', 'Villa', 'House', 'Land'])

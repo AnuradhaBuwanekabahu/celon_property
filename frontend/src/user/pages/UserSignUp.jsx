@@ -10,8 +10,11 @@ function UserSignUp() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
+  const [otp, setOtp] = useState('')
+  const [step, setStep] = useState('form')
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [resendLoading, setResendLoading] = useState(false)
   const [googleReady, setGoogleReady] = useState(false)
 
   const saveUser = (data) => {
@@ -22,6 +25,49 @@ function UserSignUp() {
   const handleSignUpSuccess = (data) => {
     saveUser(data)
     navigate('/wanted')
+  }
+
+  const verifyOtp = async (e) => {
+    e.preventDefault()
+    setError(null)
+
+    if (!/^\d{6}$/.test(otp)) {
+      setError('Enter the 6-digit verification code.')
+      return
+    }
+
+    setLoading(true)
+    try {
+      const res = await fetch(`${API_URL}/api/users/verify-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) throw new Error(data.message || 'Verification failed')
+      handleSignUpSuccess(data)
+    } catch (err) {
+      setError(err.message || 'Verification failed')
+      setLoading(false)
+    }
+  }
+
+  const resendOtp = async () => {
+    setError(null)
+    setResendLoading(true)
+    try {
+      const res = await fetch(`${API_URL}/api/users/resend-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) throw new Error(data.message || 'Could not resend OTP')
+    } catch (err) {
+      setError(err.message || 'Could not resend OTP')
+    } finally {
+      setResendLoading(false)
+    }
   }
 
   const handleGoogleCredentialResponse = useCallback(
@@ -115,7 +161,8 @@ function UserSignUp() {
         throw new Error(data.message || 'Signup failed')
       }
 
-      handleSignUpSuccess(data)
+      setStep('otp')
+      setLoading(false)
     } catch (err) {
       setError(err.message || 'Signup failed')
       setLoading(false)
@@ -141,7 +188,7 @@ function UserSignUp() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        {step === 'form' ? <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
             <div className="relative rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm focus-within:border-[#14213D] focus-within:ring-1 focus-within:ring-[#14213D]">
@@ -195,7 +242,40 @@ function UserSignUp() {
           >
             {loading ? 'Creating account...' : 'Sign up with email'}
           </button>
-        </form>
+        </form> : <form onSubmit={verifyOtp} className="space-y-5">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900">Verify your email</h2>
+            <p className="mt-2 text-sm text-gray-500">Enter the 6-digit code sent to {email}.</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Verification code</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              maxLength={6}
+              value={otp}
+              onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-center text-lg tracking-[0.5em] outline-none focus:border-[#14213D] focus:ring-1 focus:ring-[#14213D]"
+              placeholder="000000"
+              required
+            />
+          </div>
+
+          {error && <p className="text-sm text-red-600">{error}</p>}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-2xl bg-[#14213D] px-5 py-3 text-white text-sm font-semibold hover:bg-[#0f172a] transition disabled:opacity-60"
+          >
+            {loading ? 'Verifying...' : 'Verify email'}
+          </button>
+
+          <button type="button" onClick={resendOtp} disabled={resendLoading} className="w-full text-sm font-semibold text-[#14213D] hover:underline disabled:opacity-60">
+            {resendLoading ? 'Sending...' : 'Resend code'}
+          </button>
+        </form>}
 
         <div className="mt-6 text-center text-sm text-gray-500">or</div>
 

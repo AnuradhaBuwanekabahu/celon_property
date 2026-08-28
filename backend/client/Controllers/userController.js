@@ -1,6 +1,7 @@
 import db from "../../configuration/db.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { sendOtpEmail } from "../utils/nodemailer.js";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
@@ -19,6 +20,19 @@ const generateToken = (user) => {
 };
 
 const normalizeEmail = (email) => (email || "").trim().toLowerCase();
+const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
+
+const createUserOtp = async (email) => {
+  const otp = generateOtp();
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+  await db.query("UPDATE user_otp_verifications SET is_used = 1 WHERE email = ? AND is_used = 0", [email]);
+  await db.query(
+    "INSERT INTO user_otp_verifications (email, otp_code, expires_at) VALUES (?, ?, ?)",
+    [email, otp, expiresAt]
+  );
+  await sendOtpEmail(email, otp);
+};
 
 export const registerUserWithEmail = async (req, res) => {
   try {
@@ -30,17 +44,23 @@ export const registerUserWithEmail = async (req, res) => {
 
     const normalizedEmail = normalizeEmail(email);
 
-    const [existing] = await db.query("SELECT id FROM users WHERE email = ?", [normalizedEmail]);
+    const [existing] = await db.query("SELECT id, is_verified FROM users WHERE email = ?", [normalizedEmail]);
     if (existing.length > 0) {
-      return res.status(409).json({ success: false, message: "Email already registered" });
+      if (existing[0].is_verified) {
+        return res.status(409).json({ success: false, message: "Email already registered" });
+      }
+      await db.query("DELETE FROM user_otp_verifications WHERE email = ?", [normalizedEmail]);
+      await db.query("DELETE FROM users WHERE id = ?", [existing[0].id]);
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const [result] = await db.query(
-      `INSERT INTO users (full_name, email, password, auth_type, is_active) VALUES (?, ?, ?, 'email', 1)`,
+      `INSERT INTO users (full_name, email, password, auth_type, is_active, is_verified) VALUES (?, ?, ?, 'email', 1, 0)`,
       [full_name, normalizedEmail, hashedPassword]
     );
+
+    await createUserOtp(normalizedEmail);
 
     const user = {
       id: result.insertId,
@@ -52,9 +72,8 @@ export const registerUserWithEmail = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: "User registered successfully",
-      token: generateToken(user),
-      user,
+      message: "Registration successful. Please verify the OTP sent to your email.",
+      email: normalizedEmail,
     });
   } catch (error) {
     console.error(error);
@@ -89,6 +108,10 @@ export const loginUserWithEmail = async (req, res) => {
 
     if (!user.is_active) {
       return res.status(403).json({ success: false, message: "Account is deactivated" });
+    }
+
+    if (!user.is_verified) {
+      return res.status(403).json({ success: false, message: "Please verify your email before logging in" });
     }
 
     const passwordMatch = await bcrypt.compare(password, user.password);
@@ -169,6 +192,7 @@ export const loginUserWithGoogle = async (req, res) => {
         email: existingUser.email || normalizedEmail,
         auth_type: existingUser.auth_type || "google",
         is_active: existingUser.is_active,
+        is_verified: true,
       };
 
       return res.status(200).json({
@@ -180,7 +204,7 @@ export const loginUserWithGoogle = async (req, res) => {
     }
 
     const [result] = await db.query(
-      `INSERT INTO users (full_name, email, google_id, auth_type, is_active) VALUES (?, ?, ?, 'google', 1)`,
+      `INSERT INTO users (full_name, email, google_id, auth_type, is_active, is_verified) VALUES (?, ?, ?, 'google', 1, 1)`,
       [full_name || "Google User", normalizedEmail, google_id]
     );
 
@@ -198,6 +222,57 @@ export const loginUserWithGoogle = async (req, res) => {
       token: generateToken(user),
       user,
     });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+export const verifyUserRegistrationOtp = async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body?.email);
+    const otp = String(req.body?.otp || "").trim();
+
+    if (!email || !/^\d{6}$/.test(otp)) {
+      return res.status(400).json({ success: false, message: "Email and a valid 6-digit OTP are required" });
+    }
+
+    const [rows] = await db.query(
+      `SELECT * FROM user_otp_verifications
+       WHERE email = ? AND otp_code = ? AND is_used = 0
+       ORDER BY created_at DESC LIMIT 1`,
+      [email, otp]
+    );
+
+    if (!rows.length) return res.status(400).json({ success: false, message: "Invalid OTP" });
+    if (new Date(rows[0].expires_at) < new Date()) {
+      return res.status(400).json({ success: false, message: "OTP has expired" });
+    }
+
+    await db.query("UPDATE user_otp_verifications SET is_used = 1 WHERE id = ?", [rows[0].id]);
+    await db.query("UPDATE users SET is_verified = 1 WHERE email = ? AND auth_type = 'email'", [email]);
+    const [users] = await db.query("SELECT id, full_name, email, auth_type, is_active FROM users WHERE email = ?", [email]);
+
+    if (!users.length) return res.status(404).json({ success: false, message: "User not found" });
+    const user = users[0];
+    return res.status(200).json({ success: true, message: "Email verified successfully", token: generateToken(user), user });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+export const resendUserRegistrationOtp = async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body?.email);
+    if (!email) return res.status(400).json({ success: false, message: "Email is required" });
+
+    const [users] = await db.query("SELECT is_verified FROM users WHERE email = ? AND auth_type = 'email'", [email]);
+    if (!users.length) return res.status(404).json({ success: false, message: "User not found" });
+    if (users[0].is_verified) return res.status(400).json({ success: false, message: "Email already verified" });
+
+    await createUserOtp(email);
+    return res.status(200).json({ success: true, message: "OTP resent successfully" });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ success: false, message: "Server error" });

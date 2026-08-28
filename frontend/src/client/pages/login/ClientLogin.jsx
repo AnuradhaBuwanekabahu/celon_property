@@ -1,9 +1,9 @@
-import React, { useState } from "react";
-import { FcGoogle } from "react-icons/fc";
+import React, { useEffect, useState } from "react";
 import { FiMail, FiLock, FiEye, FiEyeOff } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import API from "../../api/clientapi.js";
 
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 export default function ClientLogin() {
 
@@ -27,11 +27,66 @@ export default function ClientLogin() {
 
   }
 
+  const handleGoogleLogin = async (response) => {
+    if (!response?.credential) {
+      alert("Google login failed. Please try again.");
+      return;
+    }
+
+    try {
+      setloading(true);
+      const result = await API.post("/api/clients/google", {
+        id_token: response.credential
+      });
+      const clientData = result.data.client;
+
+      localStorage.setItem("clientToken", result.data.token);
+      localStorage.setItem("clientId", clientData.id);
+      localStorage.setItem("client", JSON.stringify(clientData));
+      navigate(`/dashboard/${clientData.id}`);
+    } catch (error) {
+      alert(error.response?.data?.message || "Google login failed");
+    } finally {
+      setloading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID) return;
+
+    const initializeGoogle = () => {
+      const button = document.getElementById("client-google-login-button");
+      if (!window.google?.accounts?.id || !button) return;
+
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleLogin
+      });
+      window.google.accounts.id.renderButton(button, {
+        theme: "outline",
+        size: "large",
+        width: 360,
+        text: "continue_with"
+      });
+    };
+
+    initializeGoogle();
+    const interval = setInterval(() => {
+      if (window.google?.accounts?.id) {
+        initializeGoogle();
+        clearInterval(interval);
+      }
+    }, 200);
+
+    return () => clearInterval(interval);
+  }, []);
+
 
   const handleLogin = async () => {
 
     if (!formData.password || !formData.email) {
       alert("please fill all fields")
+      return;
     }
 
     try {
@@ -46,11 +101,10 @@ export default function ClientLogin() {
 
       const clientData = response.data.client || { id: response.data.clientId };
 
-      localStorage.setItem(
-        "client",
-        JSON.stringify(clientData)
-      );
-      navigate('/dashboard')
+      localStorage.setItem("clientToken", response.data.token);
+      localStorage.setItem("clientId", clientData.id);
+      localStorage.setItem("client", JSON.stringify(clientData));
+      navigate(`/dashboard/${clientData.id}`);
 
     }
 
@@ -76,11 +130,11 @@ export default function ClientLogin() {
         />
 
         <div className="absolute inset-0 bg-black/40 flex flex-col justify-end p-12 text-white prata-regular">
-          <h1 className=" relative bottom-[200px] text-5xl .prata-regular">
+          <h1 className="relative bottom-50 text-5xl prata-regular">
             Welcome Back
           </h1>
 
-          <p className=".inter relative bottom-[200px] mt-4 text-lg text-gray-200 max-w-md">
+          <p className="inter relative bottom-50 mt-4 text-lg text-gray-200 max-w-md">
             Manage your account, explore new opportunities, and stay connected
             with everything in one secure place.
           </p>
@@ -110,12 +164,10 @@ export default function ClientLogin() {
 
           {/* Google */}
 
-          <button
-            className="mt-8 w-full border border-gray-300 bg-gray-50 rounded-xl h-12 flex items-center justify-center gap-3 hover:bg-gray-500 transition"
-          >
-            <FcGoogle className="text-2xl" />
-            Continue with Google
-          </button>
+          <div id="client-google-login-button" className="mt-8 flex justify-center min-h-12"></div>
+          {!GOOGLE_CLIENT_ID && (
+            <p className="mt-2 text-center text-sm text-red-300">Google login is not configured.</p>
+          )}
 
           {/* Divider */}
 
@@ -195,7 +247,7 @@ export default function ClientLogin() {
           <p className="mt-6 text-center text-gray-500 text-sm">
             Don't have an account?
             <span className="text-[#FBBF24] font-medium cursor-pointer hover:underline ml-1"
-              onClick={() => navigate('/client-register')}>
+              onClick={() => navigate('/dashboard/client-register')}>
               Create Account
             </span>
           </p>

@@ -35,15 +35,14 @@ CREATE TABLE stays_to_buy (
 
     map_address VARCHAR(255),
 
-    rate DECIMAL(2,1) DEFAULT 0.0
+    rate DECIMAL(2,1) DEFAULT 0.0,
 
 
     location VARCHAR(255),
 
     main_image  longblob NOT NULL,
-     main_video LONGBLOB NULL,
+   
 
-    images JSON,
 
     status ENUM(
         'pending',
@@ -63,6 +62,25 @@ CREATE TABLE stays_to_buy (
     FOREIGN KEY(client_id)
 
     REFERENCES clients(id)
+
+    ON DELETE CASCADE
+
+);
+
+CREATE TABLE stay_to_buy_images (
+
+    id INT AUTO_INCREMENT PRIMARY KEY,
+
+    stay_buy_id INT NOT NULL,
+
+    image LONGBLOB NOT NULL,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+
+    FOREIGN KEY(stay_buy_id)
+
+    REFERENCES stays_to_buy(id)
 
     ON DELETE CASCADE
 

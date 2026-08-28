@@ -29,7 +29,7 @@ CREATE TABLE stays_to_rent (
 
     highlights JSON,
 
-   rate DECIMAL(2,1) DEFAULT 0.0
+   rate DECIMAL(2,1) DEFAULT 0.0,
 
     area_sqft DECIMAL(10,2),
 
@@ -39,9 +39,7 @@ CREATE TABLE stays_to_rent (
 
     location VARCHAR(255),
 
-    main_image VARCHAR(255) NOT NULL,
-
-    images JSON,
+    main_image LONGBLOB NOT NULL,
 
     price_period ENUM(
         'monthly',
@@ -63,6 +61,26 @@ CREATE TABLE stays_to_rent (
     FOREIGN KEY(client_id)
 
     REFERENCES clients(id)
+
+    ON DELETE CASCADE
+
+);
+
+
+CREATE TABLE stay_to_rent_images (
+
+    id INT AUTO_INCREMENT PRIMARY KEY,
+
+    stay_rent_id INT NOT NULL,
+
+    image LONGBLOB NOT NULL,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+
+    FOREIGN KEY(stay_rent_id)
+
+    REFERENCES stays_to_rent(id)
 
     ON DELETE CASCADE
 

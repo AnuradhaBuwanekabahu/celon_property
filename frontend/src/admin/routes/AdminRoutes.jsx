@@ -2,71 +2,36 @@ import { Routes, Route } from "react-router-dom";
 
 import Layout from "../components/Layout";
 
+import Dashboard from "../pages/Dashboard/Dashboard";
+import HotSales from "../pages/HotSales/HotSales";
+import ViewHotSale from "../pages/HotSales/ViewHotSale";
+import EditHotSale from "../pages/HotSales/EditHotSales";
 import StayToBuy from "../pages/StayToBuy/StayToBuy";
 import ViewStayToBuy from "../pages/StayToBuy/ViewStayToBuy";
 import EditStayToBuy from "../pages/StayToBuy/EditStayToBuy";
-
-
-
-import Lands from "../pages/lands/Lands";
-import ViewLand from "../pages/lands/ViewLand";
-import EditLand from "../pages/lands/EditLand";
-
-
-
-
-
-
-import Payments from "../pages/Payments/Payments";
-import ViewPayment from "../pages/Payments/ViewPayments";
-import EditPayment from "../pages/Payments/EditPayment";
-
-import Users from "../pages/Users/Users";
-import ViewUser from "../pages/Users/ViewUser";
-import EditUser from "../pages/Users/EditUser";
-
-
-
-
-
-
-
-import Wanted from "../pages/wanted/Wanted";
-import ViewWanted from "../pages/wanted/ViewWanted";
-import EditWanted from "../pages/wanted/EditWanted";
-
-import EditAd from "../pages/Advertisements/EditAd";
-import Ads from "../pages/Advertisements/Ads";
-import ViewAd from "../pages/Advertisements/ViewAd";
-
-
 import StayToRent from "../pages/StayToRent/StayToRent";
 import ViewStayToRent from "../pages/StayToRent/ViewStayToRent";
 import EditStayToRent from "../pages/StayToRent/EditStayToRent";
+import Lands from "../pages/lands/Lands";
+import ViewLand from "../pages/lands/ViewLand";
+import EditLand from "../pages/lands/EditLand";
+import Ads from "../pages/Advertisements/Ads";
+import ViewAd from "../pages/Advertisements/ViewAd";
+import EditAd from "../pages/Advertisements/EditAd";
 import Clients from "../pages/clients/Clients";
 import ViewClient from "../pages/clients/ViewClient";
 import EditClient from "../pages/clients/EditClient";
-import EditHotSale from "../pages/HotSales/EditHotSales";
-import HotSales from "../pages/HotSales/HotSales";
-import ViewHotSale from "../pages/HotSales/ViewHotSale";
-import Dashboard from "../pages/Dashboard/Dashboard";
+import Payments from "../pages/Payments/Payments";
+import ViewPayment from "../pages/Payments/ViewPayments";
+import EditPayment from "../pages/Payments/EditPayment";
+import Users from "../pages/Users/Users";
+import ViewUser from "../pages/Users/ViewUser";
+import EditUser from "../pages/Users/EditUser";
+import Wanted from "../pages/wanted/Wanted";
+import ViewWanted from "../pages/wanted/ViewWanted";
+import EditWanted from "../pages/wanted/EditWanted";
 import ViewProfile from "../pages/Admin/ViewProfile";
 import EditProfile from "../pages/Admin/EditProfile";
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -99,8 +64,6 @@ const AdminRoutes = () => {
     path="stay-to-buy/edit/:id"
     element={<EditStayToBuy />}
 />
-
-
 
 
 <Route

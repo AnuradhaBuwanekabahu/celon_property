@@ -1,39 +1,72 @@
-import React from "react";
+import React, { useEffect, useContext, useState } from "react";
 import { MdBedroomParent } from "react-icons/md";
 import { LiaSalesforce } from "react-icons/lia";
 import { FaHome } from "react-icons/fa";
 import { MdOutlineLandslide } from "react-icons/md";
 import { RiAdvertisementLine } from "react-icons/ri";
+import { clientContext } from "../context/ClientContext";
+import API from "../api/clientapi";
 
-const DashboardSummery = () => {
+const DashboardSummery = ({ clientID }) => {
+  const { hotSales, stayToBuy, stayToRent, lands, getHotSales, getStayToBuy, getStayToRent, getlands } = useContext(clientContext);
+  const [ads, setAds] = useState([]);
+
+  const resolvedClientId = clientID || localStorage.getItem("clientId") || "";
+
+  useEffect(() => {
+    if (!resolvedClientId) return;
+    getHotSales();
+    getStayToBuy();
+    getStayToRent();
+    getlands();
+
+    const fetchAds = async () => {
+      try {
+        const response = await API.get("/api/ads/ads");
+        const data = response.data?.ads || [];
+        setAds(data.filter((item) => Number(item.client_id) === Number(resolvedClientId)));
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchAds();
+  }, [resolvedClientId]);
+
+  const hotSalesCount = hotSales.filter((item) => Number(item.client_id) === Number(resolvedClientId)).length;
+  const stayToBuyCount = stayToBuy.filter((item) => Number(item.client_id) === Number(resolvedClientId)).length;
+  const stayToRentCount = stayToRent.filter((item) => Number(item.client_id) === Number(resolvedClientId)).length;
+  const landsCount = lands.filter((item) => Number(item.client_id) === Number(resolvedClientId)).length;
+  const adsCount = ads.length;
+
   const category = [
     {
       name: "Hot Sales",
-      count: 4,
+      count: hotSalesCount,
       icon: <LiaSalesforce />,
       color: "bg-red-500",
     },
     {
       name: "Stay To Buy",
-      count: 4,
+      count: stayToBuyCount,
       icon: <FaHome />,
       color: "bg-blue-500",
     },
     {
       name: "Stay To Rent",
-      count: 4,
+      count: stayToRentCount,
       icon: <MdBedroomParent />,
       color: "bg-green-500",
     },
     {
       name: "Lands",
-      count: 4,
+      count: landsCount,
       icon: <MdOutlineLandslide />,
       color: "bg-yellow-500",
     },
     {
       name: "Advertisements",
-      count: 4,
+      count: adsCount,
       icon: <RiAdvertisementLine />,
       color: "bg-purple-500",
     },
