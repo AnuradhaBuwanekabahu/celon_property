@@ -1,4 +1,5 @@
 import db from "../../configuration/db.js";
+import { getApplicableLimit, publicLimitInfo } from '../utils/limitUtils.js';
 
 const getImageContentType = (buffer) => {
     if (!buffer || buffer.length === 0) return "application/octet-stream";
@@ -45,11 +46,15 @@ export const addLands = async (req, res) => {
             price,
             land_size,
             size_unit,
-            location,
+            map_address,
             city,
             status,
             duration,
-            overview
+            overview,
+            rate,
+            district,
+            address,
+            days
         } = req.body;
 
         const mainImageBuffer = req.files.main_image[0].buffer;
@@ -59,34 +64,51 @@ export const addLands = async (req, res) => {
             mainVideoBuffer = req.files.main_video[0].buffer;
         }
 
+        const limitInfo = await getApplicableLimit(connection, clientId);
+        const listingDays = Number(limitInfo.applicableLimit.days);
+        const expiresAt = new Date(Date.now() + (listingDays * 24 * 60 * 60 * 1000));
+        const listingStatus = Number(limitInfo.applicableLimit.price) > 0 ? 'pending' : 'active';
+
         const [result] = await connection.query(
             `INSERT INTO land (
                 client_id,
+                limit_id,
                 title,
                 description,
                 price,
+                rate,
                 overview,
                 land_size,
                 size_unit,
-                location,
+                map_address,
                 city,
+                district,
+                address,
                 status,
                 duration,
+                days,
+                expires_at,
                 main_image,
                 main_video
-            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
             [
                 clientId,
+                limitInfo.applicableLimit.id,
                 title,
                 description || null,
                 price,
+                rate || null,
                 overview || null,
                 land_size,
                 size_unit,
-                location,
+                map_address || req.body.location || null,
                 city,
-                status || 'pending',
+                district,
+                address,
+                listingStatus,
                 duration || 'month',
+                listingDays,
+                expiresAt,
                 mainImageBuffer,
                 mainVideoBuffer
             ]
@@ -104,18 +126,38 @@ export const addLands = async (req, res) => {
             }
         }
 
+        let paymentId = null;
+        if (Number(limitInfo.applicableLimit.price) > 0) {
+            const [paymentResult] = await connection.query(
+                `INSERT INTO payments (client_id, property_type, property_id, amount, status, created_at)
+                 VALUES (?, 'land', ?, ?, 'pending', NOW())`,
+                [clientId, result.insertId, Number(limitInfo.applicableLimit.price)]
+            );
+            paymentId = paymentResult.insertId;
+        }
+
+        if (Number(limitInfo.applicableLimit.price) === 0) {
+            await connection.query(
+                `UPDATE clients SET total_ads_count = total_ads_count + 1 WHERE id = ?`,
+                [clientId]
+            );
+        }
+
         await connection.commit();
 
         res.status(201).json({
             message: "Land added successfully",
-            id: landsID
+            id: landsID,
+            status: listingStatus,
+            payment_id: paymentId,
+            tier: publicLimitInfo(limitInfo.applicableLimit)
         });
 
     } catch (error) {
         await connection.rollback();
         console.log(error);
 
-        res.status(500).json({
+        res.status(error.code === 'NO_TIER_AVAILABLE' ? 409 : 500).json({
             message: "Internal server error",
             error: error.message
         });
@@ -139,13 +181,22 @@ export const showAllLands = async (req, res) => {
                 title,
                 description,
                 price,
+                   rate,
                 overview,
                 land_size,
                 size_unit,
-                location,
+                map_address,
                 city,
+                   district,
+                   address,
                 status,
                 duration,
+                CASE
+                    WHEN expires_at IS NULL THEN NULL
+                    WHEN DATEDIFF(expires_at, CURRENT_TIMESTAMP) < 0 THEN 0
+                    ELSE DATEDIFF(expires_at, CURRENT_TIMESTAMP)
+                END AS remaining_days,
+                (expires_at IS NOT NULL AND DATEDIFF(expires_at, CURRENT_TIMESTAMP) <= 0 AND status <> 'expired') AS needs_expiry_update,
                 created_at,
                 updated_at
             FROM land
@@ -202,11 +253,14 @@ export const getLandById = async (req, res) => {
                 title,
                 description,
                 price,
+                   rate,
                 overview,
                 land_size,
                 size_unit,
-                location,
+                map_address,
                 city,
+                   district,
+                   address,
                 status,
                 duration,
                 created_at,
@@ -331,12 +385,15 @@ export const updateLand = async (req, res) => {
             price,
             land_size,
             size_unit,
-            location,
+            map_address,
             city,
             status,
             duration,
             overview,
-            remove_image_ids
+            remove_image_ids,
+            rate,
+            district,
+            address
         } = req.body;
 
         // Build dynamic update fields
@@ -351,9 +408,10 @@ export const updateLand = async (req, res) => {
         if (title !== undefined) pushField("title", title);
         if (description !== undefined) pushField("description", description);
         if (price !== undefined) pushField("price", price);
+        if (rate !== undefined) pushField("rate", rate || null);
         if (land_size !== undefined) pushField("land_size", land_size);
         if (size_unit !== undefined) pushField("size_unit", size_unit);
-        if (location !== undefined) pushField("location", location);
+        if (map_address !== undefined) pushField("map_address", map_address);
         if (city !== undefined) pushField("city", city);
         if (status !== undefined) pushField("status", status);
         if (duration !== undefined) pushField("duration", duration);

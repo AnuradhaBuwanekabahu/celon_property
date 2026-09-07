@@ -180,7 +180,7 @@ function Footer() {
           <div className="flex items-center gap-4 text-xs">
             <Link to="/terms" className="hover:text-slate-400 transition">Terms & Conditions</Link>
             <span>|</span>
-            <Link to="/terms" className="hover:text-slate-400 transition">Privacy Policy</Link>
+            <Link to="/privacy" className="hover:text-slate-400 transition">Privacy Policy</Link>
           </div>
         </div>
 

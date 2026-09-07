@@ -43,11 +43,9 @@ const ShowLandsProfile = lazy(() => import("./client/pages/dashboard/Lands/DashB
 const DashBoardEditLands = lazy(() => import("./client/pages/dashboard/Lands/DashBoardEditLands"));
 const DashBoardDeleteLands = lazy(() => import("./client/pages/dashboard/Lands/DashBoardDeleteLands"));
 const DashBoardEditLandsProfile = lazy(() => import("./client/pages/dashboard/Lands/DashboardEditLandsProfile"));
-const DashBoardCreateAds = lazy(() => import("./client/pages/dashboard/Ads/DashBoardCreateAds"));
-const DashBoardShowAds = lazy(() => import("./client/pages/dashboard/Ads/DashBoardShowAds"));
-const DashBoardEditAds = lazy(() => import("./client/pages/dashboard/Ads/DashBoardEditAds"));
-const DashBoardDeleteAds = lazy(() => import("./client/pages/dashboard/Ads/DashBoardDeleteAds"));
-
+const Terms = lazy(() => import("./user/pages/Terms"));
+const History = lazy(() => import("./user/pages/History"));
+const Privacy = lazy(() => import("./user/pages/Privacy"));
 const Listings = lazy(() => import("./user/pages/Listings"));
 const PropertyDetails = lazy(() => import("./user/pages/PropertyDetails"));
 const About = lazy(() => import("./user/pages/About"));
@@ -61,7 +59,7 @@ const HotSales = lazy(() => import("./user/pages/HotSales"));
 const StayToRent = lazy(() => import("./user/pages/StayToRent"));
 const StayToBuy = lazy(() => import("./user/pages/StayToBuy"));
 const Lands = lazy(() => import("./user/pages/Lands"));
-const RentalDetails = lazy(() => import("./user/pages/RentalDetails"));
+const Limits =lazy(()=>import ('../src/superAdmin/pages/Limits'))
 
 const Login = lazy(() => import("./superAdmin/pages/Login"));
 const Dashboard = lazy(() => import("./superAdmin/pages/Dashboard"));
@@ -77,6 +75,7 @@ const ProtectedRouted = lazy(() => import("./admin/routes/ProtectedRoute"));
 const AdminRoutes = lazy(() => import("./admin/routes/AdminRoutes"));
 const RegisterAdmin = lazy(() => import("./admin/pages/adminAuth/RegisterAdmin"));
 const LoginAdmins = lazy(() => import("./admin/pages/adminAuth/LoginAdmin"));
+import ScrollToTop from "./components/ScrollToTop";
 
 const routeFallback = (
   <div style={{
@@ -100,6 +99,7 @@ function App() {
 
   return (
     <div>
+    <ScrollToTop />
       <ToastContainer
         position="top-right"
         autoClose={3000}
@@ -115,8 +115,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/listings" element={<Listings />} />
-          <Route path="/property/:id" element={<PropertyDetails />} />
-          <Route path="/rental/:id" element={<RentalDetails />} />
+         
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/hot-sales" element={<HotSales />} />
@@ -127,6 +126,7 @@ function App() {
           <Route path="/services" element={<Services />} />
           <Route path="/user-login" element={<UserLogin />} />
           <Route path="/user-signup" element={<UserSignUp />} />
+          <Route path="/property/:type/:id" element={<PropertyDetails />} />
 
           <Route element={<ClientLogin />} path="/dashboard/client-login" />
           <Route element={<Register />} path="/dashboard/client-register" />
@@ -162,11 +162,6 @@ function App() {
           <Route element={<DashBoardEditLands />} path="/dashboard/lands/edit/:id" />
           <Route element={<DashBoardDeleteLands />} path="/dashboard/lands/delete/:id" />
           <Route element={<DashBoardEditLandsProfile />} path="/dashboard/lands/edit-profile/:id" />
-
-          <Route element={<DashBoardCreateAds />} path="/dashboard/create-ads/:id" />
-          <Route element={<DashBoardShowAds />} path="/dashboard/ads/view/:id" />
-          <Route element={<DashBoardShowAds />} path="/dashboard/ads/edit/:id" />
-          <Route element={<DashBoardDeleteAds />} path="/dashboard/ads/delete/:id" />
 
           <Route element={<DashboardPayment />} path="/dashboard/payment" />
           <Route path="/payment-success" element={<PaymentSuccess />} />
@@ -205,6 +200,7 @@ function App() {
               </RequireAuth>
             }
           />
+          <Route path="/superadmin/limits" element={<RequireSuperAdmin><Limits /></RequireSuperAdmin>}/>
           <Route
             path="/superadmin/admins"
             element={
@@ -272,6 +268,9 @@ function App() {
 
           <Route path="/admin/login" element={<LoginAdmins />} />
           <Route path="/admin/register" element={<RegisterAdmin />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/history" element={<History />} />
+          <Route path="/privacy" element={<Privacy />} />
           <Route
             path="/admin/*"
             element={

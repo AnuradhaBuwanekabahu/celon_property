@@ -1,30 +1,27 @@
+
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+
 import {
     ArrowLeft,
     Pencil,
-    Search,
-    User,
-    Phone,
-    Mail,
-    MapPin,
-    Wallet
+    Search
 } from "lucide-react";
+
 import { toast } from "react-toastify";
 
 import { getWantedById } from "../../api/wantedApi";
+
 import Loader from "../../components/Loader";
+
 
 const ViewWanted = () => {
 
     const { id } = useParams();
 
     const [property, setProperty] = useState(null);
-    const [loading, setLoading] = useState(true);
 
-    const API_URL =
-        import.meta.env.VITE_BACKEND_URL ||
-        "http://localhost:5000";
+    const [loading, setLoading] = useState(true);
 
 
     // =====================================================
@@ -60,6 +57,7 @@ const ViewWanted = () => {
             );
 
             toast.error(
+                error?.response?.data?.message ||
                 "Failed to load wanted property"
             );
 
@@ -158,92 +156,6 @@ const ViewWanted = () => {
 
 
     // =====================================================
-    // IMAGE URL
-    // =====================================================
-
-    const getImageUrl = (image, imageType = "image/jpeg") => {
-
-        if (!image) {
-            return null;
-        }
-
-
-        // -----------------------------------------------
-        // URL
-        // -----------------------------------------------
-
-        if (typeof image === "string") {
-
-            if (
-                image.startsWith("http://") ||
-                image.startsWith("https://") ||
-                image.startsWith("data:")
-            ) {
-
-                return image;
-
-            }
-
-            return `${API_URL}${image}`;
-
-        }
-
-
-        // -----------------------------------------------
-        // MYSQL BUFFER
-        // -----------------------------------------------
-
-        if (
-            image?.type === "Buffer" &&
-            Array.isArray(image.data)
-        ) {
-
-            const bytes =
-                new Uint8Array(image.data);
-
-            let binary = "";
-
-            bytes.forEach((byte) => {
-
-                binary += String.fromCharCode(byte);
-
-            });
-
-            return `data:${
-                imageType || "image/jpeg"
-            };base64,${btoa(binary)}`;
-
-        }
-
-
-        return null;
-
-    };
-
-
-    // =====================================================
-    // MAIN IMAGE
-    // =====================================================
-
-    const mainImage = getImageUrl(
-        property.main_image,
-        property.main_image_type
-    );
-
-
-    // =====================================================
-    // GALLERY
-    // =====================================================
-
-    const galleryImages =
-        Array.isArray(property.images)
-            ? property.images
-            : Array.isArray(property.gallery)
-                ? property.gallery
-                : [];
-
-
-    // =====================================================
     // PAGE
     // =====================================================
 
@@ -311,14 +223,14 @@ const ViewWanted = () => {
                                     Wanted Property Details
                                 </h1>
 
-                                
-
                             </div>
 
                         </div>
 
                     </div>
 
+
+                    {/* HEADER ACTIONS */}
 
                     <div className="flex gap-3">
 
@@ -376,83 +288,6 @@ const ViewWanted = () => {
 
 
                 {/* =================================================
-                    MAIN IMAGE
-                ================================================= */}
-
-                <div className="
-                    bg-white
-                    rounded-2xl
-                    shadow-sm
-                    border
-                    border-gray-100
-                    p-5
-                    mb-6
-                ">
-
-                    {mainImage ? (
-
-                        <img
-                            src={mainImage}
-                            alt={property.title}
-                            className="
-                                w-full
-                                h-[300px]
-                                sm:h-[400px]
-                                lg:h-[450px]
-                                object-cover
-                                rounded-xl
-                            "
-                            onError={(e) => {
-
-                                console.error(
-                                    "Main image failed:",
-                                    mainImage
-                                );
-
-                                e.currentTarget.style.display =
-                                    "none";
-
-                            }}
-                        />
-
-                    ) : (
-
-                        <div className="
-                            w-full
-                            h-[300px]
-                            sm:h-[400px]
-                            lg:h-[450px]
-                            rounded-xl
-                            bg-[#E8EEF9]
-                            flex
-                            items-center
-                            justify-center
-                            text-gray-500
-                        ">
-
-                            <div className="text-center">
-
-                                <Search
-                                    size={40}
-                                    className="
-                                        mx-auto
-                                        text-gray-400
-                                        mb-3
-                                    "
-                                />
-
-                                No Main Image Available
-
-                            </div>
-
-                        </div>
-
-                    )}
-
-                </div>
-
-
-                {/* =================================================
                     PROPERTY INFORMATION
                 ================================================= */}
 
@@ -485,11 +320,15 @@ const ViewWanted = () => {
                     ">
 
 
+                        {/* TITLE */}
+
                         <Info
                             label="Title"
                             value={property.title}
                         />
 
+
+                        {/* BUDGET */}
 
                         <Info
                             label="Budget"
@@ -503,6 +342,8 @@ const ViewWanted = () => {
                         />
 
 
+                        {/* PREFERRED CITY */}
+
                         <Info
                             label="Preferred City"
                             value={
@@ -511,6 +352,8 @@ const ViewWanted = () => {
                         />
 
 
+                        {/* PHONE NUMBER */}
+
                         <Info
                             label="Phone Number"
                             value={
@@ -518,6 +361,8 @@ const ViewWanted = () => {
                             }
                         />
 
+
+                        {/* STATUS */}
 
                         <Info
                             label="Status"
@@ -545,117 +390,9 @@ const ViewWanted = () => {
                             }
                         />
 
-
-                        {property.full_name && (
-
-                            <Info
-                                label="Client"
-                                value={property.full_name}
-                            />
-
-                        )}
-
-
-                        {property.email && (
-
-                            <Info
-                                label="Email"
-                                value={property.email}
-                            />
-
-                        )}
-
                     </div>
 
                 </div>
-
-
-                {/* =================================================
-                    CLIENT INFORMATION
-                ================================================= */}
-
-                {(property.full_name ||
-                    property.email ||
-                    property.phone_number) && (
-
-                    <div className="
-                        bg-white
-                        rounded-2xl
-                        shadow-sm
-                        border
-                        border-gray-100
-                        p-6
-                        mb-6
-                    ">
-
-                        <h2 className="
-                            text-xl
-                            font-bold
-                            text-[#14213D]
-                            mb-5
-                        ">
-                            Client Information
-                        </h2>
-
-
-                        <div className="
-                            grid
-                            grid-cols-1
-                            sm:grid-cols-2
-                            lg:grid-cols-3
-                            gap-4
-                        ">
-
-
-                            {property.full_name && (
-
-                                <DetailCard
-                                    icon={
-                                        <User size={20} />
-                                    }
-                                    label="Client"
-                                    value={
-                                        property.full_name
-                                    }
-                                />
-
-                            )}
-
-
-                            {property.phone_number && (
-
-                                <DetailCard
-                                    icon={
-                                        <Phone size={20} />
-                                    }
-                                    label="Phone Number"
-                                    value={
-                                        property.phone_number
-                                    }
-                                />
-
-                            )}
-
-
-                            {property.email && (
-
-                                <DetailCard
-                                    icon={
-                                        <Mail size={20} />
-                                    }
-                                    label="Email"
-                                    value={
-                                        property.email
-                                    }
-                                />
-
-                            )}
-
-                        </div>
-
-                    </div>
-
-                )}
 
 
                 {/* =================================================
@@ -685,211 +422,13 @@ const ViewWanted = () => {
                     <p className="
                         text-gray-600
                         leading-relaxed
+                        whitespace-pre-line
                     ">
 
                         {property.description ||
                             "No description available."}
 
                     </p>
-
-                </div>
-
-
-                {/* =================================================
-                    GALLERY
-                ================================================= */}
-
-                <div className="
-                    bg-white
-                    rounded-2xl
-                    shadow-sm
-                    border
-                    border-gray-100
-                    p-6
-                    mb-6
-                ">
-
-                    <div className="
-                        flex
-                        justify-between
-                        items-center
-                        mb-5
-                    ">
-
-                        <h2 className="
-                            text-xl
-                            font-bold
-                            text-[#14213D]
-                        ">
-                            Gallery
-                        </h2>
-
-
-                        
-
-                    </div>
-
-
-                    {galleryImages.length > 0 ? (
-
-                        <div className="
-                            grid
-                            grid-cols-2
-                            sm:grid-cols-3
-                            lg:grid-cols-4
-                            gap-4
-                        ">
-
-                            {galleryImages.map(
-                                (image, index) => {
-
-                                    /*
-                                     * Supports:
-                                     *
-                                     * image = {
-                                     *   id,
-                                     *   image,
-                                     *   image_type
-                                     * }
-                                     *
-                                     * OR
-                                     *
-                                     * image = {
-                                     *   id,
-                                     *   url
-                                     * }
-                                     *
-                                     * OR
-                                     *
-                                     * image = "/api/..."
-                                     */
-
-                                    let imageUrl = null;
-
-
-                                    // URL string
-
-                                    if (
-                                        typeof image === "string"
-                                    ) {
-
-                                        imageUrl =
-                                            getImageUrl(
-                                                image
-                                            );
-
-                                    }
-
-
-                                    // Backend URL object
-
-                                    else if (
-                                        image?.url
-                                    ) {
-
-                                        imageUrl =
-                                            getImageUrl(
-                                                image.url
-                                            );
-
-                                    }
-
-
-                                    // Buffer/object
-
-                                    else if (
-                                        image?.image
-                                    ) {
-
-                                        imageUrl =
-                                            getImageUrl(
-                                                image.image,
-                                                image.image_type
-                                            );
-
-                                    }
-
-
-                                    if (!imageUrl) {
-                                        return null;
-                                    }
-
-
-                                    return (
-
-                                        <div
-                                            key={
-                                                image?.id ||
-                                                index
-                                            }
-                                            className="
-                                                group
-                                                overflow-hidden
-                                                rounded-xl
-                                                bg-gray-100
-                                            "
-                                        >
-
-                                            <img
-                                                src={imageUrl}
-                                                alt={`Wanted Gallery ${index + 1}`}
-                                                className="
-                                                    w-full
-                                                    h-40
-                                                    sm:h-48
-                                                    object-cover
-                                                    rounded-xl
-                                                    transition
-                                                    duration-300
-                                                    hover:opacity-80
-                                                "
-                                                onError={(e) => {
-
-                                                    console.error(
-                                                        "Gallery image failed:",
-                                                        imageUrl
-                                                    );
-
-                                                    e.currentTarget.style.display =
-                                                        "none";
-
-                                                }}
-                                            />
-
-                                        </div>
-
-                                    );
-
-                                }
-                            )}
-
-                        </div>
-
-                    ) : (
-
-                        <div className="
-                            py-12
-                            text-center
-                            bg-gray-50
-                            rounded-xl
-                        ">
-
-                            <Search
-                                size={35}
-                                className="
-                                    mx-auto
-                                    text-gray-400
-                                    mb-3
-                                "
-                            />
-
-                            <p className="text-gray-500">
-                                No gallery images available.
-                            </p>
-
-                        </div>
-
-                    )}
 
                 </div>
 
@@ -959,6 +498,7 @@ const ViewWanted = () => {
         </div>
 
     );
+
 };
 
 
@@ -992,77 +532,9 @@ const Info = ({ label, value }) => (
         </p>
 
     </div>
-);
-
-
-// =====================================================
-// DETAIL CARD
-// =====================================================
-
-const DetailCard = ({
-    icon,
-    label,
-    value
-}) => (
-
-    <div className="
-        bg-white
-        border
-        border-gray-100
-        rounded-xl
-        p-5
-        hover:bg-[#E8EEF9]
-        transition
-    ">
-
-        <div className="
-            flex
-            items-center
-            gap-4
-        ">
-
-            <div className="
-                w-11
-                h-11
-                rounded-xl
-                bg-[#14213D]
-                text-white
-                flex
-                items-center
-                justify-center
-                shrink-0
-            ">
-
-                {icon}
-
-            </div>
-
-
-            <div className="min-w-0">
-
-                <p className="
-                    text-sm
-                    text-gray-500
-                ">
-                    {label}
-                </p>
-
-
-                <p className="
-                    font-semibold
-                    text-[#14213D]
-                    break-words
-                ">
-                    {value || "-"}
-                </p>
-
-            </div>
-
-        </div>
-
-    </div>
 
 );
 
 
 export default ViewWanted;
+

@@ -9,6 +9,7 @@ import {
 } from "../../api/hotSalesApi";
 
 import {
+    districtOptions,
     cityOptions,
     highlightOptions,
     overviewOptions
@@ -41,13 +42,15 @@ const EditHotSale = () => {
         price: "",
         property_type: "",
 
-        rate: "",
+        
 
         area_sqft: "",
+        district: "",
 
         city: "",
+        address: "",
         map_address: "",
-        location: "",
+       
 
         duration: "month",
 
@@ -111,20 +114,22 @@ const EditHotSale = () => {
                     property_type:
                         sale.property_type || "",
 
-                    rate:
-                        sale.rate || "",
+                    
 
                     area_sqft:
                         sale.area_sqft || "",
+                    district:
+                        sale.district || "",
 
                     city:
                         sale.city || "",
+                    address:
+                        sale.address || "",
 
                     map_address:
                         sale.map_address || "",
 
-                    location:
-                        sale.location || "",
+                    
 
                     duration:
                         sale.duration || "month",
@@ -374,22 +379,26 @@ const EditHotSale = () => {
             );
 
 
-            data.append(
-                "rate",
-                form.rate
-            );
 
 
             data.append(
                 "area_sqft",
                 form.area_sqft
             );
+            data.append(
+    "district",
+    form.district
+);
 
 
             data.append(
                 "city",
                 form.city
             );
+            data.append(
+    "address",
+    form.address
+);
 
 
             data.append(
@@ -398,10 +407,7 @@ const EditHotSale = () => {
             );
 
 
-            data.append(
-                "location",
-                form.location
-            );
+           
 
 
             // ============================
@@ -642,195 +648,180 @@ const EditHotSale = () => {
                 </div>
 
 
-                {/* ============================
-                    PROPERTY TYPE / CITY
-                ============================ */}
+          {/* ============================
+    PROPERTY TYPE / DISTRICT / CITY
+============================ */}
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
-                    <div>
-                        <label className="block text-sm font-medium text-[#14213D] mb-2">
+    {/* Property Type */}
 
-                    Proprty_type
+    <div>
 
-                    </label>
+        <label className="block text-sm font-medium text-[#14213D] mb-2">
+            Property Type
+        </label>
 
+        <select
+            name="property_type"
+            value={form.property_type}
+            onChange={handleChange}
+            className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
+        >
 
-                    <select
-                        name="property_type"
-                        value={form.property_type}
-                        onChange={handleChange}
-                        className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
-                    >
+            <option value="">
+                Select Property Type
+            </option>
 
-                        <option value="">
-                            Select Property Type
-                        </option>
+            <option value="House">House</option>
+            <option value="Apartment">Apartment</option>
+            <option value="Bungalow">Bungalow</option>
+            <option value="Hotel">Hotel</option>
+            <option value="WareHouse">WareHouse</option>
+            <option value="Villa">Villa</option>
+            <option value="Studio">Studio</option>
 
-                        <option value="House">
-                            House
-                        </option>
+        </select>
 
-                        <option value="Apartment">
-                            Apartment
-                        </option>
+    </div>
 
-                        <option value="Villa">
-                            Villa
-                        </option>
 
-                        <option value="Bungalow">
-                            Bungalow
-                        </option>
+    {/* District */}
 
-                        <option value="Land">
-                            Land
-                        </option>
+    <div>
 
-                    </select>
+        <label className="block text-sm font-medium text-[#14213D] mb-2">
+            District
+        </label>
 
-                    </div>
+        <select
+            name="district"
+            value={form.district}
+            onChange={handleChange}
+            className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
+        >
 
-                    <div>
+            <option value="">
+                Select District
+            </option>
 
-                        <label className="block text-sm font-medium text-[#14213D] mb-2">
+            {districtOptions.map((district) => (
 
-                    City
+                <option
+                    key={district}
+                    value={district}
+                >
+                    {district}
+                </option>
 
-                    </label>
+            ))}
 
+        </select>
 
-                    <select
-                        name="city"
-                        value={form.city}
-                        onChange={handleChange}
-                        className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
-                    >
+    </div>
 
-                        <option value="">
-                            Select City
-                        </option>
 
+    {/* City */}
+    {/* City */}
 
-                        {cityOptions.map(city => (
+    <div>
 
-                            <option
-                                key={city}
-                                value={city}
-                            >
+        <label className="block text-sm font-medium text-[#14213D] mb-2">
+            City
+        </label>
 
-                                {city}
+        <input
+            type="text"
+            name="city"
+            value={form.city}
+            onChange={handleChange}
+            placeholder="Enter city"
+            className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
+        />
 
-                            </option>
+    </div>
 
-                        ))}
+</div>
 
-                    </select>
 
-                    </div>
+      {/* ============================
+    STATUS / DURATION
+============================ */}
 
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                </div>
+    {/* Status */}
 
+    <div>
 
-                {/* ============================
-                    STATUS / RATE / DURATION
-                ============================ */}
+        <label className="block text-sm font-medium text-[#14213D] mb-2">
+            Status
+        </label>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <select
+            name="status"
+            value={form.status}
+            onChange={handleChange}
+            className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-[#FCA311]"
+        >
 
-                    <div>
+            <option value="pending">
+                Pending
+            </option>
 
-                        <label className="block text-sm font-medium text-[#14213D] mb-2">
+            <option value="active">
+                Active
+            </option>
 
-                    Status
+            <option value="sold">
+                Sold
+            </option>
 
-                    </label>
+        </select>
 
+    </div>
 
-                    <select
-                        name="status"
-                        value={form.status}
-                        onChange={handleChange}
-                        className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-[#FCA311]"
-                    >
 
-                        <option value="pending">
-                            Pending
-                        </option>
+    {/* Duration */}
 
-                        <option value="active">
-                            Active
-                        </option>
+    <div>
 
-                        <option value="sold">
-                            Sold
-                        </option>
+        <label className="block text-sm font-medium text-[#14213D] mb-2">
+            Duration
+        </label>
 
-                    </select>
+        <select
+            name="duration"
+            value={form.duration}
+            onChange={handleChange}
+            className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-[#FCA311]"
+        >
 
-                    </div>
+            <option value="permanent">
+                Permanent
+            </option>
 
-                    <div>
-                        <label className="block text-sm font-medium text-[#14213D] mb-2">
+            <option value="month">
+                Month
+            </option>
 
-                    Rate
+            <option value="year">
+                Year
+            </option>
 
-                    </label>
+            <option value="week">
+                Week
+            </option>
 
+            <option value="day">
+                Day
+            </option>
 
-                    <input
-                        type="number"
-                        name="rate"
-                        value={form.rate}
-                        onChange={handleChange}
-                        placeholder="Rate"
-                        className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
-                    />
+        </select>
 
-                    </div>
+    </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-[#14213D] mb-2">
-
-                    Duration
-
-                    </label>
-
-
-                    <select
-                        name="duration"
-                        value={form.duration}
-                        onChange={handleChange}
-                        className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-[#FCA311]"
-                    >
-
-                        <option value="permanent">
-                            Permanent
-                        </option>
-
-                        <option value="month">
-                            Month
-                        </option>
-
-                        <option value="year">
-                            Year
-                        </option>
-
-                        <option value="week">
-                            Week
-                        </option>
-
-                        <option value="day">
-                            Day
-                        </option>
-
-                    </select>
-
-                    </div>
-
-
-                </div>
+</div>
 
 
                 {/* ============================
@@ -980,44 +971,76 @@ const EditHotSale = () => {
                 </div>
 
 
-                {/* ============================
-                    AREA / MAP
-                ============================ */}
+              {/* ============================
+    AREA / ADDRESS
+============================ */}
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
+    {/* Area */}
 
-                    <input
-                        type="number"
-                        name="area_sqft"
-                        value={form.area_sqft}
-                        onChange={handleChange}
-                        placeholder="Area (sqft)"
-                        className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
-                    />
+    <div>
 
+        <label className="block text-sm font-medium text-[#14213D] mb-2">
+            Area (sqft)
+        </label>
 
-                    <input
-                        type="text"
-                        name="map_address"
-                        value={form.map_address}
-                        onChange={handleChange}
-                        placeholder="Map address"
-                        className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
-                    />
+        <input
+            type="number"
+            name="area_sqft"
+            value={form.area_sqft}
+            onChange={handleChange}
+            placeholder="Area (sqft)"
+            className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
+        />
 
-
-                </div>
+    </div>
 
 
-                <input
-                    type="text"
-                    name="location"
-                    value={form.location}
-                    onChange={handleChange}
-                    placeholder="Enter your location address"
-                    className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
-                />
+    {/* Address */}
+
+    <div>
+
+        <label className="block text-sm font-medium text-[#14213D] mb-2">
+            Address
+        </label>
+
+        <input
+            type="text"
+            name="address"
+            value={form.address}
+            onChange={handleChange}
+            placeholder="Enter property address"
+            className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
+        />
+
+    </div>
+
+</div>
+
+
+{/* ============================
+    MAP ADDRESS
+============================ */}
+
+<div>
+
+    <label className="block text-sm font-medium text-[#14213D] mb-2">
+        Map Address
+    </label>
+
+    <input
+        type="text"
+        name="map_address"
+        value={form.map_address}
+        onChange={handleChange}
+        placeholder="Enter Google Maps address/link"
+        className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
+    />
+
+</div>
+
+
 
 
                 {/* ============================

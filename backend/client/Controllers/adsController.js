@@ -1,5 +1,13 @@
 import db from "../../configuration/db.js";
 
+const normalizePosition = (value) => {
+    if (value === 'front_page_bottom') return 'front_page_bottom';
+    if (value === 'front_page_top') return 'front_page_top';
+    if (String(value) === '1') return 'front_page_bottom';
+    if (String(value) === '2') return 'front_page_top';
+    return 'sub_pages';
+};
+
 
 // Add Advertisement
 
@@ -50,7 +58,7 @@ export const addAds = async (req, res) => {
 
             link_url || null,
 
-            position || 'sub_pages',
+            normalizePosition(position),
 
             is_active === undefined || is_active === null || is_active === '' ? 1 : is_active
 
@@ -114,6 +122,7 @@ export const showAllAds = async (req, res) => {
 
         const adsWithImage = ads.map((ad) => ({
             ...ad,
+            position: normalizePosition(ad.position),
             image: `/api/ads/image/${ad.id}`
         }));
 
@@ -170,14 +179,6 @@ export const getAdImage = async (req, res) => {
     } catch (error) {
 
         console.log(error);
-
-
-        res.status(500).json({
-
-            message: "Internal server error"
-
-        });
-
     }
 
 };

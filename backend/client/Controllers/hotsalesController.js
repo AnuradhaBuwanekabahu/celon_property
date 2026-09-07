@@ -1,4 +1,5 @@
 import db from "../../configuration/db.js"
+import { getApplicableLimit, publicLimitInfo } from '../utils/limitUtils.js'
 
 const parseJSONSafe = (value) => {
     if (typeof value !== 'string') return value;
@@ -32,9 +33,11 @@ export const addHotSale = async (req, res) => {
             overview,
             highlights,
             area_sqft,
+            district,
             city,
+            address,
             map_address,
-            location
+            days
         } = req.body;
 
         const normalizedClientId = client_id && String(client_id).trim() !== ''
@@ -45,22 +48,30 @@ export const addHotSale = async (req, res) => {
         const mainVideoBuffer = req.files?.main_video?.[0]?.buffer ?? null;
 
         if (!normalizedClientId) {
+            await connection.rollback();
             return res.status(401).json({
                 message: "Please log in before adding a property."
             });
         }
 
         if (!mainImageBuffer) {
+            await connection.rollback();
             return res.status(400).json({
                 message: "Main image is required"
             });
         }
+
+        const limitInfo = await getApplicableLimit(connection, normalizedClientId);
+        const listingDays = Number(limitInfo.applicableLimit.days);
+        const expiresAt = new Date(Date.now() + (listingDays * 24 * 60 * 60 * 1000));
+        const listingStatus = Number(limitInfo.applicableLimit.price) > 0 ? 'pending' : 'active';
 
         const [result] = await connection.query(
             `
             INSERT INTO hot_sales
             (
                 client_id,
+                limit_id,
                 title,
                 description,
                 price,
@@ -70,16 +81,21 @@ export const addHotSale = async (req, res) => {
                 highlights,
                 overview,
                 area_sqft,
+                district,
                 city,
+                address,
                 map_address,
-                location,
+                selected_days,
+                expires_at,
+                status,
                 main_video,
                 main_image
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `,
             [
                 normalizedClientId,
+                limitInfo.applicableLimit.id,
                 title,
                 description || null,
                 price,
@@ -89,9 +105,13 @@ export const addHotSale = async (req, res) => {
                 highlights ? JSON.stringify(highlights) : null,
                 overview ? JSON.stringify(overview) : null,
                 area_sqft || null,
+                district,
                 city,
+                address,
                 map_address || null,
-                location || null,
+                listingDays,
+                expiresAt,
+                listingStatus,
                 mainVideoBuffer,
                 mainImageBuffer
             ]
@@ -99,7 +119,7 @@ export const addHotSale = async (req, res) => {
 
         const hotSaleId = result.insertId;
 
-        // Insert additional images
+        // Insert additional images before finalizing the transaction.
         if (req.files?.images) {
             for (const image of req.files.images) {
                 await connection.query(
@@ -116,13 +136,39 @@ export const addHotSale = async (req, res) => {
             }
         }
 
+        if (Number(limitInfo.applicableLimit.price) > 0) {
+            const [paymentResult] = await connection.query(
+                `INSERT INTO payments (client_id, property_type, property_id, amount, status, created_at)
+                 VALUES (?, 'hot_sales', ?, ?, 'pending', NOW())`,
+                [normalizedClientId, hotSaleId, Number(limitInfo.applicableLimit.price)]
+            );
+
+            await connection.commit();
+            return res.status(201).json({
+                message: 'Hot sale added successfully and payment is pending',
+                id: hotSaleId,
+                paymentId: paymentResult.insertId,
+                status: 'pending',
+                tier: publicLimitInfo(limitInfo.applicableLimit)
+            });
+        }
+
+        await connection.query(
+            `UPDATE clients SET total_ads_count = total_ads_count + 1 WHERE id = ?`,
+            [normalizedClientId]
+        );
+
         await connection.commit();
-        res.status(201).json({ message: "Hot sale added successfully", id: hotSaleId });
+        res.status(201).json({ message: "Hot sale added successfully", id: hotSaleId, status: listingStatus, tier: publicLimitInfo(limitInfo.applicableLimit) });
 
     } catch (error) {
-        await connection.rollback();
+        try {
+            await connection.rollback();
+        } catch (rollbackError) {
+            console.error("HOT SALE ROLLBACK ERROR:", rollbackError);
+        }
         console.log(error);
-        res.status(500).json({ message: "Internal server error", error: error.message });
+        res.status(error.code === 'NO_TIER_AVAILABLE' ? 409 : 500).json({ message: error.message || "Internal server error" });
     } finally {
         connection.release();
     }
@@ -145,11 +191,19 @@ export const showallhotsales = async (req, res) => {
                 highlights,
                 overview,
                 area_sqft,
+                district,
                 city,
+                address,
                 map_address,
-                location,
                 main_video,
                 main_image,
+                selected_days AS days,
+                CASE
+                    WHEN expires_at IS NULL THEN NULL
+                    WHEN DATEDIFF(expires_at, CURRENT_TIMESTAMP) < 0 THEN 0
+                    ELSE DATEDIFF(expires_at, CURRENT_TIMESTAMP)
+                END AS remaining_days,
+                (expires_at IS NOT NULL AND DATEDIFF(expires_at, CURRENT_TIMESTAMP) <= 0 AND status <> 'expired') AS needs_expiry_update,
                 status,
                 created_at,
                 updated_at
@@ -217,11 +271,13 @@ export const getHotSaleById = async (req, res) => {
                 highlights,
                 overview,
                 area_sqft,
+                district,
                 city,
+                address,
                 map_address,
-                location,
                 main_video,
                 main_image,
+                selected_days AS days,
                 status,
                 created_at,
                 updated_at
@@ -358,9 +414,10 @@ export const editHotSale = async (req, res) => {
             overview,
             highlights,
             area_sqft,
+            district,
             city,
+            address,
             map_address,
-            location,
             status
         } = req.body;
 
@@ -384,9 +441,10 @@ export const editHotSale = async (req, res) => {
                 highlights = ?,
                 overview = ?,
                 area_sqft = ?,
+                district = ?,
                 city = ?,
+                address = ?,
                 map_address = ?,
-                location = ?,
                 status = ?,
                 main_image = ?,
                 main_video = ?
@@ -402,9 +460,10 @@ export const editHotSale = async (req, res) => {
                 highlights ? JSON.stringify(highlights) : current.highlights,
                 overview ? JSON.stringify(overview) : current.overview,
                 areaSqftValue,
+                district ?? current.district,
                 city ?? current.city,
+                address ?? current.address,
                 map_address ?? current.map_address,
-                location ?? current.location,
                 status ?? current.status,
                 mainImageBuffer ?? current.main_image,
                 mainVideoBuffer ?? current.main_video,

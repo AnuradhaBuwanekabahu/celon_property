@@ -1,5 +1,5 @@
 import React from 'react';
-import { overviewOptions, cityOptions } from '../Assets/data.js'
+import { overviewOptions, districtOptions } from '../../assets/data.js'
 import { Upload, X, ImagePlus } from 'lucide-react';
 import { useContext } from 'react';
 import { clientContext } from '../context/ClientContext.jsx';
@@ -9,8 +9,11 @@ const AddLands = () => {
 
     const {
         landFormData,
+        setLandFormData,
         handleLandChange,
         handleLandSubmit,
+        availableLimits,
+        setSelectedLimitDays,
 
         handleLandOverviewChange,
         addLandOverview,
@@ -36,6 +39,8 @@ const AddLands = () => {
         removeLandGalleryImage,
     } = useContext(clientContext);
 
+    const limitOptions = Array.isArray(availableLimits) ? availableLimits : [];
+
     return (
         <div className="max-w-6xl mt-8 mx-auto p-4 sm:p-6">
             <h2 className="text-xl sm:text-2xl font-bold text-[#14213D] mb-5">
@@ -46,88 +51,193 @@ const AddLands = () => {
 
                 {/* Basic details */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <input
-                        type="text"
-                        name="title"
+                    <div className="space-y-1">
+                        <label htmlFor="title" className="block text-sm font-semibold text-[#14213D]">
+                            Land Title
+                        </label>
+                        <input
+                            id="title"
+                            type="text"
+                            name="title"
+                            onChange={handleLandChange}
+                            placeholder="Land title"
+                            className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
+                        />
+                    </div>
+
+                    <div className="space-y-1">
+                        <label htmlFor="price" className="block text-sm font-semibold text-[#14213D]">
+                            Price (RS)
+                        </label>
+                        <input
+                            id="price"
+                            type="number"
+                            name="price"
+                            onChange={handleLandChange}
+                            placeholder="Price (RS)"
+                            className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
+                        />
+                    </div>
+                </div>
+
+                <div className="space-y-1">
+                    <label htmlFor="description" className="block text-sm font-semibold text-[#14213D]">
+                        Description
+                    </label>
+                    <textarea
+                        id="description"
+                        name="description"
                         onChange={handleLandChange}
-                        placeholder="Land title"
-                        className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
-                    />
-                    <input
-                        type="number"
-                        name="price"
-                        onChange={handleLandChange}
-                        placeholder="Price (RS)"
+                        placeholder="Enter description here..."
+                        rows={4}
                         className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
                     />
                 </div>
 
-                <textarea
-                    name="description"
-                    onChange={handleLandChange}
-                    placeholder="Enter description here..."
-                    rows={4}
-                    className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
-                />
-
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <select
-                        name="city"
-                        value={landFormData.city}
-                        onChange={handleLandChange}
-                        className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
-                    >
-                        <option value="">Select City</option>
-                        {cityOptions.map((item, index) => (
-                            <option key={index} value={item}>
-                                {item}
-                            </option>
-                        ))}
-                    </select>
+                    <div className="space-y-1">
+                        <label htmlFor="city" className="block text-sm font-semibold text-[#14213D]">
+                            City
+                        </label>
+                        <input
+                            id="city"
+                            type="text"
+                            name="city"
+                            value={landFormData.city}
+                            onChange={handleLandChange}
+                            placeholder="Enter city"
+                            className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
+                        />
+                    </div>
 
-                    <input
-                        type="text"
-                        name="location"
-                        onChange={handleLandChange}
-                        placeholder="Enter location address"
-                        className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
-                    />
+                    <div className="space-y-1">
+                        <label htmlFor="district" className="block text-sm font-semibold text-[#14213D]">
+                            District
+                        </label>
+                        <select
+                            id="district"
+                            name="district"
+                            value={landFormData.district}
+                            onChange={handleLandChange}
+                            required
+                            className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
+                        >
+                            <option value="">Select District</option>
+                            {districtOptions.map((item) => <option key={item} value={item}>{item}</option>)}
+                        </select>
+                    </div>
+
+                    <div className="space-y-1">
+                        <label htmlFor="address" className="block text-sm font-semibold text-[#14213D]">
+                            Full Address
+                        </label>
+                        <input
+                            id="address"
+                            type="text"
+                            name="address"
+                            value={landFormData.address}
+                            onChange={handleLandChange}
+                            placeholder="Full address"
+                            required
+                            className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
+                        />
+                    </div>
+
+                    <div className="space-y-1">
+                        <label htmlFor="map_address" className="block text-sm font-semibold text-[#14213D]">
+                            Map Address
+                        </label>
+                        <input
+                            id="map_address"
+                            type="text"
+                            name="map_address"
+                            value={landFormData.map_address}
+                            onChange={handleLandChange}
+                            placeholder="Map address"
+                            className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
+                        />
+                    </div>
                 </div>
 
                 {/* Land size & unit */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <input
-                        type="number"
-                        name="land_size"
-                        step="0.01"
-                        onChange={handleLandChange}
-                        placeholder="Land size"
-                        className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
-                    />
+                    <div className="space-y-1">
+                        <label htmlFor="land_size" className="block text-sm font-semibold text-[#14213D]">
+                            Land Size
+                        </label>
+                        <input
+                            id="land_size"
+                            type="number"
+                            name="land_size"
+                            step="0.01"
+                            onChange={handleLandChange}
+                            placeholder="Land size"
+                            className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
+                        />
+                    </div>
 
-                    <select
-                        name="size_unit"
-                        value={landFormData.size_unit}
-                        onChange={handleLandChange}
-                        className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
-                    >
-                        <option value="perches">Perches</option>
-                        <option value="acres">Acres</option>
-                        <option value="sqft">Sqft</option>
-                    </select>
+                    <div className="space-y-1">
+                        <label htmlFor="size_unit" className="block text-sm font-semibold text-[#14213D]">
+                            Size Unit
+                        </label>
+                        <select
+                            id="size_unit"
+                            name="size_unit"
+                            value={landFormData.size_unit}
+                            onChange={handleLandChange}
+                            className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
+                        >
+                            <option value="perches">Perches</option>
+                            <option value="acres">Acres</option>
+                            <option value="sqft">Sqft</option>
+                        </select>
+                    </div>
 
-                    <select
-                        name="duration"
-                        value={landFormData.duration}
-                        onChange={handleLandChange}
-                        className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
-                    >
-                        <option value="permanent">Permanent</option>
-                        <option value="year">Year</option>
-                        <option value="month">Month</option>
-                        <option value="week">Week</option>
-                        <option value="day">Day</option>
-                    </select>
+                    <div className="space-y-1">
+                        <label htmlFor="duration" className="block text-sm font-semibold text-[#14213D]">
+                            Duration
+                        </label>
+                        <select
+                            id="duration"
+                            name="duration"
+                            value={landFormData.duration}
+                            onChange={handleLandChange}
+                            className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
+                        >
+                            <option value="permanent">Permanent</option>
+                            <option value="year">Year</option>
+                            <option value="month">Month</option>
+                            <option value="week">Week</option>
+                            <option value="day">Day</option>
+                        </select>
+                    </div>
+
+                    <div className="space-y-1">
+                        <label htmlFor="ad_limit" className="block text-sm font-semibold text-[#14213D]">
+                            Ad Limit
+                        </label>
+                        <select
+                            id="ad_limit"
+                            value={landFormData.days || ''}
+                            onChange={(e) => {
+                                const selectedLimit = limitOptions.find((limit) => String(limit.days) === e.target.value);
+                                setSelectedLimitDays(String(selectedLimit?.days ?? ''));
+                                setLandFormData((prev) => ({
+                                    ...prev,
+                                    days: selectedLimit ? String(selectedLimit.days) : '',
+                                    limit_id: selectedLimit ? String(selectedLimit.id) : '',
+                                }));
+                            }}
+                            className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
+                        >
+                            <option value="">Select ad limit</option>
+                            {limitOptions.map((limit) => (
+                                <option key={limit.id} value={limit.days}>
+                                    {limit.days} days {Number(limit.price) > 0 ? `- Rs ${Number(limit.price).toLocaleString()}` : '- Free'}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
 
                 {/* Overview */}
@@ -137,30 +247,42 @@ const AddLands = () => {
 
                     {landFormData.overview.map((item, index) => (
                         <div key={index} className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                            <select
-                                value={item.title}
-                                onChange={(e) => handleLandOverviewChange(index, 'title', e.target.value)}
-                                className="border border-gray-300 p-3 rounded-xl text-sm w-full sm:w-1/2"
-                            >
-                                {overviewOptions.map((option) => (
-                                    <option key={option.value} value={option.value}>
-                                        {option.label}
-                                    </option>
-                                ))}
-                            </select>
+                            <div className="w-full sm:w-1/2 space-y-1">
+                                <label htmlFor={`overview-title-${index}`} className="block text-xs font-medium text-gray-600">
+                                    Overview Title
+                                </label>
+                                <select
+                                    id={`overview-title-${index}`}
+                                    value={item.title}
+                                    onChange={(e) => handleLandOverviewChange(index, 'title', e.target.value)}
+                                    className="border border-gray-300 p-3 rounded-xl text-sm w-full"
+                                >
+                                    {overviewOptions.map((option) => (
+                                        <option key={option.value} value={option.value}>
+                                            {option.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
 
-                            <input
-                                type="text"
-                                placeholder="Enter value"
-                                value={item.value}
-                                onChange={(e) => handleLandOverviewChange(index, 'value', e.target.value)}
-                                className="border border-gray-300 p-3 rounded-xl text-sm w-full sm:w-1/2"
-                            />
+                            <div className="w-full sm:w-1/2 space-y-1">
+                                <label htmlFor={`overview-value-${index}`} className="block text-xs font-medium text-gray-600">
+                                    Value
+                                </label>
+                                <input
+                                    id={`overview-value-${index}`}
+                                    type="text"
+                                    placeholder="Enter value"
+                                    value={item.value}
+                                    onChange={(e) => handleLandOverviewChange(index, 'value', e.target.value)}
+                                    className="border border-gray-300 p-3 rounded-xl text-sm w-full"
+                                />
+                            </div>
 
                             <button
                                 type="button"
                                 onClick={() => removeLandOverview(index)}
-                                className="bg-red-500 text-white px-4 py-2 rounded-xl text-sm shrink-0"
+                                className="bg-red-500 text-white px-4 py-2 rounded-xl text-sm shrink-0 self-end"
                             >
                                 Remove
                             </button>

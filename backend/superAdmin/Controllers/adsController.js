@@ -24,6 +24,14 @@ const getImageBuffer = (req) => {
     return Buffer.from("placeholder");
 };
 
+const normalizePosition = (value) => {
+    if (value === 'front_page_bottom') return 'front_page_bottom';
+    if (value === 'front_page_top') return 'front_page_top';
+    if (String(value) === '1') return 'front_page_bottom';
+    if (String(value) === '2') return 'front_page_top';
+    return 'sub_pages';
+};
+
 // Create Advertisement
 
 export const createAd = async (req, res) => {
@@ -32,7 +40,7 @@ export const createAd = async (req, res) => {
 
         const title = req.body?.title?.trim();
         const link_url = req.body?.link_url || null;
-        const position = Number(req.body?.position ?? 0) || 0;
+        const position = normalizePosition(req.body?.position);
         const clientId = await getOwnerId(req);
 
         if (!title) {
@@ -152,14 +160,13 @@ export const getAdImage = async (req, res) => {
 // Update Advertisement
 
 export const updateAd = async (req, res) => {
-
     try {
 
         const { id } = req.params;
 
         const title = req.body?.title?.trim();
         const link_url = req.body?.link_url || null;
-        const position = Number(req.body?.position ?? 0) || 0;
+        const position = normalizePosition(req.body?.position);
         const clientId = await getOwnerId(req);
 
         const [existingAd] = await db.query(
@@ -297,6 +304,8 @@ export const getAds = async (req, res) => {
         const adsWithImage = ads.map((ad) => ({
 
             ...ad,
+
+            position: normalizePosition(ad.position),
 
             image: `/api/super-admin/ads/image/${ad.id}`
 

@@ -31,6 +31,29 @@ function transformLand(item) {
     kitchen: item.kitchen || 0,
     garden: item.garden || 0,
     gallery: mainImage ? [mainImage, ...gallery] : gallery,
+
+    rating: item.rate ?? 0,
+    duration: item.duration || 'permanent',
+    city: item.city,
+    video: normalizeImageUrl(item.main_video),
+    mainVideo: normalizeImageUrl(item.main_video),
+
+    overview: Array.isArray(item.overview)
+      ? item.overview
+      : [],
+
+    // =========================
+    // Client
+    // =========================
+    clientId: item.client_id,
+
+    // =========================
+    // Dates
+    // =========================
+    createdAt: item.created_at,
+    updatedAt: item.updated_at,
+
+
   }
 }
 
@@ -46,4 +69,36 @@ export async function getLandById(id) {
   if (!res.ok) throw new Error('Failed to fetch land by id')
   const data = await res.json()
   return transformLand(data.land || data)
+}
+
+export async function getClientById(id) {
+  const res = await fetch(`${API_URL}/api/clients/${id}`)
+
+  if (!res.ok) {
+    throw new Error('Failed to fetch client')
+  }
+
+  const data = await res.json()
+
+  return data.client
+}
+
+export async function sendPropertyInquiry(data) {
+  const res = await fetch(`${API_URL}/api/users/inquiry`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  const result = await res.json();
+
+  if (!res.ok) {
+    throw new Error(
+      result.message || "Failed to send property inquiry"
+    );
+  }
+
+  return result;
 }

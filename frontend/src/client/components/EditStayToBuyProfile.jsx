@@ -1,7 +1,7 @@
 import React, { useEffect, useContext } from 'react';
 import { useParams } from 'react-router-dom';
 import { clientContext } from '../context/ClientContext.jsx';
-import { overviewOptions, highlightOptions, cityOptions } from '../Assets/data.js';
+import { overviewOptions, highlightOptions } from '../../assets/data.js';
 import { Upload, X, ImagePlus } from 'lucide-react';
 
 const EditStayToBuyProfile = ({ propertyId }) => {
@@ -88,19 +88,14 @@ const EditStayToBuyProfile = ({ propertyId }) => {
                         <option value="Studio">Studio</option>
                     </select>
 
-                    <select
+                    <input
+                        type="text"
                         name="city"
                         value={stayFormData.city}
                         onChange={handleStayChange}
+                        placeholder="Enter city"
                         className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
-                    >
-                        <option value="">Select City</option>
-                        {cityOptions.map((item, index) => (
-                            <option key={index} value={item}>
-                                {item}
-                            </option>
-                        ))}
-                    </select>
+                    />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -200,15 +195,6 @@ const EditStayToBuyProfile = ({ propertyId }) => {
                         className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
                     />
                 </div>
-
-                <input
-                    type="text"
-                    name="location"
-                    value={stayFormData.location}
-                    onChange={handleStayChange}
-                    placeholder="Enter your location address"
-                    className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
-                />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">

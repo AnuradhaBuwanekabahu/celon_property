@@ -51,11 +51,15 @@ export default function RecordForm({ fields, values, onChange }) {
                 className="w-full rounded-lg border border-slate-300 bg-slate-50/30 px-3.5 py-2.5 text-sm text-slate-900 font-medium transition-all duration-200 focus:border-amber-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/10 cursor-pointer"
               >
                 <option value="">Select option...</option>
-                {f.options?.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
-                  </option>
-                ))}
+                {f.options?.map((opt) => {
+                  const val = typeof opt === 'object' ? opt.value : opt;
+                  const label = typeof opt === 'object' ? opt.label : opt;
+                  return (
+                    <option key={val} value={val}>
+                      {label}
+                    </option>
+                  );
+                })}
               </select>
             ) : isImage ? (
               <div className="space-y-3">

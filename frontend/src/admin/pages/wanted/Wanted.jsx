@@ -42,31 +42,9 @@ const Wanted = () => {
     const itemsPerPage = 10;
 
 
-    const API_URL =
-        import.meta.env.VITE_BACKEND_URL ||
-        "http://localhost:5000";
 
 
-    // =====================================================
-    // IMAGE URL
-    // =====================================================
-
-    const getImageUrl = (image) => {
-
-        if (!image) {
-            return null;
-        }
-
-        if (
-            image.startsWith("http://") ||
-            image.startsWith("https://") ||
-            image.startsWith("data:")
-        ) {
-            return image;
-        }
-
-        return `${API_URL}${image}`;
-    };
+  
 
 
     // =====================================================
@@ -375,7 +353,7 @@ const Wanted = () => {
 
                     <table className="
                         w-full
-                        min-w-[1000px]
+                        min-w-[900px]
                     ">
 
 
@@ -388,13 +366,6 @@ const Wanted = () => {
 
                             <tr>
 
-                                <th className="
-                                    px-5
-                                    py-4
-                                    text-left
-                                ">
-                                    Image
-                                </th>
 
 
                                 <th className="
@@ -464,7 +435,7 @@ const Wanted = () => {
                                 <tr>
 
                                     <td
-                                        colSpan="7"
+                                        colSpan="6"
                                         className="
                                             text-center
                                             py-12
@@ -486,10 +457,7 @@ const Wanted = () => {
                                 paginatedProperties.map(
                                     (property) => {
 
-                                        const imageUrl =
-                                            getImageUrl(
-                                                property.main_image
-                                            );
+                                        
 
 
                                         return (
@@ -505,63 +473,8 @@ const Wanted = () => {
                                             >
 
 
-                                                {/* IMAGE */}
+                                         
 
-                                                <td className="
-                                                    px-5
-                                                    py-4
-                                                ">
-
-                                                    {imageUrl ? (
-
-                                                        <img
-                                                            src={imageUrl}
-                                                            alt={
-                                                                property.title ||
-                                                                "Wanted Property"
-                                                            }
-                                                            className="
-                                                                w-24
-                                                                h-16
-                                                                rounded-xl
-                                                                object-cover
-                                                                border
-                                                                border-gray-200
-                                                            "
-                                                            onError={(e) => {
-
-                                                                e.currentTarget.style.display =
-                                                                    "none";
-
-                                                            }}
-                                                        />
-
-                                                    ) : (
-
-                                                        <div className="
-                                                            w-24
-                                                            h-16
-                                                            rounded-xl
-                                                            bg-gray-100
-                                                            border
-                                                            border-gray-200
-                                                            flex
-                                                            items-center
-                                                            justify-center
-                                                        ">
-
-                                                            <span className="
-                                                                text-xs
-                                                                text-gray-500
-                                                            ">
-                                                                No Image
-                                                            </span>
-
-                                                        </div>
-
-                                                    )}
-
-                                                </td>
 
 
                                                 {/* TITLE */}
@@ -579,17 +492,7 @@ const Wanted = () => {
                                                     </p>
 
 
-                                                    {property.full_name && (
-
-                                                        <p className="
-                                                            text-sm
-                                                            text-gray-500
-                                                            mt-1
-                                                        ">
-                                                            {property.full_name}
-                                                        </p>
-
-                                                    )}
+                                                    
 
                                                 </td>
 

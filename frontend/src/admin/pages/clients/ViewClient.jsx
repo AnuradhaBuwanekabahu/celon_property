@@ -412,7 +412,7 @@ const ViewClient = () => {
                         {client.avatar ? (
 
                             <img
-                                src={`http://localhost:5000/api/clients/${client.id}/avatar`}
+                                src={`http://localhost:5000/api/admin/clients/${client.id}/avatar`}
                                 alt={
                                     client.full_name ||
                                     "Client"

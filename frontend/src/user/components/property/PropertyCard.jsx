@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Star, MapPin, Bed, Bath, Heart } from 'lucide-react'
+import { MapPin, Bed, Bath, Heart } from 'lucide-react'
 
 const tagColors = {
   Apartment: 'bg-blue-500/90 text-white',
@@ -20,9 +20,9 @@ function PropertyCard({ property }) {
   const propertyImage = property.image || property.main_image || (property.gallery && property.gallery[0])
 
   return (
-    <div className="group relative rounded-2xl overflow-hidden bg-white shadow-md hover:shadow-2xl transition-all duration-300 h-[400px] flex flex-col cursor-pointer border border-gray-100/80">
+    <div className="group relative rounded-2xl overflow-hidden bg-white shadow-md hover:shadow-2xl transition-all duration-300 flex flex-col cursor-pointer border border-gray-100/80">
       {/* Image Container with Zoom Effect */}
-      <div className="relative w-full h-[58%] overflow-hidden bg-gray-100">
+      <div className="relative w-full h-48 overflow-hidden bg-gray-100">
         {propertyImage ? (
           <img
             src={propertyImage}
@@ -57,46 +57,25 @@ function PropertyCard({ property }) {
       </div>
 
       {/* Floating Info Container */}
-      <div className="relative -mt-6 mx-3 mb-3 bg-white rounded-xl p-4 shadow-lg border border-gray-100 flex flex-col justify-between flex-1 group-hover:border-gray-200 transition-colors">
+      <div className="relative -mt-6 mx-3 mb-3 bg-white rounded-xl p-4 shadow-lg border border-gray-100 flex flex-col group-hover:border-gray-200 transition-colors">
         <div>
           <h3 className="text-gray-900 font-bold text-base md:text-lg mb-1 tracking-tight line-clamp-1 group-hover:text-[#14213D] transition-colors">
             {property.title || 'Untitled Property'}
           </h3>
 
-          <p className="text-gray-500 text-xs mb-3 flex items-center gap-1.5 min-h-[1.25rem]">
+          <p className="text-gray-500 text-xs flex items-center gap-1.5">
             <MapPin size={14} className="text-[#14213D] shrink-0 stroke-[2]" />
             <span className="line-clamp-1">{property.location || property.city || 'Sri Lanka'}</span>
           </p>
-
-          {/* Quick Amenities Row */}
-          {(property.beds > 0 || property.bathrooms > 0 || property.rooms > 0) && (
-            <div className="flex items-center gap-3 text-xs text-gray-500 pt-1 pb-2 border-t border-gray-100">
-              {property.beds > 0 && (
-                <span className="flex items-center gap-1">
-                  <Bed size={13} className="text-gray-400" /> {property.beds} Beds
-                </span>
-              )}
-              {property.bathrooms > 0 && (
-                <span className="flex items-center gap-1">
-                  <Bath size={13} className="text-gray-400" /> {property.bathrooms} Baths
-                </span>
-              )}
-            </div>
-          )}
         </div>
 
-        {/* Footer: Price & Rating */}
-        <div className="flex justify-between items-end pt-2 border-t border-gray-100/80">
+        {/* Footer: Price */}
+        <div className="flex justify-between items-end mt-3 pt-3 border-t border-gray-100/80">
           <div>
             <span className="text-[10px] uppercase font-semibold text-gray-400 block tracking-wider">Price</span>
             <p className="text-[#14213D] text-base md:text-lg font-extrabold tracking-tight leading-none">
               LKR {formattedPrice}
             </p>
-          </div>
-
-          <div className="flex items-center gap-1 text-xs font-bold text-gray-800 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-100">
-            <Star size={13} className="text-amber-500 fill-amber-500" />
-            <span>{property.rating || '4.5'}</span>
           </div>
         </div>
       </div>

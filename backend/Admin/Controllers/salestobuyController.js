@@ -1,4 +1,3 @@
-
 import db from "../../configuration/db.js";
 
 // ======================================================
@@ -23,10 +22,11 @@ export const addStayToBuy = async (req, res) => {
             highlights,
             area_sqft,
             duration,
+            district,
             city,
+            address,
             map_address,
             rate,
-            location,
             status
         } = req.body;
 
@@ -57,7 +57,9 @@ export const addStayToBuy = async (req, res) => {
             !title ||
             !price ||
             !property_type ||
-            !city
+            !district ||
+            !city ||
+            !address
         ) {
 
             await connection.rollback();
@@ -65,7 +67,7 @@ export const addStayToBuy = async (req, res) => {
             return res.status(400).json({
                 success: false,
                 message:
-                    "Title, price, property type and city are required."
+                    "Title, price, property type, district, city and address are required."
             });
 
         }
@@ -117,6 +119,7 @@ export const addStayToBuy = async (req, res) => {
 
         let overviewData = [];
         let highlightsData = [];
+
 
         try {
 
@@ -171,21 +174,20 @@ export const addStayToBuy = async (req, res) => {
                     highlights,
                     area_sqft,
                     duration,
+                    district,
                     city,
+                    address,
                     map_address,
                     rate,
-                    location,
                     main_image,
-                    
                     main_video,
-                    
                     status
                 )
 
                 VALUES
                 (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?, ?, ?, ?
+                    ?, ?, ?, ?, ?, ?, ?, ?
                 )
                 `,
 
@@ -213,23 +215,21 @@ export const addStayToBuy = async (req, res) => {
 
                     duration || "month",
 
+                    district,
+
                     city,
+
+                    address,
 
                     map_address || null,
 
                     rate || 0,
 
-                    location || null,
-
                     mainImage.buffer,
-
-                    
 
                     mainVideo
                         ? mainVideo.buffer
                         : null,
-
-                    
 
                     status || "pending"
 
@@ -259,11 +259,10 @@ export const addStayToBuy = async (req, res) => {
                 await connection.query(
 
                     `
-                    INSERT INTO stays_to_buy_images
+                    INSERT INTO stay_to_buy_images
                     (
-                        stays_to_buy_id,
+                        stay_buy_id,
                         image
-                        
                     )
 
                     VALUES (?, ?)
@@ -272,7 +271,6 @@ export const addStayToBuy = async (req, res) => {
                     [
                         stayToBuyId,
                         image.buffer
-                        
                     ]
 
                 );
@@ -351,10 +349,11 @@ export const getStayToBuy = async (req, res) => {
                     highlights,
                     area_sqft,
                     duration,
+                    district,
                     city,
+                    address,
                     map_address,
                     rate,
-                    location,
                     status
 
                 FROM stays_to_buy
@@ -376,8 +375,8 @@ export const getStayToBuy = async (req, res) => {
 
                                 `
                                 SELECT id
-                                FROM stays_to_buy_images
-                                WHERE stays_to_buy_id = ?
+                                FROM stay_to_buy_images
+                                WHERE stay_buy_id = ?
                                 ORDER BY id ASC
                                 `,
 
@@ -476,16 +475,18 @@ export const getStayToBuyById =
                         highlights,
                         area_sqft,
                         duration,
+                        district,
                         city,
+                        address,
                         map_address,
                         rate,
-                        location,
                         status,
+
                         CASE
-    WHEN main_video IS NOT NULL THEN 1
-    ELSE 0
-END AS has_video
-                        
+                            WHEN main_video IS NOT NULL
+                            THEN 1
+                            ELSE 0
+                        END AS has_video
 
                     FROM stays_to_buy
 
@@ -517,11 +518,10 @@ END AS has_video
                     `
                     SELECT
                         id
-                        
 
-                    FROM stays_to_buy_images
+                    FROM stay_to_buy_images
 
-                    WHERE stays_to_buy_id = ?
+                    WHERE stay_buy_id = ?
 
                     ORDER BY id ASC
                     `,
@@ -535,14 +535,13 @@ END AS has_video
 
                 ...rows[0],
 
-
                 main_image:
                     `/api/stays-to-buy/image/${id}`,
 
                 main_video:
-    rows[0].has_video
-        ? `/api/stays-to-buy/video/${id}`
-        : null,
+                    rows[0].has_video
+                        ? `/api/stays-to-buy/video/${id}`
+                        : null,
 
                 images:
                     images.map(
@@ -602,7 +601,6 @@ export const getStayToBuyImage =
                     `
                     SELECT
                         main_image
-                    
 
                     FROM stays_to_buy
 
@@ -628,7 +626,10 @@ export const getStayToBuyImage =
             }
 
 
-            res.set("Content-Type", "image/jpeg");
+            res.set(
+                "Content-Type",
+                "image/jpeg"
+            );
 
 
             return res.send(
@@ -676,7 +677,6 @@ export const getStayToBuyVideo =
                     `
                     SELECT
                         main_video
-                        
 
                     FROM stays_to_buy
 
@@ -702,7 +702,10 @@ export const getStayToBuyVideo =
             }
 
 
-           res.set("Content-Type", "video/mp4");
+            res.set(
+                "Content-Type",
+                "video/mp4"
+            );
 
 
             return res.send(
@@ -750,12 +753,11 @@ export const getStayToBuyGallery =
                     `
                     SELECT
                         id,
-                        stays_to_buy_id
-                        
+                        stay_buy_id
 
-                    FROM stays_to_buy_images
+                    FROM stay_to_buy_images
 
-                    WHERE stays_to_buy_id = ?
+                    WHERE stay_buy_id = ?
 
                     ORDER BY id ASC
                     `,
@@ -772,9 +774,8 @@ export const getStayToBuyGallery =
                         id:
                             image.id,
 
-                        stays_to_buy_id:
-                            image.stays_to_buy_id,
-
+                        stay_buy_id:
+                            image.stay_buy_id,
 
                         image:
                             `/api/stays-to-buy/gallery-image/${image.id}`,
@@ -836,9 +837,8 @@ export const getStayToBuyGalleryImage =
                     `
                     SELECT
                         image
-                        
 
-                    FROM stays_to_buy_images
+                    FROM stay_to_buy_images
 
                     WHERE id = ?
                     `,
@@ -862,7 +862,10 @@ export const getStayToBuyGalleryImage =
             }
 
 
-            res.set("Content-Type", "image/jpeg");
+            res.set(
+                "Content-Type",
+                "image/jpeg"
+            );
 
 
             return res.send(
@@ -959,10 +962,11 @@ export const updateStayToBuy =
                 highlights,
                 area_sqft,
                 duration,
+                district,
                 city,
+                address,
                 map_address,
                 rate,
-                location,
                 status,
                 keep_gallery
 
@@ -979,7 +983,9 @@ export const updateStayToBuy =
                 price === null ||
                 price === "" ||
                 !property_type ||
-                !city
+                !district ||
+                !city ||
+                !address
             ) {
 
                 await connection.rollback();
@@ -989,7 +995,7 @@ export const updateStayToBuy =
                     success: false,
 
                     message:
-                        "Title, price, property type and city are required."
+                        "Title, price, property type, district, city and address are required."
 
                 });
 
@@ -1060,10 +1066,11 @@ export const updateStayToBuy =
                     highlights = ?,
                     area_sqft = ?,
                     duration = ?,
+                    district = ?,
                     city = ?,
+                    address = ?,
                     map_address = ?,
                     rate = ?,
-                    location = ?,
                     status = ?
 
                 WHERE id = ?
@@ -1093,13 +1100,15 @@ export const updateStayToBuy =
 
                     duration || "month",
 
+                    district,
+
                     city,
+
+                    address,
 
                     map_address || null,
 
                     rate || 0,
-
-                    location || null,
 
                     status || "pending",
 
@@ -1130,7 +1139,6 @@ export const updateStayToBuy =
 
                     SET
                         main_image = ?
-                        
 
                     WHERE id = ?
                     `,
@@ -1138,8 +1146,6 @@ export const updateStayToBuy =
                     [
 
                         file.buffer,
-
-                        
 
                         id
 
@@ -1170,7 +1176,6 @@ export const updateStayToBuy =
 
                     SET
                         main_video = ?
-                        
 
                     WHERE id = ?
                     `,
@@ -1178,8 +1183,6 @@ export const updateStayToBuy =
                     [
 
                         file.buffer,
-
-                        
 
                         id
 
@@ -1236,7 +1239,48 @@ export const updateStayToBuy =
                     );
 
 
-     
+            // ==================================================
+            // DELETE GALLERY IMAGES NOT KEPT
+            // ==================================================
+
+            if (keep_gallery !== undefined) {
+
+                if (keepGalleryIds.length > 0) {
+
+                    await connection.query(
+
+                        `
+                        DELETE FROM stay_to_buy_images
+
+                        WHERE stay_buy_id = ?
+
+                        AND id NOT IN (?)
+                        `,
+
+                        [
+                            id,
+                            keepGalleryIds
+                        ]
+
+                    );
+
+                } else {
+
+                    await connection.query(
+
+                        `
+                        DELETE FROM stay_to_buy_images
+
+                        WHERE stay_buy_id = ?
+                        `,
+
+                        [id]
+
+                    );
+
+                }
+
+            }
 
 
             // ==================================================
@@ -1256,11 +1300,10 @@ export const updateStayToBuy =
                     await connection.query(
 
                         `
-                        INSERT INTO stays_to_buy_images
+                        INSERT INTO stay_to_buy_images
                         (
-                            stays_to_buy_id,
+                            stay_buy_id,
                             image
-                        
                         )
 
                         VALUES (?, ?)
@@ -1271,8 +1314,6 @@ export const updateStayToBuy =
                             id,
 
                             image.buffer
-
-                        
 
                         ]
 
@@ -1399,4 +1440,3 @@ export const deleteStayToBuy =
         }
 
     };
-

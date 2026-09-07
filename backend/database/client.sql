@@ -10,7 +10,7 @@ CREATE TABLE clients (
     avatar LONGBLOB,
     whatsapp_number VARCHAR(20),
     full_name VARCHAR(100) NOT NULL,
-    ads_count INT NOT NULL DEFAULT 0,
+    total_ads_count INT NOT NULL DEFAULT 0,
     is_active BOOLEAN DEFAULT TRUE,
     is_verified BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

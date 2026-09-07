@@ -1,12 +1,23 @@
+
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Pencil, Video } from "lucide-react";
+import {
+    ArrowLeft,
+    Pencil,
+    Video,
+    MapPin,
+    Building2,
+    Ruler,
+    Clock,
+    Map
+} from "lucide-react";
 import { toast } from "react-toastify";
 
 import { getLandById } from "../../api/landApi";
 import Loader from "../../components/Loader";
 
 const ViewLand = () => {
+
     const { id } = useParams();
 
     const [land, setLand] = useState(null);
@@ -16,17 +27,24 @@ const ViewLand = () => {
         import.meta.env.VITE_BACKEND_URL ||
         "http://localhost:5000";
 
+
     // =====================================================
     // LOAD LAND
     // =====================================================
 
     const fetchLand = async () => {
+
         try {
+
             setLoading(true);
 
-            const response = await getLandById(id);
+            const response =
+                await getLandById(id);
 
-            console.log("VIEW LAND RESPONSE:", response.data);
+            console.log(
+                "VIEW LAND RESPONSE:",
+                response.data
+            );
 
             const data =
                 response.data?.data ||
@@ -35,17 +53,38 @@ const ViewLand = () => {
             setLand(data);
 
         } catch (error) {
-            console.error("VIEW LAND ERROR:", error);
 
-            toast.error("Failed to load land");
+            console.error(
+                "VIEW LAND ERROR:",
+                error
+            );
+
+            toast.error(
+                error.response?.data?.message ||
+                "Failed to load land"
+            );
+
+            setLand(null);
 
         } finally {
+
             setLoading(false);
+
         }
+
     };
 
+
+    // =====================================================
+    // USE EFFECT
+    // =====================================================
+
     useEffect(() => {
-        fetchLand();
+
+        if (id) {
+            fetchLand();
+        }
+
     }, [id]);
 
 
@@ -54,7 +93,9 @@ const ViewLand = () => {
     // =====================================================
 
     if (loading) {
+
         return <Loader />;
+
     }
 
 
@@ -63,12 +104,31 @@ const ViewLand = () => {
     // =====================================================
 
     if (!land) {
+
         return (
-            <div className="min-h-screen bg-[#E8EEF9] p-6 flex items-center justify-center">
 
-                <div className="bg-white rounded-2xl shadow p-8 text-center">
+            <div className="
+                min-h-screen
+                bg-[#E8EEF9]
+                p-6
+                flex
+                items-center
+                justify-center
+            ">
 
-                    <p className="text-[#14213D] text-lg font-semibold">
+                <div className="
+                    bg-white
+                    rounded-2xl
+                    shadow
+                    p-8
+                    text-center
+                ">
+
+                    <p className="
+                        text-[#14213D]
+                        text-lg
+                        font-semibold
+                    ">
                         Land property not found
                     </p>
 
@@ -89,15 +149,19 @@ const ViewLand = () => {
                             transition
                         "
                     >
+
                         <ArrowLeft size={18} />
 
                         Back to Lands
+
                     </Link>
 
                 </div>
 
             </div>
+
         );
+
     }
 
 
@@ -106,30 +170,45 @@ const ViewLand = () => {
     // =====================================================
 
     const parseJSON = (data) => {
-        if (!data) return [];
+
+        if (!data) {
+            return [];
+        }
 
         if (Array.isArray(data)) {
             return data;
         }
 
         if (typeof data === "string") {
+
             try {
-                const parsed = JSON.parse(data);
+
+                const parsed =
+                    JSON.parse(data);
 
                 return Array.isArray(parsed)
                     ? parsed
                     : [];
 
             } catch {
+
                 return [];
+
             }
+
         }
 
         return [];
+
     };
 
 
-    const overview = parseJSON(land.overview);
+    // =====================================================
+    // OVERVIEW
+    // =====================================================
+
+    const overview =
+        parseJSON(land.overview);
 
 
     // =====================================================
@@ -137,9 +216,16 @@ const ViewLand = () => {
     // =====================================================
 
     const getImageUrl = (image) => {
-        if (!image) return null;
 
-        // Backend URL
+        if (!image) {
+            return null;
+        }
+
+
+        // ---------------------------------------------
+        // STRING URL
+        // ---------------------------------------------
+
         if (typeof image === "string") {
 
             if (
@@ -147,29 +233,45 @@ const ViewLand = () => {
                 image.startsWith("https://") ||
                 image.startsWith("data:")
             ) {
+
                 return image;
+
             }
 
             return `${API_URL}${image}`;
+
         }
 
-        // MySQL Buffer
+
+        // ---------------------------------------------
+        // MYSQL BUFFER
+        // ---------------------------------------------
+
         if (
             image?.type === "Buffer" &&
             Array.isArray(image.data)
         ) {
-            const bytes = new Uint8Array(image.data);
+
+            const bytes =
+                new Uint8Array(image.data);
 
             let binary = "";
 
             bytes.forEach((byte) => {
+
                 binary += String.fromCharCode(byte);
+
             });
 
-            return `data:image/jpeg;base64,${btoa(binary)}`;
+            return `
+                data:image/jpeg;base64,
+                ${btoa(binary)}
+            `.replace(/\s/g, "");
+
         }
 
         return null;
+
     };
 
 
@@ -178,7 +280,11 @@ const ViewLand = () => {
     // =====================================================
 
     const getVideoUrl = (video) => {
-        if (!video) return null;
+
+        if (!video) {
+            return null;
+        }
+
 
         if (typeof video === "string") {
 
@@ -187,13 +293,17 @@ const ViewLand = () => {
                 video.startsWith("https://") ||
                 video.startsWith("data:")
             ) {
+
                 return video;
+
             }
 
             return `${API_URL}${video}`;
+
         }
 
         return null;
+
     };
 
 
@@ -201,27 +311,95 @@ const ViewLand = () => {
     // MAIN IMAGE
     // =====================================================
 
-    const mainImage = getImageUrl(
-        land.main_image
-    );
+    const mainImage =
+        getImageUrl(
+            land.main_image
+        );
 
 
     // =====================================================
     // MAIN VIDEO
     // =====================================================
 
-    const mainVideo = getVideoUrl(
-        land.main_video
-    );
+    const mainVideo =
+        getVideoUrl(
+            land.main_video
+        );
 
 
     // =====================================================
     // GALLERY
     // =====================================================
 
-    const gallery = Array.isArray(land.gallery)
-        ? land.gallery
-        : [];
+    const gallery =
+        Array.isArray(land.gallery)
+            ? land.gallery
+            : [];
+
+
+    // =====================================================
+    // FORMAT PRICE
+    // =====================================================
+
+    const formatPrice = (price) => {
+
+        if (
+            price === null ||
+            price === undefined ||
+            price === ""
+        ) {
+
+            return "-";
+
+        }
+
+        return Number(price)
+            .toLocaleString("en-LK");
+
+    };
+
+
+    // =====================================================
+    // STATUS STYLE
+    // =====================================================
+
+    const getStatusStyle = (status) => {
+
+        switch (
+            status?.toLowerCase()
+        ) {
+
+            case "active":
+
+                return `
+                    bg-green-100
+                    text-green-700
+                `;
+
+            case "sold":
+
+                return `
+                    bg-red-100
+                    text-red-700
+                `;
+
+            case "pending":
+
+                return `
+                    bg-yellow-100
+                    text-yellow-700
+                `;
+
+            default:
+
+                return `
+                    bg-gray-100
+                    text-gray-700
+                `;
+
+        }
+
+    };
 
 
     // =====================================================
@@ -230,7 +408,13 @@ const ViewLand = () => {
 
     return (
 
-        <div className="min-h-screen bg-[#E8EEF9] p-4 sm:p-6 lg:p-8">
+        <div className="
+            min-h-screen
+            bg-[#E8EEF9]
+            p-4
+            sm:p-6
+            lg:p-8
+        ">
 
             <div className="max-w-7xl mx-auto">
 
@@ -260,12 +444,13 @@ const ViewLand = () => {
                             Land Details
                         </h1>
 
-                       
-
                     </div>
 
 
-                    <div className="flex gap-3">
+                    <div className="
+                        flex
+                        gap-3
+                    ">
 
                         {/* BACK */}
 
@@ -286,7 +471,9 @@ const ViewLand = () => {
                             "
                         >
 
-                            <ArrowLeft size={18} />
+                            <ArrowLeft
+                                size={18}
+                            />
 
                             Back
 
@@ -313,7 +500,9 @@ const ViewLand = () => {
                             "
                         >
 
-                            <Pencil size={18} />
+                            <Pencil
+                                size={18}
+                            />
 
                             Edit
 
@@ -337,6 +526,16 @@ const ViewLand = () => {
                     p-5
                     mb-6
                 ">
+
+                    <h2 className="
+                        text-xl
+                        font-bold
+                        text-[#14213D]
+                        mb-4
+                    ">
+                        Main Image
+                    </h2>
+
 
                     {mainImage ? (
 
@@ -475,61 +674,108 @@ const ViewLand = () => {
                         gap-4
                     ">
 
+
+                        {/* TITLE */}
+
                         <Info
                             label="Title"
                             value={land.title}
                         />
 
 
+                        {/* PRICE */}
+
                         <Info
                             label="Price"
-                            value={`Rs. ${Number(
-                                land.price || 0
-                            ).toLocaleString()}`}
+                            value={`Rs. ${formatPrice(
+                                land.price
+                            )}`}
                         />
 
+
+                   
+
+
+                        {/* LAND SIZE */}
 
                         <Info
                             label="Land Size"
-                            value={`${land.land_size || 0} ${land.size_unit || ""}`}
+                            value={
+                                land.land_size
+                                    ? `${land.land_size} ${
+                                        land.size_unit || ""
+                                      }`
+                                    : "-"
+                            }
                         />
 
 
-                        <Info
-                            label="Rate"
-                            value={`${Number(
-                                land.rate || 0
-                            ).toLocaleString()}`}
-                        />
-
-
-                        <Info
-                            label="City"
-                            value={land.city}
-                        />
-
-
-                        <Info
-                            label="Location"
-                            value={land.location}
-                        />
-
-
-                        <Info
-                            label="Duration"
-                            value={land.duration}
-                        />
-
+                        {/* SIZE UNIT */}
 
                         <Info
                             label="Size Unit"
-                            value={land.size_unit}
+                            value={
+                                land.size_unit
+                            }
                         />
 
+
+                        {/* DISTRICT */}
+
+                        <Info
+                            label="District"
+                            value={
+                                land.district
+                            }
+                        />
+
+
+                        {/* CITY */}
+
+                        <Info
+                            label="City"
+                            value={
+                                land.city
+                            }
+                        />
+
+
+                        {/* ADDRESS */}
+
+                        <Info
+                            label="Address"
+                            value={
+                                land.address
+                            }
+                        />
+
+
+                        {/* MAP ADDRESS */}
+
+                        <Info
+                            label="Map Address"
+                            value={
+                                land.map_address
+                            }
+                        />
+
+
+                        {/* DURATION */}
+
+                        <Info
+                            label="Duration"
+                            value={
+                                land.duration
+                            }
+                        />
+
+
+                        {/* STATUS */}
 
                         <Info
                             label="Status"
                             value={
+
                                 <span
                                     className={`
                                         inline-block
@@ -538,24 +784,25 @@ const ViewLand = () => {
                                         rounded-full
                                         text-sm
                                         font-medium
-
-                                        ${
-                                            land.status === "active"
-                                                ? "bg-green-100 text-green-700"
-                                                : land.status === "sold"
-                                                ? "bg-red-100 text-red-700"
-                                                : "bg-yellow-100 text-yellow-700"
-                                        }
+                                        ${getStatusStyle(
+                                            land.status
+                                        )}
                                     `}
                                 >
-                                    {land.status}
+
+                                    {land.status ||
+                                        "Pending"}
+
                                 </span>
+
                             }
                         />
 
                     </div>
 
                 </div>
+
+
 
 
                 {/* =================================================
@@ -641,27 +888,43 @@ const ViewLand = () => {
                                         "
                                     >
 
-                                        <span className="
-                                            font-semibold
-                                            text-[#14213D]
-                                        ">
-                                            {item.title}
-                                        </span>
+                                        {typeof item === "object" ? (
+
+                                            <>
+
+                                                <span className="
+                                                    font-semibold
+                                                    text-[#14213D]
+                                                ">
+                                                    {item.title || "-"}
+                                                </span>
 
 
-                                        <span className="
-                                            mx-2
-                                            text-gray-500
-                                        ">
-                                            :
-                                        </span>
+                                                <span className="
+                                                    mx-2
+                                                    text-gray-500
+                                                ">
+                                                    :
+                                                </span>
 
 
-                                        <span className="
-                                            text-gray-700
-                                        ">
-                                            {item.value || "-"}
-                                        </span>
+                                                <span className="
+                                                    text-gray-700
+                                                ">
+                                                    {item.value || "-"}
+                                                </span>
+
+                                            </>
+
+                                        ) : (
+
+                                            <span className="
+                                                text-gray-700
+                                            ">
+                                                {item}
+                                            </span>
+
+                                        )}
 
                                     </div>
 
@@ -672,48 +935,15 @@ const ViewLand = () => {
 
                     ) : (
 
-                        <p className="text-gray-500">
+                        <p className="
+                            text-gray-500
+                        ">
                             No overview information available.
                         </p>
 
                     )}
 
                 </div>
-
-
-                {/* =================================================
-                    MAP / LOCATION
-                ================================================= */}
-
-                {land.map_address && (
-
-                    <div className="
-                        bg-white
-                        rounded-2xl
-                        shadow-sm
-                        border
-                        border-gray-100
-                        p-6
-                        mb-6
-                    ">
-
-                        <h2 className="
-                            text-xl
-                            font-bold
-                            text-[#14213D]
-                            mb-3
-                        ">
-                            Map Address
-                        </h2>
-
-
-                        <p className="text-gray-600">
-                            {land.map_address}
-                        </p>
-
-                    </div>
-
-                )}
 
 
                 {/* =================================================
@@ -745,9 +975,6 @@ const ViewLand = () => {
                             Gallery
                         </h2>
 
-
-                        
-
                     </div>
 
 
@@ -764,40 +991,54 @@ const ViewLand = () => {
                             {gallery.map(
                                 (image, index) => {
 
-                                    /*
-                                     * Backend returns:
-                                     *
-                                     * {
-                                     *   id: 1,
-                                     *   url: "/api/lands/gallery-image/1"
-                                     * }
-                                     */
-
                                     let imageUrl = null;
+
+
+                                    // --------------------------------
+                                    // STRING
+                                    // --------------------------------
 
                                     if (
                                         typeof image === "string"
                                     ) {
+
                                         imageUrl =
-                                            getImageUrl(image);
+                                            getImageUrl(
+                                                image
+                                            );
+
                                     }
+
+
+                                    // --------------------------------
+                                    // URL
+                                    // --------------------------------
 
                                     else if (
                                         image?.url
                                     ) {
+
                                         imageUrl =
                                             getImageUrl(
                                                 image.url
                                             );
+
                                     }
+
+
+                                    // --------------------------------
+                                    // IMAGE
+                                    // --------------------------------
 
                                     else if (
                                         image?.image
                                     ) {
+
                                         imageUrl =
                                             getImageUrl(
                                                 image.image
                                             );
+
                                     }
 
 
@@ -822,7 +1063,9 @@ const ViewLand = () => {
 
                                             <img
                                                 src={imageUrl}
-                                                alt={`Land Gallery ${index + 1}`}
+                                                alt={`Land Gallery ${
+                                                    index + 1
+                                                }`}
                                                 className="
                                                     h-32
                                                     sm:h-40
@@ -830,11 +1073,11 @@ const ViewLand = () => {
                                                     object-cover
                                                     rounded-xl
                                                     hover:opacity-80
-                                                    
                                                     transition
                                                     duration-300
                                                 "
                                                 onError={(e) => {
+
                                                     console.error(
                                                         "Gallery image failed:",
                                                         imageUrl
@@ -842,6 +1085,7 @@ const ViewLand = () => {
 
                                                     e.currentTarget.style.display =
                                                         "none";
+
                                                 }}
                                             />
 
@@ -863,7 +1107,9 @@ const ViewLand = () => {
                             rounded-xl
                         ">
 
-                            <p className="text-gray-500">
+                            <p className="
+                                text-gray-500
+                            ">
                                 No gallery images available.
                             </p>
 
@@ -901,7 +1147,9 @@ const ViewLand = () => {
                         "
                     >
 
-                        <ArrowLeft size={18} />
+                        <ArrowLeft
+                            size={18}
+                        />
 
                         Back
 
@@ -926,7 +1174,9 @@ const ViewLand = () => {
                         "
                     >
 
-                        <Pencil size={18} />
+                        <Pencil
+                            size={18}
+                        />
 
                         Edit Property
 
@@ -937,7 +1187,9 @@ const ViewLand = () => {
             </div>
 
         </div>
+
     );
+
 };
 
 
@@ -962,15 +1214,16 @@ const Info = ({ label, value }) => (
         </p>
 
 
-        <p className="
+        <div className="
             font-semibold
             text-[#14213D]
             break-words
         ">
             {value || "-"}
-        </p>
+        </div>
 
     </div>
+
 );
 
 

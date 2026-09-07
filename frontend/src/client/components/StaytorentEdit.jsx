@@ -1,6 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { clientContext } from '../context/ClientContext';
-import CardDesign from './CardDesign';
 import { useNavigate } from 'react-router-dom';
 import { Edit2 } from 'lucide-react';
 

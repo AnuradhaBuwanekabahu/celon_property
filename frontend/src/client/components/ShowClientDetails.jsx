@@ -1,4 +1,5 @@
 import React, { useContext, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import {
   User,
   Phone,
@@ -21,8 +22,10 @@ import { clientContext } from "../context/ClientContext";
 function ShowClientDetails({ clientID }) {
   const { client, getclientdata } = useContext(clientContext);
   const navigate = useNavigate();
+  const location = useLocation();
   const { id: routeId } = useParams();
-  const resolvedId = clientID || routeId || localStorage.getItem("clientId");
+  const isPropertyRoute = /\/dashboard\/(?:edit-hotsales-profile|stays-buy\/edit-profile|stays-rent\/edit-profile|lands\/edit-profile|.*\/profile\/|.*\/edit\/|.*\/delete\/|.*\/view\/)/.test(location.pathname);
+  const resolvedId = isPropertyRoute ? (localStorage.getItem("clientId") || clientID) : (clientID || routeId || localStorage.getItem("clientId"));
 
   useEffect(() => {
     if (resolvedId) {
@@ -55,7 +58,7 @@ function ShowClientDetails({ clientID }) {
   const handleLogout = () => {
     localStorage.removeItem("clientToken");
     localStorage.removeItem("clientId");
-    navigate("/client-login");
+    navigate("/dashboard/client-login");
   };
 
   const quickActions = [

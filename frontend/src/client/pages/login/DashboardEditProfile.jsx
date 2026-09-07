@@ -11,7 +11,7 @@ const DashboardEditProfile = () => {
 
   useEffect(() => {
     if (!localStorage.getItem("clientToken")) {
-      navigate("/client-login");
+      navigate("/dashboard/client-login");
     }
   }, [navigate]);
 

@@ -116,10 +116,6 @@ const DeleteHotSales =({ clientID }) =>{
                                                                          {item.title}
                                                                        </p>
                                                                
-                                                                       <p className="text-[11px] text-gray-500 mt-1">
-                                                                         {item.location}
-                                                                       </p>
-                                                               
                                                                        <div className="flex items-center justify-between mt-3">
                                                                          <p className="font-bold text-[16px]">
                                                                            RS.{item.price}

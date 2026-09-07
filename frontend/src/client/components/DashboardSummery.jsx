@@ -1,15 +1,21 @@
-import React, { useEffect, useContext, useState } from "react";
+import React, { useEffect, useContext } from "react";
 import { MdBedroomParent } from "react-icons/md";
 import { LiaSalesforce } from "react-icons/lia";
 import { FaHome } from "react-icons/fa";
 import { MdOutlineLandslide } from "react-icons/md";
-import { RiAdvertisementLine } from "react-icons/ri";
 import { clientContext } from "../context/ClientContext";
-import API from "../api/clientapi";
 
 const DashboardSummery = ({ clientID }) => {
-  const { hotSales, stayToBuy, stayToRent, lands, getHotSales, getStayToBuy, getStayToRent, getlands } = useContext(clientContext);
-  const [ads, setAds] = useState([]);
+  const {
+    hotSales,
+    stayToBuy,
+    stayToRent,
+    lands,
+    getHotSales,
+    getStayToBuy,
+    getStayToRent,
+    getlands,
+  } = useContext(clientContext);
 
   const resolvedClientId = clientID || localStorage.getItem("clientId") || "";
 
@@ -19,25 +25,20 @@ const DashboardSummery = ({ clientID }) => {
     getStayToBuy();
     getStayToRent();
     getlands();
-
-    const fetchAds = async () => {
-      try {
-        const response = await API.get("/api/ads/ads");
-        const data = response.data?.ads || [];
-        setAds(data.filter((item) => Number(item.client_id) === Number(resolvedClientId)));
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    fetchAds();
   }, [resolvedClientId]);
 
-  const hotSalesCount = hotSales.filter((item) => Number(item.client_id) === Number(resolvedClientId)).length;
-  const stayToBuyCount = stayToBuy.filter((item) => Number(item.client_id) === Number(resolvedClientId)).length;
-  const stayToRentCount = stayToRent.filter((item) => Number(item.client_id) === Number(resolvedClientId)).length;
-  const landsCount = lands.filter((item) => Number(item.client_id) === Number(resolvedClientId)).length;
-  const adsCount = ads.length;
+  const hotSalesCount = hotSales.filter(
+    (item) => Number(item.client_id) === Number(resolvedClientId)
+  ).length;
+  const stayToBuyCount = stayToBuy.filter(
+    (item) => Number(item.client_id) === Number(resolvedClientId)
+  ).length;
+  const stayToRentCount = stayToRent.filter(
+    (item) => Number(item.client_id) === Number(resolvedClientId)
+  ).length;
+  const landsCount = lands.filter(
+    (item) => Number(item.client_id) === Number(resolvedClientId)
+  ).length;
 
   const category = [
     {
@@ -64,30 +65,27 @@ const DashboardSummery = ({ clientID }) => {
       icon: <MdOutlineLandslide />,
       color: "bg-yellow-500",
     },
-    {
-      name: "Advertisements",
-      count: adsCount,
-      icon: <RiAdvertisementLine />,
-      color: "bg-purple-500",
-    },
   ];
 
   return (
-    <div className="max-w-6xl mt-8 ml-24 mx-auto p-4 sm:p-4  bg-white">
+    <div className="max-w-6xl mt-8 mx-auto px-4 sm:px-6">
       <div className="mb-4">
-    
-        <p className="text-m text-black mt-1">Overview of your property listings</p>
+        <p className="text-m text-black mt-1">
+          Overview of your property listings
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {category.map((item, index) => (
           <div
             key={index}
-            className="bg-[#14213D] w-full rounded-xl shadow-md hover:shadow-xl transition-all duration-300 p-3 flex items-center justify-between"
+            className="bg-[#14213D] w-full rounded-xl shadow-md hover:shadow-xl transition-all duration-300 p-4 flex items-center justify-between"
           >
             <div>
               <h3 className="text-gray-300 text-sm">{item.name}</h3>
-              <p className="text-2xl font-bold mt-2 text-white">{item.count}</p>
+              <p className="text-2xl font-bold mt-2 text-white">
+                {item.count}
+              </p>
             </div>
 
             <div

@@ -1,6 +1,6 @@
 import React from 'react';
 import { toast } from 'react-toastify';
-import { overviewOptions, highlightOptions, cityOptions } from '../Assets/data.js';
+import { overviewOptions, highlightOptions, districtOptions } from '../../assets/data.js';
 import { Upload, X, ImagePlus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useContext } from 'react';
@@ -11,7 +11,10 @@ const AddStayToBuy = ({ clientID }) => {
     const navigate = useNavigate();
     const {
         stayFormData,
+        setStayFormData,
         handleStayChange,
+        availableLimits,
+        setSelectedLimitDays,
 
         addStayOverview,
         removeStayOverview,
@@ -40,6 +43,8 @@ const AddStayToBuy = ({ clientID }) => {
         handleStaySubmit,
     } = useContext(clientContext);
 
+    const limitOptions = Array.isArray(availableLimits) ? availableLimits : [];
+
     const handleFormSubmit = (e) => {
         e.preventDefault();
 
@@ -55,10 +60,11 @@ const AddStayToBuy = ({ clientID }) => {
             stayFormData.price,
             stayFormData.description,
             stayFormData.property_type,
+            stayFormData.district,
             stayFormData.city,
+            stayFormData.address,
             stayFormData.area_sqft,
             stayFormData.map_address,
-            stayFormData.location,
         ];
 
         const hasEmptyOverview = stayFormData.overview.some((item) => !item.title || !item.value);
@@ -81,81 +87,149 @@ const AddStayToBuy = ({ clientID }) => {
 
                 {/* Basic details */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <input
-                        type="text"
-                        name="title"
-                        value={stayFormData.title}
+                    <div className="space-y-1">
+                        <label className="block text-sm font-semibold text-[#14213D]">Property Title</label>
+                        <input
+                            type="text"
+                            name="title"
+                            value={stayFormData.title}
+                            onChange={handleStayChange}
+                            placeholder="Property title"
+                            required
+                            className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
+                        />
+                    </div>
+                    <div className="space-y-1">
+                        <label className="block text-sm font-semibold text-[#14213D]">Price</label>
+                        <input
+                            type="number"
+                            name="price"
+                            value={stayFormData.price}
+                            onChange={handleStayChange}
+                            placeholder="Price (RS)"
+                            required
+                            className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
+                        />
+                    </div>
+                </div>
+
+                <div className="space-y-1">
+                    <label className="block text-sm font-semibold text-[#14213D]">Description</label>
+                    <textarea
+                        name="description"
+                        value={stayFormData.description}
                         onChange={handleStayChange}
-                        placeholder="Property title"
-                        required
-                        className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
-                    />
-                    <input
-                        type="number"
-                        name="price"
-                        value={stayFormData.price}
-                        onChange={handleStayChange}
-                        placeholder="Price (RS)"
+                        placeholder="Enter description here..."
+                        rows={4}
                         required
                         className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
                     />
                 </div>
 
-                <textarea
-                    name="description"
-                    value={stayFormData.description}
-                    onChange={handleStayChange}
-                    placeholder="Enter description here..."
-                    rows={4}
-                    required
-                    className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
-                />
-
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <select
-                        name="property_type"
-                        value={stayFormData.property_type}
-                        onChange={handleStayChange}
-                        className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
-                    >
-                        <option value="">Select property type</option>
-                        <option value="House">House</option>
-                        <option value="Apartment">Apartment</option>
-                        <option value="Bungalow">Bungalow</option>
-                        <option value="Hotel">Hotel</option>
-                        <option value="WareHouse">WareHouse</option>
-                        <option value="Villa">Villa</option>
-                        <option value="Studio">Studio</option>
-                    </select>
+                    <div className="space-y-1">
+                        <label className="block text-sm font-semibold text-[#14213D]">Property Type</label>
+                        <select
+                            name="property_type"
+                            value={stayFormData.property_type}
+                            onChange={handleStayChange}
+                            className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
+                        >
+                            <option value="">Select property type</option>
+                            <option value="House">House</option>
+                            <option value="Apartment">Apartment</option>
+                            <option value="Bungalow">Bungalow</option>
+                            <option value="Hotel">Hotel</option>
+                            <option value="WareHouse">WareHouse</option>
+                            <option value="Villa">Villa</option>
+                            <option value="Studio">Studio</option>
+                        </select>
+                    </div>
 
-                    <select
-                        name="city"
-                        value={stayFormData.city}
-                        onChange={handleStayChange}
-                        className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
-                    >
-                        <option value="">Select City</option>
-                        {cityOptions.map((item, index) => (
-                            <option key={index} value={item}>
-                                {item}
-                            </option>
-                        ))}
-                    </select>
+                    <div className="space-y-1">
+                        <label className="block text-sm font-semibold text-[#14213D]">District</label>
+                        <select
+                            name="district"
+                            value={stayFormData.district}
+                            onChange={handleStayChange}
+                            required
+                            className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
+                        >
+                            <option value="">Select District</option>
+                            {districtOptions.map((item) => <option key={item} value={item}>{item}</option>)}
+                        </select>
+                    </div>
+
+                    <div className="space-y-1">
+                        <label className="block text-sm font-semibold text-[#14213D]">City</label>
+                        <input
+                            type="text"
+                            name="city"
+                            value={stayFormData.city}
+                            onChange={handleStayChange}
+                            placeholder="Enter city"
+                            required
+                            className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
+                        />
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <select
-                        name="duration"
-                        value={stayFormData.duration}
-                        onChange={handleStayChange}
-                        className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
-                    >
-                        <option value="day">Day</option>
-                        <option value="week">Week</option>
-                        <option value="month">Month</option>
-                        <option value="year">Year</option>
-                        <option value="permanent">Permanent</option>
-                    </select>
+                    <div className="space-y-1">
+                        <label className="block text-sm font-semibold text-[#14213D]">Duration</label>
+                        <select
+                            name="duration"
+                            value={stayFormData.duration}
+                            onChange={handleStayChange}
+                            className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
+                        >
+                            <option value="day">Day</option>
+                            <option value="week">Week</option>
+                            <option value="month">Month</option>
+                            <option value="year">Year</option>
+                            <option value="permanent">Permanent</option>
+                        </select>
+                    </div>
+
+                    <div className="space-y-1">
+                        <label className="block text-sm font-semibold text-[#14213D]">Ad Listing Limit</label>
+                       <select
+    value={stayFormData.limit_id ?? ''}
+    onChange={(e) => {
+        const selectedId = e.target.value;
+        const selectedLimit = limitOptions.find(
+            (limit) => String(limit.id) === String(selectedId)
+        );
+
+        if (!selectedId) {
+            // user picked the placeholder
+            setSelectedLimitDays('');
+            setStayFormData((prev) => ({ ...prev, days: '', limit_id: '' }));
+            return;
+        }
+
+        if (!selectedLimit) {
+            console.warn('No matching limit found for id:', selectedId, 'availableLimits:', availableLimits);
+            return;
+        }
+
+        setSelectedLimitDays(String(selectedLimit.days));
+        setStayFormData((prev) => ({
+            ...prev,
+            days: String(selectedLimit.days),
+            limit_id: String(selectedLimit.id),
+        }));
+    }}
+    className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
+>
+    <option value="">Select ad limit</option>
+    {limitOptions.map((limit) => (
+        <option key={limit.id} value={String(limit.id)}>
+            {limit.days} days {Number(limit.price) > 0 ? `- Rs ${Number(limit.price).toLocaleString()}` : '- Free'}
+        </option>
+    ))}
+</select>
+                    </div>
                 </div>
 
                 {/* Overview */}
@@ -227,35 +301,45 @@ const AddStayToBuy = ({ clientID }) => {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <input
-                        type="number"
-                        name="area_sqft"
-                        value={stayFormData.area_sqft}
-                        onChange={handleStayChange}
-                        placeholder="Area (sqft)"
-                        required
-                        className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
-                    />
-                    <input
-                        type="text"
-                        name="map_address"
-                        value={stayFormData.map_address}
-                        onChange={handleStayChange}
-                        placeholder="Map address"
-                        required
-                        className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
-                    />
-                </div>
+                    <div className="space-y-1">
+                        <label className="block text-sm font-semibold text-[#14213D]">Full Address</label>
+                        <input
+                            type="text"
+                            name="address"
+                            value={stayFormData.address}
+                            onChange={handleStayChange}
+                            placeholder="Full address"
+                            required
+                            className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
+                        />
+                    </div>
 
-                <input
-                    type="text"
-                    name="location"
-                    value={stayFormData.location}
-                    onChange={handleStayChange}
-                    placeholder="Enter your location address"
-                    required
-                    className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
-                />
+                    <div className="space-y-1">
+                        <label className="block text-sm font-semibold text-[#14213D]">Area (sqft)</label>
+                        <input
+                            type="number"
+                            name="area_sqft"
+                            value={stayFormData.area_sqft}
+                            onChange={handleStayChange}
+                            placeholder="Area (sqft)"
+                            required
+                            className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
+                        />
+                    </div>
+
+                    <div className="space-y-1">
+                        <label className="block text-sm font-semibold text-[#14213D]">Map Address</label>
+                        <input
+                            type="text"
+                            name="map_address"
+                            value={stayFormData.map_address}
+                            onChange={handleStayChange}
+                            placeholder="Map address"
+                            required
+                            className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
+                        />
+                    </div>
+                </div>
 
                 {/* Main Image & Video upload */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -446,7 +446,7 @@ const Clients = () => {
                                                             src={
                                                                 client.avatar.startsWith("http")
                                                                     ? client.avatar
-                                                                    : `http://localhost:5000${client.avatar}`
+                                                                    : `http://localhost:5000/api/admin/clients/${client.id}/avatar`
                                                             }
                                                             alt={
                                                                 client.full_name

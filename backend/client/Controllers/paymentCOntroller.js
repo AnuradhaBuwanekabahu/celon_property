@@ -1,5 +1,6 @@
 import db from "../../configuration/db.js";
 import { generatePayhereHash, verifyPayhereSignature } from '../services/payhereService.js';
+import { getApplicableLimit, publicLimitInfo } from '../utils/limitUtils.js';
 
 // PayHere reports these method codes in the notify webhook
 const VALID_METHODS = [
@@ -31,6 +32,16 @@ export const createPayment = async (req, res) => {
             return res.status(400).json({
                 success: false,
                 message: "invalid amount"
+            });
+        }
+
+        const tierInfo = await getApplicableLimit(db, client_id);
+        const tierPrice = Number(tierInfo.applicableLimit.price);
+        if (Number(amount) !== tierPrice) {
+            return res.status(409).json({
+                success: false,
+                message: "Payment amount does not match the applicable tier.",
+                tier: publicLimitInfo(tierInfo.applicableLimit)
             });
         }
 
@@ -66,7 +77,8 @@ export const createPayment = async (req, res) => {
                 status: "pending",
                 merchant_id: process.env.PAYHERE_MERCHANT_ID,
                 hash
-            }
+            },
+            tier: publicLimitInfo(tierInfo.applicableLimit)
         });
 
     } catch (error) {
@@ -80,6 +92,7 @@ export const createPayment = async (req, res) => {
 
 // -------------------- payhere notify webhook --------------------
 export const payhereNotify = async (req, res) => {
+    let connection;
     try {
         const {
             merchant_id,
@@ -106,20 +119,47 @@ export const payhereNotify = async (req, res) => {
 
         const safeMethod = VALID_METHODS.includes(method) ? method : null;
 
+        connection = await db.getConnection();
+        await connection.beginTransaction();
+
         if (status_code === "2") {
-            await db.query(
+            const [paymentUpdate] = await connection.query(
                 `UPDATE payments
-                 SET status='paid',
-                     transaction_ref=?,
-                     payment_gateway='PayHere',
-                     payment_method=?,
-                     paid_at=NOW()
-                 WHERE id=?`,
+                 SET status='paid', transaction_ref=?, payment_gateway='PayHere',
+                     payment_method=?, paid_at=NOW()
+                 WHERE id=? AND status <> 'paid'`,
                 [payment_id, safeMethod, order_id]
             );
+
+            if (paymentUpdate.affectedRows === 1) {
+                const [paymentRows] = await connection.query(
+                    `SELECT client_id, property_type, property_id FROM payments WHERE id=?`,
+                    [order_id]
+                );
+                const payment = paymentRows[0];
+                const propertyTables = {
+                    hot_sales: 'hot_sales',
+                    land: 'land',
+                    stays_to_buy: 'stays_to_buy',
+                    stays_to_rent: 'stays_to_rent',
+                    wanted: 'wanted'
+                };
+                const table = propertyTables[payment?.property_type];
+
+                if (!payment || !table) throw new Error('Invalid payment property reference.');
+
+                await connection.query(
+                    `UPDATE ${table} SET status='active' WHERE id=? AND status='pending'`,
+                    [payment.property_id]
+                );
+                await connection.query(
+                    `UPDATE clients SET total_ads_count=total_ads_count+1 WHERE id=?`,
+                    [payment.client_id]
+                );
+            }
         } else {
             // -1 canceled, 0 pending, -2 failed, -3 chargedback
-            await db.query(
+            await connection.query(
                 `UPDATE payments
                  SET status='failed',
                      payment_method=?
@@ -128,9 +168,12 @@ export const payhereNotify = async (req, res) => {
             );
         }
 
+        await connection.commit();
+
         res.send("ok");
 
     } catch (error) {
+        if (connection) await connection.rollback();
         console.error(error);
         res.status(500).send("server error");
     }

@@ -78,7 +78,7 @@ const EditClient = () => {
             if (data.avatar) {
 
                 setAvatarPreview(
-                    `http://localhost:5000/api/clients/${id}/avatar`
+                    `http://localhost:5000/api/admin/clients/${id}/avatar`
                 );
 
             } else {

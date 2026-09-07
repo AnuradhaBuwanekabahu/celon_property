@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import API from '../api/clientapi';
-import { overviewOptions, cityOptions } from '../Assets/data.js';
+import { overviewOptions } from '../../assets/data.js';
 import { Upload, X, ImagePlus } from 'lucide-react';
 
 const EditLandsProfile = () => {
@@ -200,17 +200,14 @@ const EditLandsProfile = () => {
         />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <select
+          <input
+            type="text"
             name="city"
             value={formData.city}
             onChange={handleChange}
+            placeholder="Enter city"
             className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
-          >
-            <option value="">Select City</option>
-            {cityOptions.map((item, index) => (
-              <option key={index} value={item}>{item}</option>
-            ))}
-          </select>
+          />
 
           <input
             type="text"

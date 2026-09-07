@@ -3,18 +3,14 @@ import db from "../../configuration/db.js";
 // Get limits
 export const getAdLimits = async (req, res) => {
     try {
-        const [rows] = await db.query("SELECT * FROM ad_limits LIMIT 1");
-
-        if (!rows || rows.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: "Ad limits not configured. Run database setup (setup_database.js or ad_limits.sql).",
-            });
-        }
+        const [rows] = await db.query(
+            "SELECT id, tier_order, limit_count, price, days, created_at, updated_at FROM limits ORDER BY tier_order"
+        );
 
         res.status(200).json({
             success: true,
-            limits: rows[0],
+            limits: rows || [],
+            message: rows?.length ? undefined : "No ad limit tiers are configured yet.",
         });
     } catch (error) {
         console.log(error);
@@ -28,41 +24,27 @@ export const getAdLimits = async (req, res) => {
 // Update limits
 export const updateAdLimits = async (req, res) => {
     try {
-        const {
-            free_ad_limit,
-            second_limit,
-            second_limit_charge,
-            third_limit,
-            third_limit_charge,
-        } = req.body;
-
-        const [existing] = await db.query("SELECT id FROM ad_limits LIMIT 1");
-
-        if (!existing || existing.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: "Ad limits not configured. Run database setup (setup_database.js or ad_limits.sql).",
-            });
+        const limits = Array.isArray(req.body) ? req.body : req.body.limits;
+        if (!Array.isArray(limits) || limits.length === 0) {
+            return res.status(400).json({ success: false, message: "At least one limit is required" });
         }
 
-        await db.query(
-            `UPDATE ad_limits
-             SET
-                free_ad_limit=?,
-                second_limit=?,
-                second_limit_charge=?,
-                third_limit=?,
-                third_limit_charge=?
-             WHERE id=?`,
-            [
-                free_ad_limit,
-                second_limit,
-                second_limit_charge,
-                third_limit,
-                third_limit_charge,
-                existing[0].id,
-            ]
-        );
+        for (const limit of limits) {
+            if (Number(limit.limit_count) < 0 || Number(limit.price) < 0 || Number(limit.days) < 1 || Number(limit.tier_order) < 1) {
+                return res.status(400).json({ success: false, message: "Each limit must have valid count, price, and days" });
+            }
+            if (limit.id) {
+                await db.query(
+                    "UPDATE limits SET tier_order = ?, limit_count = ?, price = ?, days = ? WHERE id = ?",
+                    [Number(limit.tier_order), Number(limit.limit_count), Number(limit.price), Number(limit.days), Number(limit.id)]
+                );
+            } else {
+                await db.query(
+                    "INSERT INTO limits (tier_order, limit_count, price, days) VALUES (?, ?, ?, ?)",
+                    [Number(limit.tier_order), Number(limit.limit_count), Number(limit.price), Number(limit.days)]
+                );
+            }
+        }
 
         res.status(200).json({
             success: true,

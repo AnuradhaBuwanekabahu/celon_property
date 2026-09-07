@@ -1,4 +1,5 @@
 import db from "../../configuration/db.js";
+import { getApplicableLimit, publicLimitInfo } from '../utils/limitUtils.js';
 
 const toImageDataUrl = (value, mimeType = "image/jpeg") => {
   if (!value) return null;
@@ -51,12 +52,13 @@ const ensureStayToBuyTable = async (connection) => {
       property_type VARCHAR(50) NOT NULL,
       highlights JSON,
       area_sqft DECIMAL(10,2),
+      district VARCHAR(100) NOT NULL,
+      address VARCHAR(255) NOT NULL,
       main_video LONGBLOB,
       duration ENUM('permanent','month','year','week','day'),
       city VARCHAR(100) NOT NULL,
       map_address VARCHAR(255),
       rate DECIMAL(2,1) DEFAULT 0.0,
-      location VARCHAR(255),
       main_image LONGBLOB NOT NULL,
       status ENUM('pending','active','sold') DEFAULT 'pending',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -110,13 +112,16 @@ export const addStayToBuy = async (req, res) => {
       property_type,
       highlights,
       area_sqft,
+      district,
       city,
+      address,
       map_address,
-      location,
       duration,
+      rate,
+      days,
     } = req.body;
 
-    if (!client_id || !title || !price || !property_type || !city) {
+    if (!client_id || !title || !price || !property_type || !district || !city || !address) {
       return res.status(400).json({
         success: false,
         message: "Please fill all required fields.",
@@ -138,18 +143,24 @@ export const addStayToBuy = async (req, res) => {
       imageBuffers = req.files.images.map((img) => img.buffer);
     }
 
+    const limitInfo = await getApplicableLimit(connection, client_id);
+    const listingDays = Number(limitInfo.applicableLimit.days);
+    const expiresAt = new Date(Date.now() + (listingDays * 24 * 60 * 60 * 1000));
+    const listingStatus = Number(limitInfo.applicableLimit.price) > 0 ? 'pending' : 'active';
+
     const sql = `
       INSERT INTO stays_to_buy
       (
-        client_id, title, description, overview, price, property_type,
-        highlights, area_sqft, city, map_address, location,
-        main_image, main_video, duration
+        client_id, limit_id, title, description, overview, price, property_type,
+        highlights, area_sqft, district, city, address, map_address,
+        main_image, main_video, duration, rate, days, expires_at, status
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const [result] = await connection.query(sql, [
       client_id,
+      limitInfo.applicableLimit.id,
       title,
       description,
       overview ? JSON.stringify(JSON.parse(overview)) : JSON.stringify([]),
@@ -157,12 +168,17 @@ export const addStayToBuy = async (req, res) => {
       property_type,
       highlights ? JSON.stringify(JSON.parse(highlights)) : JSON.stringify([]),
       area_sqft || null,
+      district,
       city,
+      address,
       map_address,
-      location,
       mainImageBuffer,
       mainVideoBuffer,
       duration || 'permanent',
+      rate || null,
+      listingDays,
+      expiresAt,
+      listingStatus,
     ]);
 
     for (const image of imageBuffers) {
@@ -172,13 +188,30 @@ export const addStayToBuy = async (req, res) => {
       );
     }
 
+    let paymentId = null;
+    if (Number(limitInfo.applicableLimit.price) > 0) {
+      const [paymentResult] = await connection.query(
+        `INSERT INTO payments (client_id, property_type, property_id, amount, status, created_at)
+         VALUES (?, 'stays_to_buy', ?, ?, 'pending', NOW())`,
+        [client_id, result.insertId, Number(limitInfo.applicableLimit.price)]
+      );
+      paymentId = paymentResult.insertId;
+    }
+
+    if (Number(limitInfo.applicableLimit.price) === 0) {
+      await connection.query(
+        `UPDATE clients SET total_ads_count = total_ads_count + 1 WHERE id = ?`,
+        [client_id]
+      );
+    }
+
     await connection.commit();
-    res.status(201).json({ success: true, message: "Stay To Buy added successfully." });
+    res.status(201).json({ success: true, message: "Stay To Buy added successfully.", status: listingStatus, payment_id: paymentId, tier: publicLimitInfo(limitInfo.applicableLimit) });
 
   } catch (error) {
     if (connection) await connection.rollback();
     console.error(error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(error.code === 'NO_TIER_AVAILABLE' ? 409 : 500).json({ success: false, message: error.message });
   } finally {
     if (connection) connection.release();
   }
@@ -190,6 +223,12 @@ export const showAllStayToBuy = async (req, res) => {
     const [rows] = await db.query(`
       SELECT
         s.*,
+        CASE
+          WHEN s.expires_at IS NULL THEN NULL
+          WHEN DATEDIFF(s.expires_at, CURRENT_TIMESTAMP) < 0 THEN 0
+          ELSE DATEDIFF(s.expires_at, CURRENT_TIMESTAMP)
+        END AS remaining_days,
+        (s.expires_at IS NOT NULL AND DATEDIFF(s.expires_at, CURRENT_TIMESTAMP) <= 0 AND s.status <> 'expired') AS needs_expiry_update,
         c.full_name,
         c.email,
         c.phone_number
@@ -266,11 +305,14 @@ export const updateStayToBuy = async (req, res) => {
       property_type,
       highlights,
       area_sqft,
+      district,
       city,
+      address,
       map_address,
-      location,
       status,
       duration,
+      rate,
+      overview,
     } = req.body;
 
     let mainImage = null;
@@ -293,11 +335,14 @@ export const updateStayToBuy = async (req, res) => {
       property_type=?,
       highlights=?,
       area_sqft=?,
+      district=?,
       city=?,
+      address=?,
       map_address=?,
-      location=?,
       status=?,
       duration=?,
+      rate=?,
+      overview=?,
       main_image=COALESCE(?, main_image),
         main_video=COALESCE(?, main_video)
       WHERE id=?
@@ -310,11 +355,14 @@ export const updateStayToBuy = async (req, res) => {
       property_type,
       highlights ? JSON.stringify(JSON.parse(highlights)) : JSON.stringify([]),
       area_sqft,
+      district,
       city,
+      address,
       map_address,
-      location,
       status,
       duration || 'month',
+      rate,
+      overview ? JSON.stringify(JSON.parse(overview)) : JSON.stringify([]),
       mainImage,
       mainVideo,
       id,

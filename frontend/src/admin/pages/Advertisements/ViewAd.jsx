@@ -304,15 +304,9 @@ const ViewAd = () => {
                     gap-4
                 ">
 
-                    <Info
-                        label="Advertisement ID"
-                        value={ad.id}
-                    />
+                   
 
-                    <Info
-                        label="Client ID"
-                        value={ad.client_id}
-                    />
+                   
 
                     <Info
                         label="Title"

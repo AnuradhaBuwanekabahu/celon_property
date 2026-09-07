@@ -1,3 +1,4 @@
+
 import db from "../../configuration/db.js";
 
 // ======================================================
@@ -11,7 +12,6 @@ export const addLands = async (req, res) => {
     try {
 
         connection = await db.getConnection();
-
         await connection.beginTransaction();
 
         const {
@@ -23,10 +23,12 @@ export const addLands = async (req, res) => {
             rate,
             land_size,
             size_unit,
-            location,
+            duration,
+            address,
+            district,
+            map_address,
             city,
-            status,
-            duration
+            status
         } = req.body;
 
         // ==================================================
@@ -58,8 +60,14 @@ export const addLands = async (req, res) => {
 
         if (
             !title ||
-            !price ||
-            !land_size ||
+            price === undefined ||
+            price === null ||
+            price === "" ||
+            land_size === undefined ||
+            land_size === null ||
+            land_size === "" ||
+            !address ||
+            !district ||
             !city
         ) {
 
@@ -67,7 +75,8 @@ export const addLands = async (req, res) => {
 
             return res.status(400).json({
                 success: false,
-                message: "Required fields are missing"
+                message:
+                    "Title, price, land size, address, district and city are required."
             });
 
         }
@@ -85,7 +94,7 @@ export const addLands = async (req, res) => {
 
             return res.status(400).json({
                 success: false,
-                message: "Main image is required"
+                message: "Main image is required."
             });
 
         }
@@ -130,7 +139,7 @@ export const addLands = async (req, res) => {
 
                 return res.status(400).json({
                     success: false,
-                    message: "Invalid overview JSON"
+                    message: "Invalid overview JSON."
                 });
 
             }
@@ -147,45 +156,62 @@ export const addLands = async (req, res) => {
             (
                 client_id,
                 title,
+                rate,
                 description,
                 price,
                 overview,
-                rate,
                 land_size,
-                main_video,
-                duration,
                 size_unit,
-                location,
+                duration,
+                address,
+                district,
+                map_address,
                 city,
                 main_image,
+                main_video,
                 status
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `,
             [
                 normalizedClientId,
+
                 title,
-                description || null,
-                price,
-                JSON.stringify(overviewData),
 
                 rate === undefined || rate === ""
                     ? 0.00
                     : Number(rate),
 
+                description || null,
+
+                price,
+
+                JSON.stringify(overviewData),
+
                 land_size,
-                mainVideo,
+
+                size_unit || "perches",
 
                 duration || "month",
-                size_unit || "perches",
-                location || null,
+
+                address,
+
+                district,
+
+                map_address || null,
+
                 city,
+
                 mainImage,
+
+                mainVideo,
+
                 status || "pending"
             ]
         );
 
-        const landId = result.insertId;
+        const landId =
+            result.insertId;
 
         // ==================================================
         // GALLERY IMAGES
@@ -196,7 +222,10 @@ export const addLands = async (req, res) => {
             req.files.images.length > 0
         ) {
 
-            for (const image of req.files.images) {
+            for (
+                const image
+                of req.files.images
+            ) {
 
                 await connection.query(
                     `
@@ -224,9 +253,14 @@ export const addLands = async (req, res) => {
         await connection.commit();
 
         return res.status(201).json({
+
             success: true,
-            message: "Land added successfully",
+
+            message:
+                "Land added successfully",
+
             id: landId
+
         });
 
     } catch (error) {
@@ -241,8 +275,12 @@ export const addLands = async (req, res) => {
         );
 
         return res.status(500).json({
+
             success: false,
-            message: error.message
+
+            message:
+                error.message
+
         });
 
     } finally {
@@ -270,14 +308,16 @@ export const getLands = async (req, res) => {
                 id,
                 client_id,
                 title,
+                rate,
                 description,
                 price,
                 overview,
-                rate,
                 land_size,
-                duration,
                 size_unit,
-                location,
+                duration,
+                address,
+                district,
+                map_address,
                 city,
                 status,
                 created_at,
@@ -295,63 +335,71 @@ export const getLands = async (req, res) => {
             `
         );
 
-        const data = await Promise.all(
+        const data =
+            await Promise.all(
 
-            lands.map(async (land) => {
+                lands.map(
+                    async (land) => {
 
-                // ==================================================
-                // GET GALLERY
-                // ==================================================
+                        // ==================================
+                        // GET GALLERY
+                        // ==================================
 
-                const [images] = await db.query(
-                    `
-                    SELECT id
-                    FROM land_images
-                    WHERE land_id = ?
-                    ORDER BY id ASC
-                    `,
-                    [land.id]
-                );
+                        const [images] =
+                            await db.query(
+                                `
+                                SELECT
+                                    id
+                                FROM land_images
+                                WHERE land_id = ?
+                                ORDER BY id ASC
+                                `,
+                                [land.id]
+                            );
 
-                return {
+                        return {
 
-                    ...land,
+                            ...land,
 
-                    // ==================================================
-                    // MAIN IMAGE
-                    // ==================================================
+                            // ==============================
+                            // MAIN IMAGE
+                            // ==============================
 
-                    main_image:
-                        `/api/lands/image/${land.id}`,
+                            main_image:
+                                `/api/admin/lands/image/${land.id}`,
 
-                    // ==================================================
-                    // MAIN VIDEO
-                    // ==================================================
+                            // ==============================
+                            // MAIN VIDEO
+                            // ==============================
 
-                    main_video:
-                        land.has_video
-                            ? `/api/lands/video/${land.id}`
-                            : null,
+                            main_video:
+                                land.has_video
+                                    ? `/api/admin/lands/video/${land.id}`
+                                    : null,
 
-                    // ==================================================
-                    // GALLERY
-                    // ==================================================
+                            // ==============================
+                            // GALLERY
+                            // ==============================
 
-                    images:
-                        images.map(
-                            image =>
-                                `/api/lands/gallery-image/${image.id}`
-                        )
+                            images:
+                                images.map(
+                                    image =>
+                                        `/api/admin/lands/gallery-image/${image.id}`
+                                )
 
-                };
+                        };
 
-            })
+                    }
+                )
 
-        );
+            );
 
         return res.status(200).json({
+
             success: true,
+
             data
+
         });
 
     } catch (error) {
@@ -362,8 +410,12 @@ export const getLands = async (req, res) => {
         );
 
         return res.status(500).json({
+
             success: false,
-            message: error.message
+
+            message:
+                error.message
+
         });
 
     }
@@ -379,76 +431,86 @@ export const getLandById = async (req, res) => {
 
     try {
 
-        const { id } = req.params;
+        const { id } =
+            req.params;
 
         // ==================================================
         // GET LAND
         // ==================================================
 
-        const [rows] = await db.query(
-            `
-            SELECT
-                id,
-                client_id,
-                title,
-                description,
-                price,
-                overview,
-                rate,
-                land_size,
-                duration,
-                size_unit,
-                location,
-                city,
-                status,
-                created_at,
-                updated_at,
+        const [rows] =
+            await db.query(
+                `
+                SELECT
+                    id,
+                    client_id,
+                    title,
+                    rate,
+                    description,
+                    price,
+                    overview,
+                    land_size,
+                    size_unit,
+                    duration,
+                    address,
+                    district,
+                    map_address,
+                    city,
+                    status,
+                    created_at,
+                    updated_at,
 
-                CASE
-                    WHEN main_video IS NOT NULL
-                    THEN 1
-                    ELSE 0
-                END AS has_video
+                    CASE
+                        WHEN main_video IS NOT NULL
+                        THEN 1
+                        ELSE 0
+                    END AS has_video
 
-            FROM land
+                FROM land
 
-            WHERE id = ?
-            `,
-            [id]
-        );
+                WHERE id = ?
+                `,
+                [id]
+            );
 
         if (rows.length === 0) {
 
             return res.status(404).json({
+
                 success: false,
-                message: "Land not found"
+
+                message:
+                    "Land not found"
+
             });
 
         }
 
-        const land = rows[0];
+        const land =
+            rows[0];
 
         // ==================================================
         // GET GALLERY
         // ==================================================
 
-        const [images] = await db.query(
-            `
-            SELECT
-                id
-            FROM land_images
-            WHERE land_id = ?
-            ORDER BY id ASC
-            `,
-            [id]
-        );
+        const [images] =
+            await db.query(
+                `
+                SELECT
+                    id
+                FROM land_images
+                WHERE land_id = ?
+                ORDER BY id ASC
+                `,
+                [id]
+            );
 
         // ==================================================
         // MAIN IMAGE
         // ==================================================
 
         land.main_image =
-            `/api/lands/image/${id}`;
+            `/api/admin/lands/image/${id}`;
 
         // ==================================================
         // MAIN VIDEO
@@ -456,7 +518,7 @@ export const getLandById = async (req, res) => {
 
         land.main_video =
             land.has_video
-                ? `/api/lands/video/${id}`
+                ? `/api/admin/lands/video/${id}`
                 : null;
 
         // ==================================================
@@ -466,19 +528,25 @@ export const getLandById = async (req, res) => {
         land.images =
             images.map(
                 image =>
-                    `/api/lands/gallery-image/${image.id}`
+                    `/api/admin/lands/gallery-image/${image.id}`
             );
 
         // ==================================================
-        // ALSO RETURN GALLERY OBJECTS
+        // GALLERY OBJECTS
         // ==================================================
 
         land.gallery =
-            images.map(image => ({
-                id: image.id,
-                url:
-                    `/api/lands/gallery-image/${image.id}`
-            }));
+            images.map(
+                image => ({
+
+                    id:
+                        image.id,
+
+                    url:
+                        `/api/admin/lands/gallery-image/${image.id}`
+
+                })
+            );
 
         // ==================================================
         // RESPONSE
@@ -488,7 +556,8 @@ export const getLandById = async (req, res) => {
 
             success: true,
 
-            data: land
+            data:
+                land
 
         });
 
@@ -500,8 +569,12 @@ export const getLandById = async (req, res) => {
         );
 
         return res.status(500).json({
+
             success: false,
-            message: error.message
+
+            message:
+                error.message
+
         });
 
     }
@@ -513,20 +586,26 @@ export const getLandById = async (req, res) => {
 // GET MAIN IMAGE
 // ======================================================
 
-export const getLandMainImage = async (req, res) => {
+export const getLandMainImage = async (
+    req,
+    res
+) => {
 
     try {
 
-        const { id } = req.params;
+        const { id } =
+            req.params;
 
-        const [rows] = await db.query(
-            `
-            SELECT main_image
-            FROM land
-            WHERE id = ?
-            `,
-            [id]
-        );
+        const [rows] =
+            await db.query(
+                `
+                SELECT
+                    main_image
+                FROM land
+                WHERE id = ?
+                `,
+                [id]
+            );
 
         if (
             rows.length === 0 ||
@@ -534,8 +613,12 @@ export const getLandMainImage = async (req, res) => {
         ) {
 
             return res.status(404).json({
+
                 success: false,
-                message: "Main image not found"
+
+                message:
+                    "Main image not found"
+
             });
 
         }
@@ -545,7 +628,7 @@ export const getLandMainImage = async (req, res) => {
             "image/jpeg"
         );
 
-        res.send(
+        return res.send(
             rows[0].main_image
         );
 
@@ -557,8 +640,12 @@ export const getLandMainImage = async (req, res) => {
         );
 
         return res.status(500).json({
+
             success: false,
-            message: error.message
+
+            message:
+                error.message
+
         });
 
     }
@@ -570,20 +657,26 @@ export const getLandMainImage = async (req, res) => {
 // GET GALLERY IMAGE
 // ======================================================
 
-export const getLandGalleryImage = async (req, res) => {
+export const getLandGalleryImage = async (
+    req,
+    res
+) => {
 
     try {
 
-        const { id } = req.params;
+        const { id } =
+            req.params;
 
-        const [rows] = await db.query(
-            `
-            SELECT image
-            FROM land_images
-            WHERE id = ?
-            `,
-            [id]
-        );
+        const [rows] =
+            await db.query(
+                `
+                SELECT
+                    image
+                FROM land_images
+                WHERE id = ?
+                `,
+                [id]
+            );
 
         if (
             rows.length === 0 ||
@@ -591,8 +684,12 @@ export const getLandGalleryImage = async (req, res) => {
         ) {
 
             return res.status(404).json({
+
                 success: false,
-                message: "Gallery image not found"
+
+                message:
+                    "Gallery image not found"
+
             });
 
         }
@@ -602,7 +699,7 @@ export const getLandGalleryImage = async (req, res) => {
             "image/jpeg"
         );
 
-        res.send(
+        return res.send(
             rows[0].image
         );
 
@@ -614,8 +711,12 @@ export const getLandGalleryImage = async (req, res) => {
         );
 
         return res.status(500).json({
+
             success: false,
-            message: error.message
+
+            message:
+                error.message
+
         });
 
     }
@@ -627,20 +728,26 @@ export const getLandGalleryImage = async (req, res) => {
 // GET MAIN VIDEO
 // ======================================================
 
-export const getLandMainVideo = async (req, res) => {
+export const getLandMainVideo = async (
+    req,
+    res
+) => {
 
     try {
 
-        const { id } = req.params;
+        const { id } =
+            req.params;
 
-        const [rows] = await db.query(
-            `
-            SELECT main_video
-            FROM land
-            WHERE id = ?
-            `,
-            [id]
-        );
+        const [rows] =
+            await db.query(
+                `
+                SELECT
+                    main_video
+                FROM land
+                WHERE id = ?
+                `,
+                [id]
+            );
 
         if (
             rows.length === 0 ||
@@ -648,8 +755,12 @@ export const getLandMainVideo = async (req, res) => {
         ) {
 
             return res.status(404).json({
+
                 success: false,
-                message: "Main video not found"
+
+                message:
+                    "Main video not found"
+
             });
 
         }
@@ -659,7 +770,7 @@ export const getLandMainVideo = async (req, res) => {
             "video/mp4"
         );
 
-        res.send(
+        return res.send(
             rows[0].main_video
         );
 
@@ -671,8 +782,12 @@ export const getLandMainVideo = async (req, res) => {
         );
 
         return res.status(500).json({
+
             success: false,
-            message: error.message
+
+            message:
+                error.message
+
         });
 
     }
@@ -684,17 +799,22 @@ export const getLandMainVideo = async (req, res) => {
 // UPDATE LAND
 // ======================================================
 
-export const updateLand = async (req, res) => {
+export const updateLand = async (
+    req,
+    res
+) => {
 
     let connection;
 
     try {
 
-        connection = await db.getConnection();
+        connection =
+            await db.getConnection();
 
         await connection.beginTransaction();
 
-        const { id } = req.params;
+        const { id } =
+            req.params;
 
         const {
             client_id,
@@ -705,32 +825,40 @@ export const updateLand = async (req, res) => {
             rate,
             land_size,
             size_unit,
-            location,
+            duration,
+            address,
+            district,
+            map_address,
             city,
-            status,
-            duration
+            status
         } = req.body;
 
         // ==================================================
         // CHECK LAND
         // ==================================================
 
-        const [existing] = await connection.query(
-            `
-            SELECT id
-            FROM land
-            WHERE id = ?
-            `,
-            [id]
-        );
+        const [existing] =
+            await connection.query(
+                `
+                SELECT
+                    id
+                FROM land
+                WHERE id = ?
+                `,
+                [id]
+            );
 
         if (existing.length === 0) {
 
             await connection.rollback();
 
             return res.status(404).json({
+
                 success: false,
-                message: "Land not found"
+
+                message:
+                    "Land not found"
+
             });
 
         }
@@ -741,16 +869,26 @@ export const updateLand = async (req, res) => {
 
         if (
             !title ||
-            !price ||
-            !land_size ||
+            price === undefined ||
+            price === null ||
+            price === "" ||
+            land_size === undefined ||
+            land_size === null ||
+            land_size === "" ||
+            !address ||
+            !district ||
             !city
         ) {
 
             await connection.rollback();
 
             return res.status(400).json({
+
                 success: false,
-                message: "Required fields are missing"
+
+                message:
+                    "Title, price, land size, address, district and city are required."
+
             });
 
         }
@@ -775,29 +913,17 @@ export const updateLand = async (req, res) => {
                 await connection.rollback();
 
                 return res.status(400).json({
+
                     success: false,
-                    message: "Invalid overview JSON"
+
+                    message:
+                        "Invalid overview JSON"
+
                 });
 
             }
 
         }
-
-        // ==================================================
-        // CHECK MAIN IMAGE
-        // ==================================================
-
-        const hasMainImage =
-            req.files?.main_image &&
-            req.files.main_image.length > 0;
-
-        // ==================================================
-        // CHECK MAIN VIDEO
-        // ==================================================
-
-        const hasMainVideo =
-            req.files?.main_video &&
-            req.files.main_video.length > 0;
 
         // ==================================================
         // BUILD UPDATE QUERY
@@ -806,6 +932,7 @@ export const updateLand = async (req, res) => {
         let sql = `
             UPDATE land
             SET
+                client_id = ?,
                 title = ?,
                 description = ?,
                 price = ?,
@@ -813,13 +940,17 @@ export const updateLand = async (req, res) => {
                 rate = ?,
                 land_size = ?,
                 size_unit = ?,
-                location = ?,
+                duration = ?,
+                address = ?,
+                district = ?,
+                map_address = ?,
                 city = ?,
-                status = ?,
-                duration = ?
+                status = ?
         `;
 
         const values = [
+
+            client_id,
 
             title,
 
@@ -839,19 +970,27 @@ export const updateLand = async (req, res) => {
 
             size_unit || "perches",
 
-            location || null,
+            duration || "month",
+
+            address,
+
+            district,
+
+            map_address || null,
 
             city,
 
-            status || "pending",
-
-            duration || "month"
+            status || "pending"
 
         ];
 
         // ==================================================
-        // UPDATE MAIN IMAGE ONLY IF NEW IMAGE UPLOADED
+        // UPDATE MAIN IMAGE
         // ==================================================
+
+        const hasMainImage =
+            req.files?.main_image &&
+            req.files.main_image.length > 0;
 
         if (hasMainImage) {
 
@@ -866,8 +1005,12 @@ export const updateLand = async (req, res) => {
         }
 
         // ==================================================
-        // UPDATE MAIN VIDEO ONLY IF NEW VIDEO UPLOADED
+        // UPDATE MAIN VIDEO
         // ==================================================
+
+        const hasMainVideo =
+            req.files?.main_video &&
+            req.files.main_video.length > 0;
 
         if (hasMainVideo) {
 
@@ -887,6 +1030,10 @@ export const updateLand = async (req, res) => {
 
         values.push(id);
 
+        // ==================================================
+        // EXECUTE UPDATE
+        // ==================================================
+
         await connection.query(
             sql,
             values
@@ -894,9 +1041,6 @@ export const updateLand = async (req, res) => {
 
         // ==================================================
         // ADD NEW GALLERY IMAGES
-        //
-        // IMPORTANT:
-        // DO NOT DELETE EXISTING IMAGES
         // ==================================================
 
         if (
@@ -978,20 +1122,25 @@ export const updateLand = async (req, res) => {
 // DELETE LAND
 // ======================================================
 
-export const deleteLand = async (req, res) => {
+export const deleteLand = async (
+    req,
+    res
+) => {
 
     let connection;
 
     try {
 
-        connection = await db.getConnection();
+        connection =
+            await db.getConnection();
 
         await connection.beginTransaction();
 
-        const { id } = req.params;
+        const { id } =
+            req.params;
 
         // ==================================================
-        // DELETE GALLERY IMAGES FIRST
+        // DELETE GALLERY
         // ==================================================
 
         await connection.query(
@@ -1006,30 +1155,45 @@ export const deleteLand = async (req, res) => {
         // DELETE LAND
         // ==================================================
 
-        const [result] = await connection.query(
-            `
-            DELETE FROM land
-            WHERE id = ?
-            `,
-            [id]
-        );
+        const [result] =
+            await connection.query(
+                `
+                DELETE FROM land
+                WHERE id = ?
+                `,
+                [id]
+            );
 
-        if (result.affectedRows === 0) {
+        if (
+            result.affectedRows === 0
+        ) {
 
             await connection.rollback();
 
             return res.status(404).json({
+
                 success: false,
-                message: "Land not found"
+
+                message:
+                    "Land not found"
+
             });
 
         }
 
+        // ==================================================
+        // COMMIT
+        // ==================================================
+
         await connection.commit();
 
         return res.status(200).json({
+
             success: true,
-            message: "Land deleted successfully"
+
+            message:
+                "Land deleted successfully"
+
         });
 
     } catch (error) {
@@ -1044,8 +1208,12 @@ export const deleteLand = async (req, res) => {
         );
 
         return res.status(500).json({
+
             success: false,
-            message: error.message
+
+            message:
+                error.message
+
         });
 
     } finally {

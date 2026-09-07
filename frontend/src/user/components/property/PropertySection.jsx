@@ -3,6 +3,39 @@ import PropertyCard from './PropertyCard'
 import { ArrowRight, Building } from 'lucide-react'
 
 function PropertySection({ title, properties, seeMoreLink, loading }) {
+  const getPropertyDetailLink = (property, fallbackPath = seeMoreLink || '/') => {
+    if (!property || !property.id) return fallbackPath
+
+    if (property.detailLink) return property.detailLink
+
+    const rawType = property.propertyType || property.property_type || property.tag || property.type || ''
+    const normalizedType = String(rawType).toLowerCase()
+    const normalizedTitle = String(title || '').toLowerCase()
+
+    if (normalizedType.includes('hotsale') || normalizedType.includes('hot sales') || normalizedTitle.includes('hot sales')) {
+      return `/property/hotsale/${property.id}`
+    }
+
+    if (normalizedType.includes('land') || normalizedTitle.includes('land')) {
+      return `/property/land/${property.id}`
+    }
+
+    if (normalizedType.includes('staytorent') || normalizedType.includes('stay to rent') || normalizedTitle.includes('rent')) {
+      return `/property/staytorent/${property.id}`
+    }
+
+    if (normalizedType.includes('staytobuy') || normalizedType.includes('stay to buy') || normalizedTitle.includes('buy')) {
+      return `/property/staytobuy/${property.id}`
+    }
+
+    if (normalizedType.includes('hotel') || normalizedType.includes('apartment') || normalizedType.includes('house') || normalizedType.includes('villa') || normalizedType.includes('bungalow') || normalizedType.includes('studio')) {
+      const routeType = normalizedTitle.includes('rent') ? 'staytorent' : 'staytobuy'
+      return `/property/${routeType}/${property.id}`
+    }
+
+    return fallbackPath
+  }
+
   return (
     <section className="max-w-7xl mx-auto px-4 py-8">
       {/* Section Header */}
@@ -37,7 +70,7 @@ function PropertySection({ title, properties, seeMoreLink, loading }) {
           {properties.map((property) => (
             <Link
               key={property.id}
-              to={property.detailLink || seeMoreLink || '/'}
+              to={getPropertyDetailLink(property)}
               className="block"
             >
               <PropertyCard property={property} />

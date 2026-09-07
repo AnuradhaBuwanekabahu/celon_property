@@ -10,7 +10,8 @@ import {
 
 import {
     overviewOptions,
-    cityOptions
+    cityOptions,
+    districtOptions
 } from "../../data/propertyOption";
 
 import Loader from "../../components/Loader";
@@ -32,16 +33,20 @@ const EditLand = () => {
     // =====================================================
 
     const [form, setForm] = useState({
+        client_id: "",
 
         title: "",
         description: "",
         price: "",
-        rate: "",
+        
         land_size: "",
         size_unit: "perches",
+        address: "",
+district: "",
 
         city: "",
-        location: "",
+        map_address: "",
+    
 
         duration: "month",
         status: "pending",
@@ -138,6 +143,9 @@ const EditLand = () => {
             // =================================================
 
             setForm({
+                client_id:
+                        land.client_id || "",
+
 
                 title:
                     land.title || "",
@@ -148,20 +156,24 @@ const EditLand = () => {
                 price:
                     land.price || "",
 
-                rate:
-                    land.rate || "",
+              
 
                 land_size:
                     land.land_size || "",
 
                 size_unit:
                     land.size_unit || "perches",
+                address:
+                    land.address || "",
+
+                district:
+                    land.district || "",
 
                 city:
                     land.city || "",
+                map_address: land.map_address || "",
 
-                location:
-                    land.location || "",
+               
 
                 duration:
                     land.duration || "month",
@@ -360,6 +372,11 @@ const removeOverview = (index) => {
             // BASIC DATA
             // =================================================
 
+             data.append(
+                "client_id",
+                form.client_id
+            );
+
             data.append(
                 "title",
                 form.title
@@ -375,10 +392,7 @@ const removeOverview = (index) => {
                 form.price
             );
 
-            data.append(
-                "rate",
-                form.rate
-            );
+       
 
             data.append(
                 "land_size",
@@ -391,14 +405,22 @@ const removeOverview = (index) => {
             );
 
             data.append(
+    "address",
+    form.address
+);
+
+data.append(
+    "district",
+    form.district
+);
+
+            data.append(
                 "city",
                 form.city
             );
+            data.append("map_address", form.map_address);
 
-            data.append(
-                "location",
-                form.location
-            );
+
 
             data.append(
                 "duration",
@@ -656,168 +678,171 @@ const removeOverview = (index) => {
 
                     </div>
 
-                    {/* =================================================
-                        LAND INFORMATION
-                    ================================================= */}
+{/* =================================================
+    LAND INFORMATION
+================================================= */}
 
-                    <div>
+<div>
 
-           
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* LAND SIZE */}
+        <div>
+            <label className="block text-sm font-medium text-[#14213D] mb-2">
+                Land Size
+            </label>
 
-                            <div>
-                                <label className="block text-sm font-medium text-[#14213D] mb-2">
+            <input
+                type="number"
+                step="0.01"
+                name="land_size"
+                value={form.land_size}
+                onChange={handleChange}
+                placeholder="Land Size"
+                required
+                className="w-full border border-gray-300 p-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#FBBF24] focus:border-[#FBBF24]"
+            />
+        </div>
 
-                                 Rate
+        {/* SIZE UNIT */}
+        <div>
+            <label className="block text-sm font-medium text-[#14213D] mb-2">
+                Size Unit
+            </label>
 
-                                </label>
-                            
+            <select
+                name="size_unit"
+                value={form.size_unit}
+                onChange={handleChange}
+                className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FBBF24]"
+            >
+                <option value="perches">
+                    Perches
+                </option>
 
-                            {/* RATE */}
+                <option value="acres">
+                    Acres
+                </option>
 
-                            <input
-                                type="number"
-                                step="0.01"
-                                name="rate"
-                                value={form.rate}
-                                onChange={handleChange}
-                                placeholder="Rate"
-                                className="w-full border border-gray-300 p-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#FBBF24] focus:border-[#FBBF24]"
-                            />
+                <option value="sqft">
+                    Sqft
+                </option>
+            </select>
+        </div>
 
-                            </div>
+    </div>
 
-                            <div>
-
-                            {/* LAND SIZE */}
-
-                            <label className="block text-sm font-medium text-[#14213D] mb-2">
-
-                                 Land Size
-
-                                </label>
-
-                            <input
-                                type="number"
-                                step="0.01"
-                                name="land_size"
-                                value={form.land_size}
-                                onChange={handleChange}
-                                placeholder="Land Size"
-                                required
-                                className="w-full border border-gray-300 p-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#FBBF24] focus:border-[#FBBF24]"
-                            />
-                            </div>
-
-                            <div>
-
-                            {/* SIZE UNIT */}
-                            <label className="block text-sm font-medium text-[#14213D] mb-2">
-
-                                 Size Unit
-
-                                </label>
-
-                            <select
-                                name="size_unit"
-                                value={form.size_unit}
-                                onChange={handleChange}
-                                className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FBBF24]"
-                            >
-
-                                <option value="perches">
-                                    Perches
-                                </option>
-
-                                <option value="acres">
-                                    Acres
-                                </option>
-
-                                <option value="sqft">
-                                    Sqft
-                                </option>
-
-                            </select>
-                            </div>
-
-                        </div>
-
-                    </div>
+</div>
 
                     {/* =================================================
-                        LOCATION
-                    ================================================= */}
+    LOCATION
+================================================= */}
 
-                    <div>
+<div>
 
-        
+   
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                            {/* CITY */}
+        {/* ADDRESS */}
+        <div>
 
-                            <label className="block text-sm font-medium text-[#14213D] mb-2">
+            <label className="block text-sm font-medium text-[#14213D] mb-2">
+                Address
+            </label>
 
-                                 City
+            <input
+                type="text"
+                name="address"
+                value={form.address}
+                onChange={handleChange}
+                placeholder="Property address"
+                required
+                className="w-full border border-gray-300 p-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#FBBF24]"
+            />
 
-                                </label>
-
-
-                            <select
-                                name="city"
-                                value={form.city}
-                                onChange={handleChange}
-                                required
-                                className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FBBF24]"
-                            >
-
-                                <option value="">
-                                    Select City
-                                </option>
-
-                                {cityOptions.map(
-                                    city => (
-
-                                        <option
-                                            key={city}
-                                            value={city}
-                                        >
-                                            {city}
-                                        </option>
-
-                                    )
-                                )}
-
-                            </select>
-                            </div>
+        </div>
 
 
-                            <div>
+        {/* DISTRICT */}
+        <div>
 
-                            {/* LOCATION */}
+            <label className="block text-sm font-medium text-[#14213D] mb-2">
+                District
+            </label>
 
-                            <label className="block text-sm font-medium text-[#14213D] mb-2">
+            <select
+                name="district"
+                value={form.district}
+                onChange={handleChange}
+                required
+                className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FBBF24]"
+            >
 
-                                 Location
+                <option value="">
+                    Select District
+                </option>
 
-                                </label>
+                {districtOptions.map((district) => (
+
+                    <option
+                        key={district}
+                        value={district}
+                    >
+                        {district}
+                    </option>
+
+                ))}
+
+            </select>
+
+        </div>
 
 
-                            <input
-                                type="text"
-                                name="location"
-                                value={form.location}
-                                onChange={handleChange}
-                                placeholder="Location address"
-                                className="w-full border border-gray-300 p-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#FBBF24]"
-                            />
-                            </div>
+        {/* CITY */}
+              <div>
 
-                        </div>
+            <label className="block text-sm font-medium text-[#14213D] mb-2">
+                City
+            </label>
 
-                    </div>
+            <input
+                type="text"
+                name="city"
+                value={form.city}
+                onChange={handleChange}
+                required
+                placeholder="Enter city"
+                className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FBBF24]"
+            />
+
+        </div>
+
+        {/* MAP ADDRESS */}
+        <div>
+
+            <label className="block text-sm font-medium text-[#14213D] mb-2">
+                Map Address
+            </label>
+
+            <input
+                type="text"
+                name="map_address"
+                value={form.map_address}
+                onChange={handleChange}
+                placeholder="Google Maps address / location"
+                className="w-full border border-gray-300 p-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#FBBF24]"
+            />
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+
 
                     {/* =================================================
                         STATUS / DURATION

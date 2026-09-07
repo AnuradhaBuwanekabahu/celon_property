@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { FiMail, FiLock, FiUser, FiEye, FiEyeOff } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import API from "../../api/clientapi";
@@ -6,6 +6,7 @@ import API from "../../api/clientapi";
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 export default function Register() {
+  const googleInitialized = useRef(false);
   const navigate = useNavigate();
 
   const [step, setStep] = useState("form"); // "form" | "otp"
@@ -139,7 +140,7 @@ export default function Register() {
 
     const initializeGoogle = () => {
       const button = document.getElementById("client-google-register-button");
-      if (!window.google?.accounts?.id || !button) return;
+      if (!window.google?.accounts?.id || !button || googleInitialized.current) return;
 
       window.google.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
@@ -151,6 +152,7 @@ export default function Register() {
         width: 360,
         text: "continue_with",
       });
+      googleInitialized.current = true;
     };
 
     initializeGoogle();
@@ -324,7 +326,7 @@ export default function Register() {
               <p className="mt-6 text-center text-gray-500 text-sm">
                 Already have an account?
                 <span
-                  onClick={() => navigate("/client-login")}
+                  onClick={() => navigate("/dashboard/client-login")}
                   className="text-[#FBBF24] font-medium cursor-pointer hover:underline ml-1"
                 >
                   Sign In

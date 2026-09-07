@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { clientContext } from '../context/ClientContext';
-import { ArrowLeft, MapPin, Phone, MessageCircle, Bed, Bath, Home, Ruler, X } from 'lucide-react';
+import { ArrowLeft, Phone, MessageCircle, Bed, Bath, Home, Ruler, X } from 'lucide-react';
 
 const getOverviewIcon = (title = '') => {
     const t = title.toLowerCase();
@@ -93,12 +93,6 @@ const HotsalesProfile = ({ hotsaleID, onBack }) => {
             <h1 className='text-lg sm:text-xl md:text-2xl font-bold text-[#14213D] mt-4 leading-snug'>
                 {selectedProperty.title}
             </h1>
-
-            {/* Location */}
-            <div className='flex items-center gap-1 text-gray-500 text-xs sm:text-sm mt-1'>
-                <MapPin size={15} className='shrink-0' />
-                <span>{selectedProperty.location}</span>
-            </div>
 
             {/* Price / Sqft / Land area */}
             <div className='flex flex-col sm:flex-row flex-wrap gap-x-6 gap-y-1.5 mt-3 text-xs sm:text-sm'>

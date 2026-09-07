@@ -11,6 +11,7 @@ import {
     updateClientProfile,
     changeClientPassword
 } from "../Controllers/clientController.js";
+import { showClientLimitOptions } from "../Controllers/LimitsController.js";
 
 const clientrouter = express.Router();
 
@@ -20,6 +21,7 @@ clientrouter.post("/verify-otp", verifyRegistrationOtp);
 clientrouter.post("/resend-otp", resendOtp);
 clientrouter.post("/login", loginClient);
 clientrouter.post("/google", loginClientWithGoogle);
+clientrouter.get("/limits/:id", showClientLimitOptions);
 clientrouter.get("/:id", getClientData);
 clientrouter.put("/:id", authMiddleware, upload.single("avatar"), updateClientProfile);
 clientrouter.put("/:id/change-password", authMiddleware, changeClientPassword);

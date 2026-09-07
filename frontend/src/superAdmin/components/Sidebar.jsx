@@ -11,6 +11,7 @@ const NAV = [
     { to: '/admin/properties/stays-to-rent', label: 'Stays to Rent' },
     { to: '/admin/properties/land', label: 'Land' },
     { to: '/admin/properties/wanted', label: 'Wanted' }
+    ,{ to: '/superadmin/limits', label: 'Limits', superOnly: true }
   ]},
   { group: 'People & Money', links: [
     { to: '/superadmin/clients', label: 'Clients' },

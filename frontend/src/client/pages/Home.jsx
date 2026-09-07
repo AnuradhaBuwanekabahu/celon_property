@@ -24,7 +24,7 @@ const Home = () => {
                     <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                         <button
                             className="rounded-full bg-[#14213D] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#1f315a]"
-                            onClick={() => navigate('/client-login')}
+                            onClick={() => navigate('/dashboard/client-login')}
                         >
                             Login
                         </button>

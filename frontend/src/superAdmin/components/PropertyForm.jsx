@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { Upload, X, ImagePlus } from 'lucide-react';
 import { overviewOptions, highlightOptions, cityOptions } from '../lib/propertyData';
+import { districtOptions } from '../../assets/data.js';
 
 const PROPERTY_TYPES = ['House', 'Apartment', 'Bungalow', 'Hotel', 'WareHouse', 'Villa', 'Studio'];
 const MAX_GALLERY = 9;
@@ -83,7 +84,7 @@ function Section({ title, subtitle, children }) {
 }
 
 // ─── Main PropertyForm ────────────────────────────────────────────────────────
-export default function PropertyForm({ initialValues = {}, onSave, saving, statuses = [], showRentPeriod = false, onClose }) {
+export default function PropertyForm({ initialValues = {}, onSave, saving, statuses = [], showRentPeriod = false, isHotSales = false, onClose, limits = [] }) {
 
   // ── form text state
   const [form, setForm] = useState({
@@ -93,7 +94,10 @@ export default function PropertyForm({ initialValues = {}, onSave, saving, statu
     description:   initialValues.description   || '',
     property_type: initialValues.property_type || '',
     city:          initialValues.city          || '',
+    district:      initialValues.district      || initialValues.location || '',
+    address:       initialValues.address       || initialValues.location || '',
     duration:      initialValues.duration      || 'month',
+    days:          initialValues.days          || 30,
     area_sqft:     initialValues.area_sqft     || '',
     map_address:   initialValues.map_address   || '',
     location:      initialValues.location      || '',
@@ -170,7 +174,9 @@ export default function PropertyForm({ initialValues = {}, onSave, saving, statu
     const fd = new FormData();
 
     // text fields
-    Object.entries(form).forEach(([k, v]) => fd.append(k, v));
+    Object.entries(form).forEach(([k, v]) => {
+      if (!isHotSales || k !== 'location') fd.append(k, v);
+    });
     fd.append('overview',   JSON.stringify(overview));
     fd.append('highlights', JSON.stringify(highlights));
 
@@ -274,6 +280,31 @@ export default function PropertyForm({ initialValues = {}, onSave, saving, statu
             <option value="day">Day</option>
           </select>
         </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
+          <label className="text-xs font-bold text-slate-800 uppercase tracking-widest block mb-1.5">Limit Tier (Active days)</label>
+          {limits && limits.length > 0 ? (
+            <select
+              value={form.days}
+              onChange={e => setF('days', Number(e.target.value))}
+              className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 transition cursor-pointer"
+            >
+              <option value="">Select a limit tier...</option>
+              {limits.map(l => (
+                <option key={l.id} value={l.days}>
+                  Tier {l.tier_order} - {l.days} Days
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              type="number"
+              min="1"
+              value={form.days}
+              onChange={e => setF('days', e.target.value)}
+              className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 transition"
+            />
+          )}
+        </div>
         {showRentPeriod && (
           <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
             <label className="text-xs font-bold text-slate-800 uppercase tracking-widest block mb-1.5">Rent Period</label>
@@ -360,7 +391,7 @@ export default function PropertyForm({ initialValues = {}, onSave, saving, statu
         </div>
       </Section>
 
-      {/* Area + Map + Location */}
+      {/* Area + Map + District + Address */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
           <label className="text-xs font-bold text-slate-800 uppercase tracking-widest block mb-1.5">Area (sqft)</label>
@@ -383,15 +414,30 @@ export default function PropertyForm({ initialValues = {}, onSave, saving, statu
           />
         </div>
       </div>
-      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
-        <label className="text-xs font-bold text-slate-800 uppercase tracking-widest block mb-1.5">Location Address</label>
-        <input
-          type="text"
-          value={form.location}
-          onChange={e => setF('location', e.target.value)}
-          placeholder="Enter your location address"
-          className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 transition"
-        />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
+          <label className="text-xs font-bold text-slate-800 uppercase tracking-widest block mb-1.5">District</label>
+          <select
+            value={form.district}
+            onChange={e => { const value = e.target.value; setF('district', value); setF('location', value); }}
+            className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 transition cursor-pointer"
+          >
+            <option value="">Select district</option>
+            {districtOptions.map(item => (
+              <option key={item} value={item}>{item}</option>
+            ))}
+          </select>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
+          <label className="text-xs font-bold text-slate-800 uppercase tracking-widest block mb-1.5">Address</label>
+          <input
+            type="text"
+            value={form.address}
+            onChange={e => { setF('address', e.target.value); setF('location', e.target.value); }}
+            placeholder="Enter property address"
+            className="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 transition"
+          />
+        </div>
       </div>
 
       {/* Main Image + Video */}

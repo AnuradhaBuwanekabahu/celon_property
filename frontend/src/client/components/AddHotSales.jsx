@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import API from '../api/clientapi.js';
 import { toast } from 'react-toastify';
-import { overviewOptions, highlightOptions, cityOptions } from '../Assets/data.js'
+import { overviewOptions, highlightOptions, districtOptions } from '../../assets/data.js'
 import { Upload, X, ImagePlus } from 'lucide-react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useContext } from 'react';
@@ -14,8 +14,11 @@ const AddHotSales = () => {
     const navigate = useNavigate();
     const {
         formData,
+        setFormData,
         handleChange,
         handleSubmit,
+        availableLimits,
+        setSelectedLimitDays,
 
         handleOverviewChange,
         addOverview,
@@ -43,6 +46,8 @@ const AddHotSales = () => {
         removeGalleryImage,
     } = useContext(clientContext);
 
+    const limitOptions = Array.isArray(availableLimits) ? availableLimits : [];
+
     return (
         <div className="max-w-6xl mt-8 mx-auto p-4 sm:p-6">
             <h2 className="text-xl sm:text-2xl font-bold text-[#14213D] mb-5">
@@ -53,72 +58,168 @@ const AddHotSales = () => {
 
                 {/* Basic details */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <input
-                        type="text"
-                        name="title"
+                    <div className="space-y-1">
+                        <label htmlFor="title" className="block text-sm font-semibold text-[#14213D]">
+                            Property Title
+                        </label>
+                        <input
+                            id="title"
+                            type="text"
+                            name="title"
+                            onChange={handleChange}
+                            placeholder="Property title"
+                            className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
+                        />
+                    </div>
+
+                    <div className="space-y-1">
+                        <label htmlFor="price" className="block text-sm font-semibold text-[#14213D]">
+                            Price (RS)
+                        </label>
+                        <input
+                            id="price"
+                            type="number"
+                            name="price"
+                            onChange={handleChange}
+                            placeholder="Price (RS)"
+                            className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
+                        />
+                    </div>
+                </div>
+
+                <div className="space-y-1">
+                    <label htmlFor="description" className="block text-sm font-semibold text-[#14213D]">
+                        Description
+                    </label>
+                    <textarea
+                        id="description"
+                        name="description"
                         onChange={handleChange}
-                        placeholder="Property title"
-                        className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
-                    />
-                    <input
-                        type="number"
-                        name="price"
-                        onChange={handleChange}
-                        placeholder="Price (RS)"
+                        placeholder="Enter description here..."
+                        rows={4}
                         className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
                     />
                 </div>
 
-                <textarea
-                    name="description"
-                    onChange={handleChange}
-                    placeholder="Enter description here..."
-                    rows={4}
-                    className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
-                />
-
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <select
-                        name="property_type"
-                        onChange={handleChange}
-                        className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
-                    >
-                        <option value="">Select property type</option>
-                        <option value="House">House</option>
-                        <option value="Apartment">Apartment</option>
-                        <option value="Bungalow">Bungalow</option>
-                        <option value="Hotel">Hotel</option>
-                        <option value="WareHouse">WareHouse</option>
-                        <option value="Villa">Villa</option>
-                        <option value="Studio">Studio</option>
-                    </select>
+                    <div className="space-y-1">
+                        <label htmlFor="property_type" className="block text-sm font-semibold text-[#14213D]">
+                            Property Type
+                        </label>
+                        <select
+                            id="property_type"
+                            name="property_type"
+                            onChange={handleChange}
+                            className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
+                        >
+                            <option value="">Select property type</option>
+                            <option value="House">House</option>
+                            <option value="Apartment">Apartment</option>
+                            <option value="Bungalow">Bungalow</option>
+                            <option value="Hotel">Hotel</option>
+                            <option value="WareHouse">WareHouse</option>
+                            <option value="Villa">Villa</option>
+                            <option value="Studio">Studio</option>
+                        </select>
+                    </div>
 
-                    <select
-                        name="city"
-                        value={formData.city}
-                        onChange={handleChange}
-                        className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
-                    >
-                        <option value="">Select City</option>
-                        {cityOptions.map((item, index) => (
-                            <option key={index} value={item}>
-                                {item}
-                            </option>
-                        ))}
-                    </select>
+                    <div className="space-y-1">
+                        <label htmlFor="address" className="block text-sm font-semibold text-[#14213D]">
+                            Full Address
+                        </label>
+                        <input
+                            id="address"
+                            type="text"
+                            name="address"
+                            value={formData.address}
+                            onChange={handleChange}
+                            placeholder="Full address"
+                            required
+                            className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
+                        />
+                    </div>
+
+                    <div className="space-y-1">
+                        <label htmlFor="district" className="block text-sm font-semibold text-[#14213D]">
+                            District
+                        </label>
+                        <select
+                            id="district"
+                            name="district"
+                            value={formData.district}
+                            onChange={handleChange}
+                            required
+                            className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
+                        >
+                            <option value="">Select District</option>
+                            {districtOptions.map((item) => (
+                                <option key={item} value={item}>{item}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="space-y-1">
+                        <label htmlFor="city" className="block text-sm font-semibold text-[#14213D]">
+                            City
+                        </label>
+                        <input
+                            id="city"
+                            type="text"
+                            name="city"
+                            value={formData.city}
+                            onChange={handleChange}
+                            placeholder="Enter city"
+                            className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
+                        />
+                    </div>
+
+                  
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <select
-                        name="duration"
-                        value={formData.duration}
-                        onChange={handleChange}
-                        className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
-                    >
-                        <option value="year">Year</option>
-                        <option value="month">Month</option>
-                        <option value="day">Day</option>
-                    </select>
+                    <div className="space-y-1">
+                        <label htmlFor="duration" className="block text-sm font-semibold text-[#14213D]">
+                            Duration
+                        </label>
+                        <select
+                            id="duration"
+                            name="duration"
+                            value={formData.duration}
+                            onChange={handleChange}
+                            className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
+                        >
+                            <option value="year">Year</option>
+                            <option value="month">Month</option>
+                            <option value="day">Day</option>
+                        </select>
+                    </div>
+
+                    <div className="space-y-1">
+                        <label htmlFor="ad_limit" className="block text-sm font-semibold text-[#14213D]">
+                            Ad Limit
+                        </label>
+                        <select
+                            id="ad_limit"
+                            value={formData.days || ''}
+                            onChange={(e) => {
+                                const selectedLimit = availableLimits.find((limit) => String(limit.days) === e.target.value);
+                                setSelectedLimitDays(String(selectedLimit?.days ?? ''));
+                                setFormData((prev) => ({
+                                    ...prev,
+                                    days: selectedLimit ? String(selectedLimit.days) : '',
+                                    limit_id: selectedLimit ? String(selectedLimit.id) : '',
+                                }));
+                            }}
+                            className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
+                        >
+                            <option value="">Select ad limit</option>
+                            {limitOptions.map((limit) => (
+                                <option key={limit.id} value={limit.days}>
+                                    {limit.days} days {Number(limit.price) > 0 ? `- Rs ${Number(limit.price).toLocaleString()}` : '- Free'}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
 
                 {/* Overview */}
@@ -128,30 +229,42 @@ const AddHotSales = () => {
 
                     {formData.overview.map((item, index) => (
                         <div key={index} className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                            <select
-                                value={item.title}
-                                onChange={(e) => handleOverviewChange(index, 'title', e.target.value)}
-                                className="border border-gray-300 p-3 rounded-xl text-sm w-full sm:w-1/2"
-                            >
-                                {overviewOptions.map((option) => (
-                                    <option key={option.value} value={option.value}>
-                                        {option.label}
-                                    </option>
-                                ))}
-                            </select>
+                            <div className="w-full sm:w-1/2 space-y-1">
+                                <label htmlFor={`overview-title-${index}`} className="block text-xs font-medium text-gray-600">
+                                    Overview Title
+                                </label>
+                                <select
+                                    id={`overview-title-${index}`}
+                                    value={item.title}
+                                    onChange={(e) => handleOverviewChange(index, 'title', e.target.value)}
+                                    className="border border-gray-300 p-3 rounded-xl text-sm w-full"
+                                >
+                                    {overviewOptions.map((option) => (
+                                        <option key={option.value} value={option.value}>
+                                            {option.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
 
-                            <input
-                                type="text"
-                                placeholder="Enter value"
-                                value={item.value}
-                                onChange={(e) => handleOverviewChange(index, 'value', e.target.value)}
-                                className="border border-gray-300 p-3 rounded-xl text-sm w-full sm:w-1/2"
-                            />
+                            <div className="w-full sm:w-1/2 space-y-1">
+                                <label htmlFor={`overview-value-${index}`} className="block text-xs font-medium text-gray-600">
+                                    Value
+                                </label>
+                                <input
+                                    id={`overview-value-${index}`}
+                                    type="text"
+                                    placeholder="Enter value"
+                                    value={item.value}
+                                    onChange={(e) => handleOverviewChange(index, 'value', e.target.value)}
+                                    className="border border-gray-300 p-3 rounded-xl text-sm w-full"
+                                />
+                            </div>
 
                             <button
                                 type="button"
                                 onClick={() => removeOverview(index)}
-                                className="bg-red-500 text-white px-4 py-2 rounded-xl text-sm shrink-0"
+                                className="bg-red-500 text-white px-4 py-2 rounded-xl text-sm shrink-0 self-end"
                             >
                                 Remove
                             </button>
@@ -190,29 +303,34 @@ const AddHotSales = () => {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <input
-                        type="number"
-                        name="area_sqft"
-                        onChange={handleChange}
-                        placeholder="Area (sqft)"
-                        className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
-                    />
-                    <input
-                        type="text"
-                        name="map_address"
-                        onChange={handleChange}
-                        placeholder="Map address"
-                        className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
-                    />
-                </div>
+                    <div className="space-y-1">
+                        <label htmlFor="area_sqft" className="block text-sm font-semibold text-[#14213D]">
+                            Area (sqft)
+                        </label>
+                        <input
+                            id="area_sqft"
+                            type="number"
+                            name="area_sqft"
+                            onChange={handleChange}
+                            placeholder="Area (sqft)"
+                            className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
+                        />
+                    </div>
 
-                <input
-                    type="text"
-                    name="location"
-                    onChange={handleChange}
-                    placeholder="Enter your location address"
-                    className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
-                />
+                    <div className="space-y-1">
+                        <label htmlFor="map_address" className="block text-sm font-semibold text-[#14213D]">
+                            Map Address
+                        </label>
+                        <input
+                            id="map_address"
+                            type="text"
+                            name="map_address"
+                            onChange={handleChange}
+                            placeholder="Map address"
+                            className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
+                        />
+                    </div>
+                </div>
 
                 {/* Main Image & Video upload (separate) */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -343,7 +461,6 @@ const AddHotSales = () => {
                     )}
                 </div>
 
-                {/* Submit */}
                 {/* Submit */}
                 <div className="sticky bottom-0 bg-white pt-3 pb-1 -mx-4 px-4 flex justify-center sm:static sm:bg-transparent sm:mx-0 sm:px-0">
                     <button

@@ -11,7 +11,16 @@ const FIELDS = [
   { name: 'admin_id', label: 'Admin ID', required: true, help: 'Numeric id of the admin who owns this ad' },
   { name: 'image_url', label: 'Image URL', required: true },
   { name: 'link_url', label: 'Link URL' },
-  { name: 'position', label: 'Position', type: 'number' }
+  {
+    name: 'position',
+    label: 'Position',
+    type: 'select',
+    options: [
+      { value: 'front_page_bottom', label: 'Home page (bottom)' },
+      { value: 'sub_pages', label: 'Other pages (sidebar)' },
+      { value: 'front_page_top', label: 'Home page (top)' }
+    ]
+  }
 ];
 
 export default function Ads() {
@@ -41,7 +50,7 @@ export default function Ads() {
   useEffect(() => { load(); }, []);
 
   const openCreate = () => {
-    setForm({ admin_id: admin?.id || '' });
+    setForm({ admin_id: admin?.id || '', position: 'front_page_bottom' });
     setImageFile(null);
     setModalMode('create');
   };

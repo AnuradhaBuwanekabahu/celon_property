@@ -11,6 +11,7 @@ import staytorentRouter from "./staytorentRoutes.js";
 import wantedRouter from "./wantedRoutes.js";
 import offersRouter from "./offersRoutes.js";
 import adLimitsRouter from "./adLimitsRoutes.js";
+import limitRouter from "./limitRoutes.js";
 
 const superAdminRouter = express.Router();
 
@@ -43,5 +44,6 @@ superAdminRouter.use("/offers", offersRouter);
 
 // Ad limits settings
 superAdminRouter.use("/ad-limits", adLimitsRouter);
+superAdminRouter.use("/limits", limitRouter);
 
 export default superAdminRouter;

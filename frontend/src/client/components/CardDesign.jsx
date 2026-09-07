@@ -1,7 +1,22 @@
 import React from "react";
 import { FaStar } from "react-icons/fa6";
+import { Clock } from "lucide-react";
 
-const CardDesign = ({ title, main_image, property_type, location, price, rate, duration }) => {
+const CardDesign = ({ title, main_image, property_type, location, price, rate, duration, remaining_days, status }) => {
+  const isPending = status === "pending";
+  const numericRemainingDays = remaining_days === null || remaining_days === undefined
+    ? null
+    : Number(remaining_days);
+  const isExpired = status === "expired" || numericRemainingDays === 0;
+
+  const badge = isPending
+    ? { label: "Pending activation", className: "bg-slate-100 text-slate-600" }
+    : isExpired
+      ? { label: "Expired", className: "bg-red-50 text-red-600" }
+      : numericRemainingDays > 0
+        ? { label: `${numericRemainingDays} days left`, className: "bg-[#FCA311] text-[#14213D]" }
+        : null;
+
   return (
     <div className="relative left-24  w-[300px] h-[350px] rounded-xl overflow-hidden shadow-md hover:shadow-xl">
 
@@ -41,6 +56,13 @@ const CardDesign = ({ title, main_image, property_type, location, price, rate, d
             <span className="text-sm font-medium">{rate}</span>
           </div>
         </div>
+
+        {badge && (
+          <div className={`mt-3 inline-flex items-center gap-1.5 rounded-xl px-3 py-1 text-xs font-semibold ${badge.className}`}>
+            <Clock size={14} aria-hidden="true" />
+            <span>{badge.label}</span>
+          </div>
+        )}
 
       </div>
 

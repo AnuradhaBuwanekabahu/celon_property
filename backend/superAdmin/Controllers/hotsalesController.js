@@ -1,8 +1,13 @@
 import db from "../../configuration/db.js";
 
-// ──────────────────────────────────────────────
-// Helper: resolve a valid client_id
-// ──────────────────────────────────────────────
+const MAX_MEDIA_BYTES = 12 * 1024 * 1024;
+
+const validateMediaSize = (files = {}) => {
+    const uploadedFiles = Object.values(files).flat().filter(Boolean);
+    const oversizedFile = uploadedFiles.find((file) => file.size > MAX_MEDIA_BYTES);
+    return oversizedFile ? `File ${oversizedFile.originalname || "upload"} is too large. Use files smaller than 12 MB.` : null;
+};
+
 const getValidClientId = async (reqClientId) => {
     if (reqClientId) {
         const [found] = await db.query("SELECT id FROM clients WHERE id = ?", [reqClientId]);
@@ -13,107 +18,104 @@ const getValidClientId = async (reqClientId) => {
     throw new Error("No client account found. Please create a client account first.");
 };
 
-// ──────────────────────────────────────────────
-// Helper: buffer → base64 data URI
-// ──────────────────────────────────────────────
-const bufToBase64 = (buf, mime = 'image/jpeg') =>
-    `data:${mime};base64,${buf.toString('base64')}`;
+const toJsonString = (value, fallback = "[]") => {
+    if (value === undefined || value === null || value === "") return fallback;
+    if (typeof value === "string") return value;
+    return JSON.stringify(value);
+};
 
-
-// ══════════════════════════════════════════════
-// ADD Hot Sale  (POST /properties/hot-sales)
-// ══════════════════════════════════════════════
 export const addHotSale = async (req, res) => {
     try {
+        const mediaError = validateMediaSize(req.files);
+        if (mediaError) return res.status(413).json({ success: false, message: mediaError });
+
         const {
-            title, description, price,
-            property_type, city, Location, location,
-            map_address, area_sqft, duration,
-            status, client_id,
-            overview, highlights,
-            main_image           // fallback URL string
+            title,
+            description,
+            price,
+            property_type,
+            city,
+            district,
+            address,
+            map_address,
+            area_sqft,
+            duration,
+            status,
+            client_id,
+            overview,
+            highlights,
+            rate,
+            main_image,
+            selected_days,
+            days
         } = req.body;
 
         if (!title) return res.status(400).json({ success: false, message: "Title is required" });
 
         const clientId = await getValidClientId(client_id);
-        const loc      = Location || location || city || 'Sri Lanka';
+        const districtValue = district || city || "Colombo";
+        const addressValue = address || "Address not provided";
 
-        // ── Main image
         let mainImg = null;
         if (req.files?.main_image?.[0]) {
-            const f = req.files.main_image[0];
-            mainImg = bufToBase64(f.buffer, f.mimetype);
+            const file = req.files.main_image[0];
+            mainImg = file.buffer;
         } else if (main_image) {
             mainImg = main_image;
         } else {
             mainImg = "https://images.unsplash.com/photo-1564013799919-ab600027ffc6";
         }
 
-        // ── Main video
         let mainVid = null;
         if (req.files?.main_video?.[0]) {
-            const f = req.files.main_video[0];
-            mainVid = bufToBase64(f.buffer, f.mimetype);
+            const file = req.files.main_video[0];
+            mainVid = file.buffer;
         }
 
-        // ── Gallery images
-        const galleryImgs = req.files?.images
-            ? req.files.images.map(f => bufToBase64(f.buffer, f.mimetype))
-            : [];
+        const overviewJson = toJsonString(overview, "[]");
+        const highlightsJson = toJsonString(highlights, "[]");
 
-        // ── Parse JSON strings coming from FormData
-        const overviewJson   = overview
-            ? (typeof overview === 'string' ? overview : JSON.stringify(overview))
-            : '[]';
-        const highlightsJson = highlights
-            ? (typeof highlights === 'string' ? highlights : JSON.stringify(highlights))
-            : '[]';
-
-        const sql = `
-            INSERT INTO hot_sales
+        const [result] = await db.query(
+            `INSERT INTO hot_sales
             (client_id, title, description, price, property_type,
-             city, Location, map_address, area_sqft, duration,
-             main_image, main_video, images,
-             overview, highlights, status)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-        `;
+             overview, highlights, area_sqft, district, city, address, map_address,
+             main_video, duration, selected_days, main_image, rate, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)` ,
+            [
+                clientId,
+                title,
+                description || null,
+                price || 0,
+                property_type || "House",
+                overviewJson,
+                highlightsJson,
+                area_sqft || null,
+                districtValue,
+                city || "Colombo",
+                addressValue,
+                map_address || null,
+                mainVid,
+                duration || "month",
+                Number(selected_days || days) || 30,
+                mainImg,
+                rate || 0,
+                status || "pending"
+            ]
+        );
 
-        const [result] = await db.query(sql, [
-            clientId,
-            title,
-            description    || null,
-            price          || 0,
-            property_type  || "House",
-            city           || "Colombo",
-            loc,
-            map_address    || null,
-            area_sqft      || null,
-            duration       || "month",
-            mainImg,
-            mainVid,
-            JSON.stringify(galleryImgs),
-            overviewJson,
-            highlightsJson,
-            status         || "pending"
-        ]);
+        if (req.files?.images?.length) {
+            for (const file of req.files.images) {
+                await db.query("INSERT INTO hot_sale_images (hot_sale_id, image) VALUES (?, ?)", [result.insertId, file.buffer]);
+            }
+        }
 
-        res.status(201).json({
-            success: true,
-            message: "Hot Sale added successfully",
-            id: result.insertId
-        });
-
+        res.status(201).json({ success: true, message: "Hot Sale added successfully", id: result.insertId });
     } catch (error) {
         console.error("addHotSale error:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
 
-
-// ══════════════════════════════════════════════
-// GET ALL Hot Sales
-// ══════════════════════════════════════════════
 export const getHotSales = async (req, res) => {
     try {
         const [rows] = await db.query(`
@@ -129,18 +131,27 @@ export const getHotSales = async (req, res) => {
     }
 };
 
-
-// ══════════════════════════════════════════════
-// UPDATE Hot Sale  (PUT /properties/hot-sales/:id)
-// ══════════════════════════════════════════════
 export const updateHotSale = async (req, res) => {
     try {
+        const mediaError = validateMediaSize(req.files);
+        if (mediaError) return res.status(413).json({ success: false, message: mediaError });
+
         const { id } = req.params;
         const {
-            title, description, price,
-            property_type, city, Location, location,
-            map_address, area_sqft, duration,
-            overview, highlights, status
+            title,
+            description,
+            price,
+            property_type,
+            city,
+            district,
+            address,
+            map_address,
+            area_sqft,
+            duration,
+            overview,
+            highlights,
+            status,
+            rate
         } = req.body;
 
         const [existing] = await db.query("SELECT * FROM hot_sales WHERE id=?", [id]);
@@ -148,82 +159,73 @@ export const updateHotSale = async (req, res) => {
             return res.status(404).json({ message: "Property not found" });
         }
 
-        // ── Files
         let mainImg = null;
         if (req.files?.main_image?.[0]) {
-            const f = req.files.main_image[0];
-            mainImg = bufToBase64(f.buffer, f.mimetype);
+            const file = req.files.main_image[0];
+            mainImg = file.buffer;
         }
 
         let mainVid = null;
         if (req.files?.main_video?.[0]) {
-            const f = req.files.main_video[0];
-            mainVid = bufToBase64(f.buffer, f.mimetype);
+            const file = req.files.main_video[0];
+            mainVid = file.buffer;
         }
 
-        let galleryJson = null;
-        if (req.files?.images?.length) {
-            galleryJson = JSON.stringify(
-                req.files.images.map(f => bufToBase64(f.buffer, f.mimetype))
-            );
-        }
-
-        const loc            = Location || location || city || existing[0].Location;
-        const overviewJson   = overview
-            ? (typeof overview === 'string' ? overview : JSON.stringify(overview))
-            : existing[0].overview || '[]';
-        const highlightsJson = highlights
-            ? (typeof highlights === 'string' ? highlights : JSON.stringify(highlights))
-            : existing[0].highlights || '[]';
-
-        const areaSqftVal = (area_sqft !== undefined && area_sqft !== '' && !isNaN(area_sqft)) ? Number(area_sqft) : null;
+        const districtValue = district || city || existing[0].district || "Colombo";
+        const addressValue = address || existing[0].address || "Address not provided";
+        const overviewJson = toJsonString(overview, existing[0].overview || "[]");
+        const highlightsJson = toJsonString(highlights, existing[0].highlights || "[]");
 
         await db.query(
             `UPDATE hot_sales
              SET title=?, description=?, price=?,
-                 property_type=?, city=?, Location=?,
-                 map_address=?, area_sqft=?, duration=?,
-                 overview=?, highlights=?, status=?,
+                 property_type=?, city=?, district=?, address=?, map_address=?, area_sqft=?, duration=?,
+                 overview=?, highlights=?, status=?, rate=?,
                  main_image=COALESCE(?, main_image),
-                 main_video=COALESCE(?, main_video),
-                 images=COALESCE(?, images)
+                 main_video=COALESCE(?, main_video)
              WHERE id=?`,
             [
                 title || existing[0].title,
-                description !== undefined ? description : existing[0].description,
-                (price !== undefined && price !== '' && !isNaN(price)) ? Number(price) : existing[0].price,
+                description ?? existing[0].description,
+                price ?? existing[0].price,
                 property_type || existing[0].property_type,
                 city || existing[0].city,
-                loc,
-                map_address || null,
-                areaSqftVal,
+                districtValue,
+                addressValue,
+                map_address ?? existing[0].map_address,
+                area_sqft ?? existing[0].area_sqft,
                 duration || existing[0].duration,
                 overviewJson,
                 highlightsJson,
                 status || existing[0].status,
-                mainImg, mainVid, galleryJson,
+                rate ?? existing[0].rate,
+                mainImg,
+                mainVid,
                 id
             ]
         );
 
-        res.json({ success: true, message: "Hot Sale updated successfully" });
+        if (req.files?.images?.length) {
+            await db.query("DELETE FROM hot_sale_images WHERE hot_sale_id = ?", [id]);
+            for (const file of req.files.images) {
+                await db.query("INSERT INTO hot_sale_images (hot_sale_id, image) VALUES (?, ?)", [id, file.buffer]);
+            }
+        }
 
+        res.json({ success: true, message: "Hot Sale updated successfully" });
     } catch (error) {
         console.log(error);
-        res.status(500).json({ success: false, message: error.message || "Server Error" });
+        res.status(500).json({ success: false, message: "Server Error" });
     }
 };
 
-
-// ══════════════════════════════════════════════
-// DELETE Hot Sale
-// ══════════════════════════════════════════════
 export const deleteHotSale = async (req, res) => {
     try {
         const { id } = req.params;
         const [existing] = await db.query("SELECT * FROM hot_sales WHERE id=?", [id]);
         if (existing.length === 0) return res.status(404).json({ message: "Property not found" });
 
+        await db.query("DELETE FROM hot_sale_images WHERE hot_sale_id=?", [id]);
         await db.query("DELETE FROM hot_sales WHERE id=?", [id]);
         res.json({ success: true, message: "Hot Sale deleted successfully" });
     } catch (error) {
@@ -232,13 +234,9 @@ export const deleteHotSale = async (req, res) => {
     }
 };
 
-
-// ══════════════════════════════════════════════
-// UPDATE STATUS
-// ══════════════════════════════════════════════
 export const updatePropertyStatus = async (req, res) => {
     try {
-        const { id }     = req.params;
+        const { id } = req.params;
         const { status } = req.body;
         const VALID = ["pending", "active", "approved", "rejected", "sold"];
         if (!VALID.includes(status)) return res.status(400).json({ message: "Invalid status" });

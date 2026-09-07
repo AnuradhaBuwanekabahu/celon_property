@@ -9,8 +9,9 @@ import {
     getWantedImage
 } from "../Controllers/wantedController.js";
 
-import upload from "../middleware/upload.js";
+
 import authMiddleware from "../Middleware/authMiddleware.js";
+import upload from "../Middleware/upload.js";
 
 const adminWantedRouter = express.Router();
 

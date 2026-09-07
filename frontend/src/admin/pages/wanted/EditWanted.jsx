@@ -1,6 +1,11 @@
+
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Upload, X } from "lucide-react";
+
+import {
+    ArrowLeft
+} from "lucide-react";
+
 import { toast } from "react-toastify";
 
 import {
@@ -9,15 +14,25 @@ import {
 } from "../../api/wantedApi";
 
 import { cityOptions } from "../../data/propertyOption";
+
 import Loader from "../../components/Loader";
+
 
 const EditWanted = () => {
 
     const { id } = useParams();
+
     const navigate = useNavigate();
 
+
+    // =====================================================
+    // LOADING
+    // =====================================================
+
     const [loading, setLoading] = useState(true);
+
     const [updating, setUpdating] = useState(false);
+
 
     // =====================================================
     // FORM
@@ -32,56 +47,6 @@ const EditWanted = () => {
         status: "pending"
     });
 
-    // =====================================================
-    // NEW IMAGES
-    // =====================================================
-
-    const [mainImage, setMainImage] = useState(null);
-    const [galleryImages, setGalleryImages] = useState([]);
-
-    // =====================================================
-    // EXISTING IMAGES
-    // =====================================================
-
-    const [existingMainImage, setExistingMainImage] = useState(null);
-    const [existingGalleryImages, setExistingGalleryImages] = useState([]);
-
-
-    // =====================================================
-    // IMAGE URL
-    // =====================================================
-
-    const getImageUrl = (image, imageType) => {
-
-        if (!image) {
-            return null;
-        }
-
-        // MySQL Buffer
-        if (
-            image.type === "Buffer" &&
-            Array.isArray(image.data)
-        ) {
-
-            const bytes = new Uint8Array(image.data);
-
-            let binary = "";
-
-            bytes.forEach((byte) => {
-                binary += String.fromCharCode(byte);
-            });
-
-            return `data:${imageType || "image/jpeg"};base64,${btoa(binary)}`;
-        }
-
-        // String URL
-        if (typeof image === "string") {
-            return image;
-        }
-
-        return null;
-    };
-
 
     // =====================================================
     // LOAD WANTED PROPERTY
@@ -95,11 +60,29 @@ const EditWanted = () => {
 
                 setLoading(true);
 
-                const res = await getWantedById(id);
+                const res =
+                    await getWantedById(id);
 
-                const data = res.data.data;
+                const data =
+                    res.data?.data ||
+                    res.data?.wanted ||
+                    res.data?.property;
 
-                console.log("Wanted Property:", data);
+                console.log(
+                    "Wanted Property:",
+                    data
+                );
+
+
+                if (!data) {
+
+                    toast.error(
+                        "Wanted property not found"
+                    );
+
+                    return;
+
+                }
 
 
                 // =================================================
@@ -110,61 +93,13 @@ const EditWanted = () => {
                     title: data.title || "",
                     description: data.description || "",
                     budget: data.budget || "",
-                    preferred_city: data.preferred_city || "",
-                    phone_number: data.phone_number || "",
-                    status: data.status || "pending"
+                    preferred_city:
+                        data.preferred_city || "",
+                    phone_number:
+                        data.phone_number || "",
+                    status:
+                        data.status || "pending"
                 });
-
-
-                // =================================================
-                // MAIN IMAGE
-                // =================================================
-
-                if (data.main_image) {
-
-                    const imageUrl = getImageUrl(
-                        data.main_image,
-                        data.main_image_type
-                    );
-
-                    setExistingMainImage(imageUrl);
-
-                } else {
-
-                    setExistingMainImage(null);
-
-                }
-
-
-                // =================================================
-                // GALLERY
-                // =================================================
-
-                if (Array.isArray(data.images)) {
-
-                    const gallery = data.images
-                        .map((image) => {
-
-                            const imageUrl = getImageUrl(
-                                image.image,
-                                image.image_type
-                            );
-
-                            return {
-                                id: image.id,
-                                url: imageUrl
-                            };
-
-                        })
-                        .filter((image) => image.url);
-
-                    setExistingGalleryImages(gallery);
-
-                } else {
-
-                    setExistingGalleryImages([]);
-
-                }
 
             } catch (error) {
 
@@ -186,8 +121,11 @@ const EditWanted = () => {
 
         };
 
+
         if (id) {
+
             loadProperty();
+
         }
 
     }, [id]);
@@ -204,123 +142,11 @@ const EditWanted = () => {
             value
         } = e.target;
 
+
         setForm((prev) => ({
             ...prev,
             [name]: value
         }));
-
-    };
-
-
-    // =====================================================
-    // MAIN IMAGE CHANGE
-    // =====================================================
-
-    const handleMainImageChange = (e) => {
-
-        const file = e.target.files?.[0];
-
-        if (!file) {
-            return;
-        }
-
-
-        if (!file.type.startsWith("image/")) {
-
-            toast.error(
-                "Please select a valid image"
-            );
-
-            return;
-        }
-
-
-        if (file.size > 10 * 1024 * 1024) {
-
-            toast.error(
-                "Main image must be less than 10MB"
-            );
-
-            return;
-        }
-
-
-        setMainImage(file);
-
-    };
-
-
-    // =====================================================
-    // GALLERY CHANGE
-    // =====================================================
-
-    const handleGalleryChange = (e) => {
-
-        const files = Array.from(
-            e.target.files || []
-        );
-
-
-        const validImages = files.filter(
-            (file) =>
-                file.type.startsWith("image/")
-        );
-
-
-        if (validImages.length !== files.length) {
-
-            toast.error(
-                "Only image files are allowed"
-            );
-
-        }
-
-
-        const validSizeImages = validImages.filter(
-            (file) =>
-                file.size <= 10 * 1024 * 1024
-        );
-
-
-        if (
-            validSizeImages.length !==
-            validImages.length
-        ) {
-
-            toast.error(
-                "Each image must be less than 10MB"
-            );
-
-        }
-
-
-        setGalleryImages(validSizeImages);
-
-    };
-
-
-    // =====================================================
-    // REMOVE NEW MAIN IMAGE
-    // =====================================================
-
-    const removeMainImage = () => {
-
-        setMainImage(null);
-
-    };
-
-
-    // =====================================================
-    // REMOVE NEW GALLERY IMAGE
-    // =====================================================
-
-    const removeSelectedGalleryImage = (index) => {
-
-        setGalleryImages((prev) =>
-            prev.filter(
-                (_, i) => i !== index
-            )
-        );
 
     };
 
@@ -345,6 +171,7 @@ const EditWanted = () => {
             );
 
             return;
+
         }
 
 
@@ -355,6 +182,7 @@ const EditWanted = () => {
             );
 
             return;
+
         }
 
 
@@ -362,6 +190,10 @@ const EditWanted = () => {
 
             setUpdating(true);
 
+
+            // =================================================
+            // FORM DATA
+            // =================================================
 
             const data = new FormData();
 
@@ -407,36 +239,6 @@ const EditWanted = () => {
 
 
             // =================================================
-            // MAIN IMAGE
-            // =================================================
-
-            if (mainImage) {
-
-                data.append(
-                    "main_image",
-                    mainImage
-                );
-
-            }
-
-
-            // =================================================
-            // GALLERY
-            // =================================================
-
-            galleryImages.forEach(
-                (image) => {
-
-                    data.append(
-                        "images",
-                        image
-                    );
-
-                }
-            );
-
-
-            // =================================================
             // UPDATE
             // =================================================
 
@@ -470,6 +272,7 @@ const EditWanted = () => {
                 "Update Wanted Error:",
                 error
             );
+
 
             console.error(
                 "Server Response:",
@@ -508,7 +311,12 @@ const EditWanted = () => {
 
     return (
 
-        <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
+        <div className="
+            min-h-screen
+            bg-gray-50
+            p-4
+            sm:p-6
+        ">
 
             <div className="max-w-5xl mx-auto">
 
@@ -538,10 +346,10 @@ const EditWanted = () => {
                             Edit Wanted Property
                         </h1>
 
-                        
-
                     </div>
 
+
+                    {/* BACK BUTTON */}
 
                     <Link
                         to="/admin/wanted"
@@ -626,6 +434,7 @@ const EditWanted = () => {
                                     Property Title
                                 </label>
 
+
                                 <input
                                     type="text"
                                     name="title"
@@ -661,6 +470,7 @@ const EditWanted = () => {
                                 ">
                                     Budget (Rs)
                                 </label>
+
 
                                 <input
                                     type="number"
@@ -699,6 +509,7 @@ const EditWanted = () => {
                                     Preferred City
                                 </label>
 
+
                                 <select
                                     name="preferred_city"
                                     value={form.preferred_city}
@@ -720,6 +531,7 @@ const EditWanted = () => {
                                     <option value="">
                                         Select City
                                     </option>
+
 
                                     {cityOptions.map(
                                         (city) => (
@@ -752,6 +564,7 @@ const EditWanted = () => {
                                 ">
                                     Phone Number
                                 </label>
+
 
                                 <input
                                     type="text"
@@ -788,6 +601,7 @@ const EditWanted = () => {
                                 ">
                                     Status
                                 </label>
+
 
                                 <select
                                     name="status"
@@ -833,18 +647,18 @@ const EditWanted = () => {
                     ================================================= */}
 
                     <div>
+
                         <label className="
-                                    block
-                                    text-sm
-                                    font-medium
-                                    text-gray-700
-                                    mb-2
-                                ">
-                                    Description
-                                </label>
+                            block
+                            text-sm
+                            font-medium
+                            text-gray-700
+                            mb-2
+                        ">
+                            Description
+                        </label>
 
 
-                        
                         <textarea
                             name="description"
                             value={form.description}
@@ -866,144 +680,6 @@ const EditWanted = () => {
 
                     </div>
 
-{/* =================================================
-    IMAGES
-================================================= */}
-
-<div className="space-y-3 border border-gray-200 rounded-xl p-4">
-
-    <h3 className="font-semibold text-lg text-[#14213D]">
-        Update Images
-    </h3>
-
-
-
-
-    {/* ============================
-        NEW MAIN IMAGE
-    ============================ */}
-
-    <div>
-
-        <label className="text-sm font-medium block mb-2">
-            New Main Image
-        </label>
-
-        <input
-            type="file"
-            accept="image/*"
-            onChange={handleMainImageChange}
-            className="
-                block
-                w-full
-                text-sm
-                border
-                border-gray-300
-                p-3
-                rounded-xl
-                cursor-pointer
-            "
-        />
-
-    </div>
-
-
-  
-
-
-    {/* ============================
-        EXISTING GALLERY
-    ============================ */}
-
-    {existingGalleryImages.length > 0 && (
-
-        <div className="mt-5">
-
-            <p className="text-sm font-medium text-gray-700 mb-3">
-                Current Gallery Images (
-                {existingGalleryImages.length}
-                )
-            </p>
-
-            <div className="
-                grid
-                grid-cols-2
-                sm:grid-cols-3
-                lg:grid-cols-4
-                gap-4
-            ">
-
-                {existingGalleryImages.map(
-                    (image) => (
-
-                        <div
-                            key={image.id}
-                            className="
-                                bg-gray-50
-                                rounded-xl
-                                overflow-hidden
-                                border
-                                border-gray-200
-                            "
-                        >
-
-                            <img
-                                src={image.url}
-                                alt="Gallery"
-                                className="
-                                    w-full
-                                    h-32
-                                    object-cover
-                                "
-                            />
-
-                        </div>
-
-                    )
-                )}
-
-            </div>
-
-        </div>
-
-    )}
-
-
-    {/* ============================
-        NEW GALLERY
-    ============================ */}
-
-    <div className="mt-5">
-
-        <label className="text-sm font-medium block mb-2">
-            Add New Gallery Images
-        </label>
-
-        <input
-            type="file"
-            multiple
-            accept="image/*"
-            onChange={handleGalleryChange}
-            className="
-                block
-                w-full
-                text-sm
-                border
-                border-gray-300
-                p-3
-                rounded-xl
-                cursor-pointer
-            "
-        />
-
-    </div>
-
-
-
-</div>
-
-
-
 
                     {/* =================================================
                         BUTTONS
@@ -1017,6 +693,9 @@ const EditWanted = () => {
                         gap-3
                         pt-2
                     ">
+
+
+                        {/* CANCEL */}
 
                         <button
                             type="button"
@@ -1041,6 +720,8 @@ const EditWanted = () => {
                         </button>
 
 
+                        {/* UPDATE */}
+
                         <button
                             type="submit"
                             disabled={updating}
@@ -1061,8 +742,6 @@ const EditWanted = () => {
                             "
                         >
 
-                           
-
                             {updating
                                 ? "Updating..."
                                 : "Update Property"
@@ -1081,5 +760,6 @@ const EditWanted = () => {
     );
 
 };
+
 
 export default EditWanted;

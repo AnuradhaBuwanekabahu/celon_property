@@ -1,9 +1,5 @@
 import API from "./api";
 
-
-
-
-
 export const getHotSales = () => 
     API.get("/api/hotsales");
 

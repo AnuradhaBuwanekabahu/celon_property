@@ -43,4 +43,83 @@ export const sendOtpEmail = async (email, otp) => {
     });
 };
 
+export const sendPropertyInquiryEmail = async ({
+  clientEmail,
+  propertyTitle,
+  userEmail,
+  message
+}) => {
+  if (!emailUser || !emailAppPassword) {
+    throw new Error(
+      "EMAIL_USER and EMAIL_APP_PASSWORD must be configured"
+    );
+  }
+
+  await transporter.sendMail({
+    from: `"Ceylon Property" <${emailUser}>`,
+
+    // CLIENT receives the message
+    to: clientEmail,
+
+    // Client can click Reply and reply to USER
+    replyTo: userEmail,
+
+    subject: `New Inquiry - ${propertyTitle}`,
+
+    html: `
+      <div style="
+        font-family: Arial, sans-serif;
+        max-width: 600px;
+        margin: auto;
+        padding: 25px;
+        border: 1px solid #E5E5E5;
+        border-radius: 12px;
+      ">
+
+        <h2 style="color: #14213D;">
+          New Property Inquiry
+        </h2>
+
+        <p>
+          You have received a new message from a user
+          interested in your property.
+        </p>
+
+        <h3 style="color: #14213D;">
+          Property
+        </h3>
+
+        <p>
+          <strong>${propertyTitle || "Property"}</strong>
+        </p>
+
+        <h3 style="color: #14213D;">
+          Message
+        </h3>
+
+        <div style="
+          background: #f7f7f7;
+          padding: 16px;
+          border-radius: 8px;
+          line-height: 1.6;
+        ">
+          ${message}
+        </div>
+
+        <hr>
+
+        <p>
+          <strong>From User:</strong>
+          ${userEmail}
+        </p>
+
+        <p style="color: #999; font-size: 13px;">
+          Click Reply to respond directly to this user.
+        </p>
+
+      </div>
+    `
+  });
+};
+
 export default transporter;

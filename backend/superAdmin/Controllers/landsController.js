@@ -1,5 +1,13 @@
 import db from "../../configuration/db.js";
 
+const MAX_MEDIA_BYTES = 12 * 1024 * 1024;
+
+const validateMediaSize = (files = {}) => {
+    const uploadedFiles = Object.values(files).flat().filter(Boolean);
+    const oversizedFile = uploadedFiles.find((file) => file.size > MAX_MEDIA_BYTES);
+    return oversizedFile ? `File ${oversizedFile.originalname || "upload"} is too large. Use files smaller than 12 MB.` : null;
+};
+
 
 
 
@@ -19,18 +27,27 @@ const getValidClientId = async (reqClientId) => {
 
 export const addLands = async (req, res) => {
     try {
+    const mediaError = validateMediaSize(req.files);
+    if (mediaError) return res.status(413).json({ success: false, message: mediaError });
+
         const {
             client_id,
             title,
             description,
             price,
+            rate,
             land_size,
             size_unit,
-            Location,
-            location,
+            district,
             city,
+            address,
+            map_address,
+            duration,
+            days,
+            overview,
             status,
-            main_image
+            main_image,
+            location
         } = req.body;
 
         if (!title) {
@@ -38,9 +55,25 @@ export const addLands = async (req, res) => {
         }
 
         const clientId = await getValidClientId(client_id);
-        const loc = Location || location || city || 'Sri Lanka';
-        const mainImg = req.files?.main_image?.[0]?.path || req.files?.main_image?.[0]?.buffer?.toString('base64') || main_image || "https://images.unsplash.com/photo-1500382017468-9049fed747ef";
-        const extraImages = req.files?.images ? req.files.images.map(img => img.path || img.buffer?.toString('base64')) : [];
+        const districtValue = district || location || city || 'Colombo';
+        const addressValue = address || location || 'Address not provided';
+        const overviewJson = overview ? (typeof overview === 'string' ? overview : JSON.stringify(overview)) : '[]';
+
+        let mainImg = null;
+        if (req.files?.main_image?.[0]) {
+            const file = req.files.main_image[0];
+            mainImg = file.buffer || file.path || main_image;
+        } else if (main_image) {
+            mainImg = main_image;
+        } else {
+            mainImg = "https://images.unsplash.com/photo-1500382017468-9049fed747ef";
+        }
+
+        let mainVid = null;
+        if (req.files?.main_video?.[0]) {
+            const file = req.files.main_video[0];
+            mainVid = file.buffer || file.path;
+        }
 
         const [result] = await db.query(
             `
@@ -50,30 +83,48 @@ export const addLands = async (req, res) => {
                 title,
                 description,
                 price,
+                rate,
+                overview,
                 land_size,
                 size_unit,
-                location,
+                duration,
+                days,
+                address,
+                district,
+                map_address,
                 city,
                 main_image,
-                images,
+                main_video,
                 status
             )
-            VALUES (?,?,?,?,?,?,?,?,?,?,?)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             `,
             [
                 clientId,
                 title,
                 description || null,
                 price || 0,
+                rate || 0,
+                overviewJson,
                 land_size || 0,
                 size_unit || "perches",
-                loc,
+                duration || "month",
+                Number(days) || 30,
+                addressValue,
+                districtValue,
+                map_address || null,
                 city || "Colombo",
                 mainImg,
-                JSON.stringify(extraImages),
-                status || "active"
+                mainVid,
+                status || "pending"
             ]
         );
+
+        if (req.files?.images?.length) {
+            for (const file of req.files.images) {
+                await db.query("INSERT INTO land_images (land_id, image) VALUES (?, ?)", [result.insertId, file.buffer]);
+            }
+        }
 
         res.status(201).json({
             success: true,
@@ -111,7 +162,6 @@ export const getlands = async(req,res)=>{
 
         let query = `
             SELECT *
-
             FROM land
         `;
         const values = [];
@@ -123,8 +173,8 @@ export const getlands = async(req,res)=>{
 
         if (search) {
             const clause = status ? ' AND ' : ' WHERE ';
-            query += `${clause} (title LIKE ? OR city LIKE ? OR location LIKE ?)`;
-            values.push(`%${search}%`, `%${search}%`, `%${search}%`);
+            query += `${clause} (title LIKE ? OR city LIKE ? OR address LIKE ? OR district LIKE ?)`;
+            values.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
         }
 
         query += ` ORDER BY created_at DESC`;
@@ -287,40 +337,60 @@ export const updateLand = async(req,res)=>{
             title,
             description,
             price,
+            rate,
             land_size,
             size_unit,
             location,
+            district,
+            address,
             city,
+            map_address,
+            duration,
+            overview,
             status
         } = req.body;
 
+        const [existing] = await db.query("SELECT * FROM land WHERE id = ?", [id]);
+        if (!existing.length) {
+            return res.status(404).json({ success: false, message: "Land not found" });
+        }
 
-
-
+        const districtValue = district || location || existing[0].district || 'Colombo';
+        const addressValue = address || location || existing[0].address || 'Address not provided';
+        const overviewJson = overview ? (typeof overview === 'string' ? overview : JSON.stringify(overview)) : (existing[0].overview || '[]');
 
         await db.query(
-
             `
             UPDATE land SET
                 title = ?,
                 description = ?,
                 price = ?,
+                rate = ?,
+                overview = ?,
                 land_size = ?,
                 size_unit = ?,
-                location = ?,
+                duration = ?,
+                address = ?,
+                district = ?,
+                map_address = ?,
                 city = ?,
                 status = ?
             WHERE id = ?
             `,
             [
-                title,
-                description,
-                price,
-                land_size,
-                size_unit,
-                location,
-                city,
-                status,
+                title || existing[0].title,
+                description ?? existing[0].description,
+                price ?? existing[0].price,
+                rate ?? existing[0].rate,
+                overviewJson,
+                land_size ?? existing[0].land_size,
+                size_unit || existing[0].size_unit,
+                duration || existing[0].duration || 'month',
+                addressValue,
+                districtValue,
+                map_address ?? existing[0].map_address,
+                city || existing[0].city,
+                status || existing[0].status,
                 id
             ]
 

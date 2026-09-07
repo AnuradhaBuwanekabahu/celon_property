@@ -22,9 +22,10 @@ export const addStayToRent = async (req, res) => {
             highlights,
             rate,
             area_sqft,
+            district,
             city,
+            address,
             map_address,
-            location,
             price_period,
             status
         } = req.body;
@@ -45,14 +46,16 @@ export const addStayToRent = async (req, res) => {
             price === null ||
             price === "" ||
             !property_type ||
-            !city
+            !district ||
+            !city ||
+            !address
         ) {
             await connection.rollback();
 
             return res.status(400).json({
                 success: false,
                 message:
-                    "Client ID, title, price, property type and city are required."
+                    "Client ID, title, price, property type, district, city and address are required."
             });
         }
 
@@ -136,22 +139,21 @@ export const addStayToRent = async (req, res) => {
                 description,
                 price,
                 overview,
+                main_video,
                 duration,
                 property_type,
                 highlights,
                 rate,
                 area_sqft,
+                district,
                 city,
+                address,
                 map_address,
-                location,
                 main_image,
-                
-                main_video,
-                
                 price_period,
                 status
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
         const [propertyResult] =
@@ -159,13 +161,20 @@ export const addStayToRent = async (req, res) => {
                 propertySql,
                 [
                     normalizedClientId,
+
                     title,
+
                     description || null,
+
                     price,
 
                     JSON.stringify(
                         overviewData
                     ),
+
+                    mainVideo
+                        ? mainVideo.buffer
+                        : null,
 
                     duration || "month",
 
@@ -179,22 +188,16 @@ export const addStayToRent = async (req, res) => {
 
                     area_sqft || null,
 
+                    district,
+
                     city,
+
+                    address,
 
                     map_address || null,
 
-                    location || null,
-
-                    // Main image
                     mainImage.buffer,
-                    
 
-                    // Main video
-                    mainVideo
-                        ? mainVideo.buffer
-                        : null,
-
-                    
                     price_period || "monthly",
 
                     status || "pending"
@@ -209,12 +212,12 @@ export const addStayToRent = async (req, res) => {
         // ==================================================
 
         if (galleryImages.length > 0) {
+
             const gallerySql = `
                 INSERT INTO stay_to_rent_images
                 (
-                    stay_to_rent_id,
+                    stay_rent_id,
                     image
-                    
                 )
                 VALUES ?
             `;
@@ -223,7 +226,6 @@ export const addStayToRent = async (req, res) => {
                 galleryImages.map((file) => [
                     stayToRentId,
                     file.buffer
-                    
                 ]);
 
             await connection.query(
@@ -291,12 +293,14 @@ export const getStayToRent = async (req, res) => {
                 s.highlights,
                 s.rate,
                 s.area_sqft,
+                s.district,
                 s.city,
+                s.address,
                 s.map_address,
-                s.location,
-                
                 s.price_period,
                 s.status,
+                s.created_at,
+                s.updated_at,
 
                 c.full_name,
                 c.email,
@@ -390,16 +394,20 @@ export const getStayToRentById = async (req, res) => {
                 highlights,
                 rate,
                 area_sqft,
+                district,
                 city,
+                address,
                 map_address,
-                location,
-                
                 price_period,
                 status,
+                created_at,
+                updated_at,
+
                 CASE
-    WHEN main_video IS NOT NULL THEN 1
-    ELSE 0
-END AS has_video
+                    WHEN main_video IS NOT NULL
+                    THEN 1
+                    ELSE 0
+                END AS has_video
 
             FROM stays_to_rent
 
@@ -428,12 +436,11 @@ END AS has_video
                 `
                 SELECT
                     id,
-                    stay_to_rent_id
-                    
+                    stay_rent_id
 
                 FROM stay_to_rent_images
 
-                WHERE stay_to_rent_id = ?
+                WHERE stay_rent_id = ?
 
                 ORDER BY id ASC
                 `,
@@ -441,7 +448,7 @@ END AS has_video
             );
 
         // ==================================================
-        // RESPONSE
+        // GALLERY RESPONSE
         // ==================================================
 
         const gallery =
@@ -449,10 +456,8 @@ END AS has_video
 
                 id: image.id,
 
-                stay_to_rent_id:
-                    image.stay_to_rent_id,
-
-               
+                stay_rent_id:
+                    image.stay_rent_id,
 
                 image:
                     `/api/stays-to-rent/gallery-image/${image.id}`,
@@ -461,6 +466,10 @@ END AS has_video
                     `/api/stays-to-rent/gallery-image/${image.id}`
             }));
 
+        // ==================================================
+        // RESPONSE
+        // ==================================================
+
         const data = {
 
             ...property,
@@ -468,9 +477,10 @@ END AS has_video
             main_image:
                 `/api/stays-to-rent/image/${id}`,
 
-            main_video: rows[0].has_video
-    ? `/api/stays-to-rent/video/${id}`
-    : null,
+            main_video:
+                property.has_video
+                    ? `/api/stays-to-rent/video/${id}`
+                    : null,
 
             gallery,
 
@@ -514,7 +524,6 @@ export const getStayToRentImage = async (
             `
             SELECT
                 main_image
-            
 
             FROM stays_to_rent
 
@@ -540,7 +549,10 @@ export const getStayToRentImage = async (
             });
         }
 
-        res.setHeader("Content-Type", "image/jpeg");
+        res.setHeader(
+            "Content-Type",
+            "image/jpeg"
+        );
 
         return res.send(
             rows[0].main_image
@@ -578,7 +590,6 @@ export const getStayToRentVideo = async (
             `
             SELECT
                 main_video
-                
 
             FROM stays_to_rent
 
@@ -603,8 +614,9 @@ export const getStayToRentVideo = async (
             });
         }
 
-        res.setHeader("Content-Type", "video/mp4"
-
+        res.setHeader(
+            "Content-Type",
+            "video/mp4"
         );
 
         return res.send(
@@ -643,12 +655,11 @@ export const getStayToRentGallery = async (
             `
             SELECT
                 id,
-                stay_to_rent_id
-                
+                stay_rent_id
 
             FROM stay_to_rent_images
 
-            WHERE stay_to_rent_id = ?
+            WHERE stay_rent_id = ?
 
             ORDER BY id ASC
             `,
@@ -660,10 +671,8 @@ export const getStayToRentGallery = async (
 
                 id: image.id,
 
-                stay_to_rent_id:
-                    image.stay_to_rent_id,
-
-               
+                stay_rent_id:
+                    image.stay_rent_id,
 
                 image:
                     `/api/stays-to-rent/gallery-image/${image.id}`,
@@ -709,7 +718,6 @@ export const getStayToRentGalleryImage = async (
             `
             SELECT
                 image
-                
 
             FROM stay_to_rent_images
 
@@ -737,7 +745,8 @@ export const getStayToRentGalleryImage = async (
         }
 
         res.setHeader(
-           "Content-Type", "image/jpeg"
+            "Content-Type",
+            "image/jpeg"
         );
 
         return res.send(
@@ -818,9 +827,10 @@ export const updateStayToRent = async (
             highlights,
             rate,
             area_sqft,
+            district,
             city,
+            address,
             map_address,
-            location,
             price_period,
             status,
             keep_gallery
@@ -836,7 +846,9 @@ export const updateStayToRent = async (
             price === null ||
             price === "" ||
             !property_type ||
-            !city
+            !district ||
+            !city ||
+            !address
         ) {
 
             await connection.rollback();
@@ -844,7 +856,7 @@ export const updateStayToRent = async (
             return res.status(400).json({
                 success: false,
                 message:
-                    "Title, price, property type and city are required."
+                    "Title, price, property type, district, city and address are required."
             });
         }
 
@@ -888,64 +900,84 @@ export const updateStayToRent = async (
         // UPDATE BASIC DATA
         // ==================================================
 
+        const updateFields = [];
+        const updateValues = [];
+
+        if (client_id) {
+
+            updateFields.push(
+                "client_id = ?"
+            );
+
+            updateValues.push(
+                Number(client_id)
+            );
+        }
+
+        updateFields.push(
+            "title = ?",
+            "description = ?",
+            "price = ?",
+            "overview = ?",
+            "duration = ?",
+            "property_type = ?",
+            "highlights = ?",
+            "rate = ?",
+            "area_sqft = ?",
+            "district = ?",
+            "city = ?",
+            "address = ?",
+            "map_address = ?",
+            "price_period = ?",
+            "status = ?"
+        );
+
+        updateValues.push(
+            title,
+            description || null,
+            price,
+
+            JSON.stringify(
+                overviewData
+            ),
+
+            duration || "month",
+
+            property_type,
+
+            JSON.stringify(
+                highlightsData
+            ),
+
+            rate || 0,
+
+            area_sqft || null,
+
+            district,
+
+            city,
+
+            address,
+
+            map_address || null,
+
+            price_period || "monthly",
+
+            status || "pending"
+        );
+
+        updateValues.push(id);
+
         await connection.query(
             `
             UPDATE stays_to_rent
 
             SET
-                ${client_id ? "client_id = ?," : ""}
-                title = ?,
-                description = ?,
-                price = ?,
-                overview = ?,
-                duration = ?,
-                property_type = ?,
-                highlights = ?,
-                rate = ?,
-                area_sqft = ?,
-                city = ?,
-                map_address = ?,
-                location = ?,
-                price_period = ?,
-                status = ?
+                ${updateFields.join(", ")}
 
             WHERE id = ?
             `,
-            [
-                ...(client_id ? [client_id] : []),
-
-                title,
-                description || null,
-                price,
-
-                JSON.stringify(
-                    overviewData
-                ),
-
-                duration || "month",
-
-                property_type,
-
-                JSON.stringify(
-                    highlightsData
-                ),
-
-                rate || 0,
-
-                area_sqft || null,
-
-                city,
-
-                map_address || null,
-
-                location || null,
-
-                price_period || "monthly",
-
-                status || "pending",
-
-                id
-            ]
+            updateValues
         );
 
         // ==================================================
@@ -966,13 +998,11 @@ export const updateStayToRent = async (
 
                 SET
                     main_image = ?
-                    
 
                 WHERE id = ?
                 `,
                 [
                     file.buffer,
-                    
                     id
                 ]
             );
@@ -996,20 +1026,18 @@ export const updateStayToRent = async (
 
                 SET
                     main_video = ?
-                    
 
                 WHERE id = ?
                 `,
                 [
                     file.buffer,
-                    
                     id
                 ]
             );
         }
 
         // ==================================================
-        // KEEP EXISTING GALLERY
+        // PARSE KEEP GALLERY
         // ==================================================
 
         let keepGalleryIds = [];
@@ -1033,7 +1061,7 @@ export const updateStayToRent = async (
             }
         }
 
-        // Convert to valid numbers
+        // Convert IDs to valid numbers
 
         keepGalleryIds =
             keepGalleryIds
@@ -1044,10 +1072,47 @@ export const updateStayToRent = async (
                         imageId > 0
                 );
 
-      
+        // ==================================================
+        // DELETE REMOVED GALLERY IMAGES
+        // ==================================================
+
+        if (keepGalleryIds.length > 0) {
+
+            const placeholders =
+                keepGalleryIds
+                    .map(() => "?")
+                    .join(",");
+
+            await connection.query(
+                `
+                DELETE FROM stay_to_rent_images
+
+                WHERE stay_rent_id = ?
+
+                AND id NOT IN (${placeholders})
+                `,
+                [
+                    id,
+                    ...keepGalleryIds
+                ]
+            );
+
+        } else {
+
+            // No existing gallery images were kept
+
+            await connection.query(
+                `
+                DELETE FROM stay_to_rent_images
+
+                WHERE stay_rent_id = ?
+                `,
+                [id]
+            );
+        }
 
         // ==================================================
-        // ADD NEW GALLERY
+        // ADD NEW GALLERY IMAGES
         // ==================================================
 
         if (
@@ -1064,16 +1129,14 @@ export const updateStayToRent = async (
                     `
                     INSERT INTO stay_to_rent_images
                     (
-                        stay_to_rent_id,
+                        stay_rent_id,
                         image
-                        
                     )
                     VALUES (?, ?)
                     `,
                     [
                         id,
                         file.buffer
-                        
                     ]
                 );
             }
@@ -1133,6 +1196,7 @@ export const deleteStayToRent = async (
             await db.query(
                 `
                 DELETE FROM stays_to_rent
+
                 WHERE id = ?
                 `,
                 [id]

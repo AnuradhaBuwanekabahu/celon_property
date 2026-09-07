@@ -1,33 +1,72 @@
-const API_URL = import.meta.env.VITE_API_URL
+import axios from 'axios'
 
-function parseWantedRow(row) {
-  return {
-    ...row,
-    postedDate: row.created_at,
-    images: Array.isArray(row.images) ? row.images : row.images ? JSON.parse(row.images) : [],
+const API_URL =
+  import.meta.env.VITE_BACKEND_URL ||
+  'http://localhost:5000'
+
+const getAuthToken = () =>
+  localStorage.getItem('userToken') ||
+  localStorage.getItem('clientToken') ||
+  localStorage.getItem('token') || ''
+
+// ==========================================
+// GET ALL WANTED
+// ==========================================
+export const getWanted = async () => {
+  const token = getAuthToken()
+
+  try {
+    const response = await axios.get(
+      `${API_URL}/api/user-wanted/showall`,
+      {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : undefined,
+        },
+      }
+    )
+
+    return response.data?.data || []
+  } catch (error) {
+    if (error?.response?.status === 401 || error?.response?.status === 403) {
+      localStorage.removeItem('userToken')
+      localStorage.removeItem('clientToken')
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      localStorage.removeItem('client')
+    }
+
+    throw error
   }
 }
 
-export async function getWanted() {
-  const res = await fetch(`${API_URL}/api/wanted/showall`)
-  if (!res.ok) {
-    throw new Error('Failed to fetch wanted requests')
+// ==========================================
+// ADD WANTED
+// ==========================================
+export const addWanted = async (formData) => {
+  const token = getAuthToken()
+
+  try {
+    const response = await axios.post(
+      `${API_URL}/api/user-wanted/add`,
+      formData,
+      {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : undefined,
+        },
+      }
+    )
+
+    return response.data
+  } catch (error) {
+    if (error?.response?.status === 401 || error?.response?.status === 403) {
+      localStorage.removeItem('userToken')
+      localStorage.removeItem('clientToken')
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      localStorage.removeItem('client')
+      throw new Error('Please log in or create an account before adding a wanted request.')
+    }
+
+    throw error
   }
-
-  const data = await res.json()
-  return (data.data || []).map(parseWantedRow)
-}
-
-export async function addWanted(formData) {
-  const res = await fetch(`${API_URL}/api/wanted/add`, {
-    method: 'POST',
-    body: formData,
-  })
-
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
-    throw new Error(body.message || 'Failed to add wanted request')
-  }
-
-  return res.json()
 }

@@ -14,6 +14,15 @@ const ViewStayToBuy = () => {
     const [loading, setLoading] = useState(true);
 
     // ======================================================
+    // API BASE URL
+    // ======================================================
+
+    const API_URL =
+        import.meta.env.VITE_BACKEND_URL ||
+        "http://localhost:5000";
+
+
+    // ======================================================
     // FETCH PROPERTY
     // ======================================================
 
@@ -23,14 +32,16 @@ const ViewStayToBuy = () => {
 
             setLoading(true);
 
-            const response = await getStayToBuyById(id);
+            const response =
+                await getStayToBuyById(id);
 
-            setProperty(
+            const data =
                 response.data?.data ||
                 response.data?.property ||
                 response.data?.stayToBuy ||
-                null
-            );
+                null;
+
+            setProperty(data);
 
         } catch (error) {
 
@@ -118,7 +129,8 @@ const ViewStayToBuy = () => {
 
             try {
 
-                const parsed = JSON.parse(data);
+                const parsed =
+                    JSON.parse(data);
 
                 return Array.isArray(parsed)
                     ? parsed
@@ -147,32 +159,53 @@ const ViewStayToBuy = () => {
 
 
     // ======================================================
+    // IMAGE URL HELPER
+    // ======================================================
+
+    const getMediaUrl = (path) => {
+
+        if (!path) return null;
+
+        if (
+            path.startsWith("http://") ||
+            path.startsWith("https://")
+        ) {
+            return path;
+        }
+
+        return `${API_URL}${path}`;
+
+    };
+
+
+    // ======================================================
     // MAIN IMAGE
     // ======================================================
 
-    const mainImage = property.main_image
-        ? `http://localhost:5000${property.main_image}`
-        : null;
+    const mainImage =
+        getMediaUrl(property.main_image);
 
 
     // ======================================================
     // MAIN VIDEO
     // ======================================================
 
-    const mainVideo = property.main_video
-        ? `http://localhost:5000${property.main_video}`
-        : null;
+    const mainVideo =
+        getMediaUrl(property.main_video);
 
 
     // ======================================================
     // GALLERY
     // ======================================================
 
-    const gallery = Array.isArray(property.images)
-        ? property.images
-        : property.gallery
-            ? [property.gallery]
-            : [];
+    const gallery =
+        Array.isArray(property.images)
+            ? property.images
+            : Array.isArray(property.gallery)
+                ? property.gallery
+                : property.gallery
+                    ? [property.gallery]
+                    : [];
 
 
     // ======================================================
@@ -196,8 +229,6 @@ const ViewStayToBuy = () => {
                         Stay To Buy Details
 
                     </h1>
-
-                    
 
                 </div>
 
@@ -275,7 +306,8 @@ const ViewStayToBuy = () => {
                         <video
                             src={mainVideo}
                             controls
-                            className="w-full max-h-[500px] rounded-xl"
+                            preload="metadata"
+                            className="w-full max-h-[500px] rounded-xl bg-black"
                         />
 
                     </div>
@@ -316,6 +348,11 @@ const ViewStayToBuy = () => {
                         />
 
                         <Info
+                            label="District"
+                            value={property.district}
+                        />
+
+                        <Info
                             label="Status"
                             value={property.status}
                         />
@@ -330,10 +367,7 @@ const ViewStayToBuy = () => {
                             value={`${property.area_sqft || 0} sqft`}
                         />
 
-                        <Info
-                            label="Rating"
-                            value={`${property.rate || 0}/5`}
-                        />
+                        
 
                         <Info
                             label="Duration"
@@ -341,13 +375,13 @@ const ViewStayToBuy = () => {
                         />
 
                         <Info
-                            label="Map Address"
-                            value={property.map_address}
+                            label="Address"
+                            value={property.address}
                         />
 
                         <Info
-                            label="Location"
-                            value={property.location}
+                            label="Map Address"
+                            value={property.map_address}
                         />
 
                     </div>
@@ -409,13 +443,11 @@ const ViewStayToBuy = () => {
                                     className="bg-[#E8EEF9] p-4 rounded-xl hover:bg-[#E8EEF9] transition"
                                 >
 
-                                    <p className="font-semibold
-                                            text-[#14213D]">
+                                    <p className="font-semibold text-[#14213D]">
 
                                         {item.title}
 
                                     </p>
-                                   
 
                                     <p className="text-gray-600 mt-1">
 
@@ -500,7 +532,7 @@ const ViewStayToBuy = () => {
 
                                 <img
                                     key={index}
-                                    src={`http://localhost:5000${image}`}
+                                    src={getMediaUrl(image)}
                                     alt={`Gallery ${index + 1}`}
                                     className="h-32 sm:h-40 w-full object-cover rounded-xl hover:opacity-80 transition"
                                 />
@@ -587,4 +619,3 @@ const Info = ({ label, value }) => (
 
 
 export default ViewStayToBuy;
-

@@ -140,7 +140,7 @@ const EditProfile = ({ clientID }) => {
     localStorage.removeItem("clientToken");
     localStorage.removeItem("clientId");
 
-    navigate("/client-login");
+    navigate("/dashboard/client-login");
   };
 
   const quickActions = [

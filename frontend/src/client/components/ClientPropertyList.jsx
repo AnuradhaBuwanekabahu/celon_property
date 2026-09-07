@@ -62,6 +62,8 @@ const ClientPropertyList = ({ clientID }) => {
               price={item.price}
               rate={item.rate}
               duration={item.duration || item.duration || "month"}
+              remaining_days={item.remaining_days}
+              status={item.status}
             />
           ))}
         </div>

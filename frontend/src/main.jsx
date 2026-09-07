@@ -5,6 +5,9 @@ import App from './App';
 import './index.css';
 import { ClientProvider } from './client/context/ClientContext';
 import { AuthProvider } from './superAdmin/context/AuthContext';
+import socket from './socket/sockat';
+
+console.log('Socket client initialized:', socket.id);
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

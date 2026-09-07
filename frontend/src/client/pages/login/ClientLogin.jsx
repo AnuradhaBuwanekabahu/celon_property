@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { FiMail, FiLock, FiEye, FiEyeOff } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import API from "../../api/clientapi.js";
@@ -11,6 +11,7 @@ export default function ClientLogin() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setloading] = useState(false);
+  const googleInitialized = useRef(false);
 
   const [formData, setformData] = useState({
     email: "",
@@ -56,7 +57,7 @@ export default function ClientLogin() {
 
     const initializeGoogle = () => {
       const button = document.getElementById("client-google-login-button");
-      if (!window.google?.accounts?.id || !button) return;
+      if (!window.google?.accounts?.id || !button || googleInitialized.current) return;
 
       window.google.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
@@ -68,6 +69,7 @@ export default function ClientLogin() {
         width: 360,
         text: "continue_with"
       });
+      googleInitialized.current = true;
     };
 
     initializeGoogle();
@@ -79,6 +81,26 @@ export default function ClientLogin() {
     }, 200);
 
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID) return;
+    if (localStorage.getItem("clientToken")) return;
+
+    const autoPromptShown = sessionStorage.getItem("clientGoogleAutoPromptShown") === "true";
+    if (autoPromptShown) return;
+
+    const timer = setTimeout(() => {
+      if (!window.google?.accounts?.id) return;
+
+      window.google.accounts.id.prompt((notification) => {
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          sessionStorage.setItem("clientGoogleAutoPromptShown", "true");
+        }
+      });
+    }, 800);
+
+    return () => clearTimeout(timer);
   }, []);
 
 

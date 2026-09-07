@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { IoIosNotifications } from "react-icons/io";
 import { FiChevronDown, FiX, FiUser } from "react-icons/fi";
 import { IoReorderThreeOutline } from "react-icons/io5";
@@ -7,16 +7,19 @@ import { clientContext } from "../context/ClientContext";
 
 export default function DashboardSidebar({ clientID }) {
   const { id: routeId } = useParams();
-  const { client, getclientdata } = useContext(clientContext);
+  const location = useLocation();
+  const context = useContext(clientContext) || {};
+  const { client, getclientdata } = context;
   const navigate = useNavigate();
+  const isPropertyRoute = /\/dashboard\/(?:edit-hotsales-profile|stays-buy\/edit-profile|stays-rent\/edit-profile|lands\/edit-profile|.*\/profile\/|.*\/edit\/|.*\/delete\/|.*\/view\/)/.test(location.pathname);
   const id = clientID || routeId || localStorage.getItem("clientId");
-  const validId = id && !["profile", "edit-client", "change-password", "edit-hotsales-profile", "stays-buy", "stays-buy-profile", "stays-buy-edit"].includes(id) ? id : null;
+  const validId = isPropertyRoute ? localStorage.getItem("clientId") : (id && !["profile", "edit-client", "change-password", "edit-hotsales-profile", "stays-buy", "stays-buy-profile", "stays-buy-edit"].includes(id) ? id : null);
 
   useEffect(() => {
-    if (validId) {
+    if (validId && getclientdata) {
       getclientdata(validId);
     }
-  }, [validId]);
+  }, [validId, getclientdata]);
 
   const [activeMenu, setActiveMenu] = useState(null);
   const [showMenu, setShowMenu] = useState(false);
@@ -56,15 +59,6 @@ export default function DashboardSidebar({ clientID }) {
         { title: "View Lands", path: `/dashboard/lands/view/${validId}` },
         { title: "Edit Land", path: `/dashboard/lands/edit/${validId}` },
         { title: "Delete Land", path: `/dashboard/lands/delete/${validId}` },
-      ],
-    },
-    {
-      name: "Advertisement",
-      children: [
-        { title: "Create Advertisement", path: `/dashboard/create-ads/${validId}` },
-        { title: "View Advertisements", path: `/dashboard/ads/view/${validId}` },
-        { title: "Edit Advertisement", path: `/dashboard/ads/edit/${validId}` },
-        { title: "Delete Advertisement", path: `/dashboard/ads/delete/${validId}` },
       ],
     },
   ];

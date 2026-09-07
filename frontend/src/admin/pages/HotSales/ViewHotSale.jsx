@@ -12,6 +12,7 @@ const ViewHotSale = () => {
     const [sale, setSale] = useState(null);
     const [loading, setLoading] = useState(true);
 
+
     // =====================================================
     // LOAD HOT SALE
     // =====================================================
@@ -40,6 +41,7 @@ const ViewHotSale = () => {
         }
 
     };
+
 
     useEffect(() => {
 
@@ -92,8 +94,11 @@ const ViewHotSale = () => {
                             transition
                         "
                     >
+
                         <ArrowLeft size={18} />
+
                         Back to Hot Sales
+
                     </Link>
 
                 </div>
@@ -127,7 +132,9 @@ const ViewHotSale = () => {
 
         }
 
-        return Array.isArray(data) ? data : [];
+        return Array.isArray(data)
+            ? data
+            : [];
 
     };
 
@@ -144,20 +151,6 @@ const ViewHotSale = () => {
     // =====================================================
     // VIDEO URL
     // =====================================================
-
-    /*
-       Your backend should return something like:
-
-       main_video:
-       "/api/hotsales/video/1"
-
-       OR
-
-       video:
-       "/api/hotsales/video/1"
-
-       This supports both.
-    */
 
     const videoUrl =
         sale.main_video ||
@@ -198,8 +191,6 @@ const ViewHotSale = () => {
                     ">
                         Hot Sale Details
                     </h1>
-
-                    
 
                 </div>
 
@@ -306,7 +297,9 @@ const ViewHotSale = () => {
                         justify-center
                         text-gray-500
                     ">
+
                         No Main Image Available
+
                     </div>
 
                 )}
@@ -366,7 +359,10 @@ const ViewHotSale = () => {
 
                         <source
                             src={`http://localhost:5000${videoUrl}`}
-                            type={sale.main_video_type || "video/mp4"}
+                            type={
+                                sale.main_video_type ||
+                                "video/mp4"
+                            }
                         />
 
                         Your browser does not support
@@ -411,6 +407,7 @@ const ViewHotSale = () => {
                     gap-4
                 ">
 
+
                     <Info
                         label="Title"
                         value={sale.title}
@@ -419,21 +416,11 @@ const ViewHotSale = () => {
 
                     <Info
                         label="Price"
-                        value={`Rs. ${Number(
-                            sale.price || 0
-                        ).toLocaleString()}`}
-                    />
-
-
-                    <Info
-                        label="City"
-                        value={sale.city}
-                    />
-
-
-                    <Info
-                        label="Status"
-                        value={sale.status}
+                        value={`Rs. ${
+                            Number(
+                                sale.price || 0
+                            ).toLocaleString()
+                        }`}
                     />
 
 
@@ -444,15 +431,34 @@ const ViewHotSale = () => {
 
 
                     <Info
-                        label="Area"
-                        value={`${sale.area_sqft || 0} sqft`}
+                        label="District"
+                        value={sale.district}
                     />
 
 
                     <Info
-                        label="Rating"
-                        value={`${sale.rate || 0}/5`}
+                        label="City"
+                        value={sale.city}
                     />
+
+
+                    <Info
+                        label="Address"
+                        value={sale.address}
+                    />
+
+
+                    <Info
+                        label="Area"
+                        value={
+                            sale.area_sqft
+                                ? `${sale.area_sqft} sqft`
+                                : "-"
+                        }
+                    />
+
+
+                   
 
 
                     <Info
@@ -462,8 +468,8 @@ const ViewHotSale = () => {
 
 
                     <Info
-                        label="Location"
-                        value={sale.location}
+                        label="Status"
+                        value={sale.status}
                     />
 
 
@@ -569,11 +575,11 @@ const ViewHotSale = () => {
 
 
                                     <span className="
-                                            mx-2
-                                            text-gray-500
-                                        ">
-                                            :
-                                        </span>
+                                        mx-2
+                                        text-gray-500
+                                    ">
+                                        :
+                                    </span>
 
 
                                     <span className="

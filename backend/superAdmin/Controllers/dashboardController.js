@@ -66,37 +66,168 @@ export const getSystemStats = async (req, res) => {
     }
 };
 
+
 export const getRecentActivity = async (req, res) => {
     try {
+        // ============================================
+        // DATE FILTER
+        // ============================================
+
+        const dateFilter = req.query.date || "all";
+
+        let dateCondition = "";
+
+        switch (dateFilter) {
+            case "today":
+                dateCondition = "WHERE created_at >= CURDATE()";
+                break;
+
+            case "7days":
+                dateCondition = "WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
+                break;
+
+            case "30days":
+                dateCondition = "WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
+                break;
+
+            case "thismonth":
+                dateCondition = "WHERE created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01')";
+                break;
+
+            case "all":
+            default:
+                dateCondition = "";
+                break;
+        }
+
+
+        // ============================================
+        // RECENT PROPERTIES
+        // ============================================
+
         let recent_properties = [];
+
         try {
             const [rows] = await db.query(
-                `SELECT p.id, p.title, p.city, p.price, p.type, COALESCE(c.full_name, 'Client') as client_name
-                 FROM (
-                   SELECT id, title, city, price, 'Hot Sale' AS type, client_id, created_at FROM hot_sales
-                   UNION ALL
-                   SELECT id, title, city, price, 'Stay to Buy' AS type, client_id, created_at FROM stays_to_buy
-                   UNION ALL
-                   SELECT id, title, city, price, 'Stay to Rent' AS type, client_id, created_at FROM stays_to_rent
-                   UNION ALL
-                   SELECT id, title, city, price, 'Land' AS type, client_id, created_at FROM land
-                   UNION ALL
-                   SELECT id, title, preferred_city AS city, budget AS price, 'Wanted' AS type, client_id, created_at FROM wanted
-                 ) p
-                 LEFT JOIN clients c ON p.client_id = c.id
-                 ORDER BY p.created_at DESC
-                 LIMIT 5`
+                `
+                SELECT 
+                    p.id,
+                    p.title,
+                    p.city,
+                    p.price,
+                    p.type,
+                    p.created_at,
+                    COALESCE(c.full_name, 'Client') as client_name
+                FROM (
+                    SELECT 
+                        id,
+                        title,
+                        city,
+                        price,
+                        'Hot Sale' AS type,
+                        client_id,
+                        created_at
+                    FROM hot_sales
+                    ${dateCondition}
+
+                    UNION ALL
+
+                    SELECT 
+                        id,
+                        title,
+                        city,
+                        price,
+                        'Stay to Buy' AS type,
+                        client_id,
+                        created_at
+                    FROM stays_to_buy
+                    ${dateCondition}
+
+                    UNION ALL
+
+                    SELECT 
+                        id,
+                        title,
+                        city,
+                        price,
+                        'Stay to Rent' AS type,
+                        client_id,
+                        created_at
+                    FROM stays_to_rent
+                    ${dateCondition}
+
+                    UNION ALL
+
+                    SELECT 
+                        id,
+                        title,
+                        city,
+                        price,
+                        'Land' AS type,
+                        client_id,
+                        created_at
+                    FROM land
+                    ${dateCondition}
+
+                    UNION ALL
+
+                    SELECT 
+                        id,
+                        title,
+                        preferred_city AS city,
+                        budget AS price,
+                        'Wanted' AS type,
+                        client_id,
+                        created_at
+                    FROM wanted
+                    ${dateCondition}
+                ) p
+
+                LEFT JOIN clients c 
+                    ON p.client_id = c.id
+
+                ORDER BY p.created_at DESC
+                LIMIT 5
+                `
             );
+
             recent_properties = rows;
-        } catch (e) {}
+
+        } catch (e) {
+            console.error("Recent Properties Error:", e);
+        }
+
+
+        // ============================================
+        // RECENT CLIENTS
+        // ============================================
 
         let recent_clients = [];
+
         try {
             const [rows] = await db.query(
-                `SELECT id, full_name, email, phone_number FROM clients ORDER BY id DESC LIMIT 5`
+                `
+                SELECT 
+                    id,
+                    full_name,
+                    email,
+                    phone_number
+                FROM clients 
+                ORDER BY id DESC 
+                LIMIT 5
+                `
             );
+
             recent_clients = rows;
-        } catch (e) {}
+
+        } catch (e) {
+            console.error("Recent Clients Error:", e);
+        }
+
+
+        // ============================================
+        // RESPONSE
+        // ============================================
 
         return res.status(200).json({
             success: true,

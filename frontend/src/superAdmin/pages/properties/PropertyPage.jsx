@@ -37,6 +37,29 @@ export default function PropertyPage({ config }) {
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState(null);
 
+  const [limits, setLimits] = useState([]);
+
+  const normalizeRows = (response) => {
+    if (Array.isArray(response)) return response;
+    if (!response || typeof response !== 'object') return [];
+
+    const candidates = [
+      response.data,
+      response.rows,
+      response.lands,
+      response.hotSales,
+      response.items,
+      response.result,
+      response.list,
+    ];
+
+    for (const candidate of candidates) {
+      if (Array.isArray(candidate)) return candidate;
+    }
+
+    return [];
+  };
+
   const load = async () => {
     setLoading(true);
     setError('');
@@ -47,10 +70,19 @@ export default function PropertyPage({ config }) {
       } else {
         res = await api.get(config.basePath);
       }
-      const payload = Array.isArray(res) ? res : (res?.data || res?.lands || res?.rows || []);
+
+      const payload = normalizeRows(res);
       setRows(Array.isArray(payload) ? payload : []);
+
+      // Fetch limits
+      try {
+        const limRes = await api.get('/limits');
+        setLimits(Array.isArray(limRes.data) ? limRes.data : []);
+      } catch (e) {
+        console.warn('Failed to fetch limits', e);
+      }
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Server error');
     } finally {
       setLoading(false);
     }
@@ -64,10 +96,10 @@ export default function PropertyPage({ config }) {
     setLoading(true);
     try {
       const res = await api.get(`${config.basePath}/search?search=${encodeURIComponent(q)}`);
-      const payload = Array.isArray(res) ? res : (res?.data || res?.lands || res?.rows || []);
+      const payload = normalizeRows(res);
       setRows(Array.isArray(payload) ? payload : []);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Server error');
     } finally {
       setLoading(false);
     }
@@ -75,6 +107,25 @@ export default function PropertyPage({ config }) {
 
   const openCreate = () => { setForm({}); setModalMode('create'); };
   const openEdit   = (row) => { setForm(row); setModalMode(row); };
+
+  // Generate dynamic fields for RecordForm
+  const getDynamicFields = () => {
+    if (!config.fields) return [];
+    return config.fields.map(f => {
+      if (f.name === 'days') {
+        return {
+          ...f,
+          type: 'select',
+          label: 'Limit Tier (Active days)',
+          options: limits.map(l => ({
+            label: `Tier ${l.tier_order} - ${l.days} Days`,
+            value: l.days
+          }))
+        };
+      }
+      return f;
+    });
+  };
 
   // ── Save for simple RecordForm (JSON body)
   const saveSimple = async () => {
@@ -264,9 +315,11 @@ export default function PropertyPage({ config }) {
               initialValues={editRow || {}}
               statuses={config.statuses}
               showRentPeriod={config.slug === 'stays-to-rent'}
+              isHotSales={config.slug === 'hot-sales'}
               saving={saving}
               onSave={saveRich}
               onClose={() => setModalMode(null)}
+              limits={limits}
             />
           </Modal>
         ) : (
@@ -283,7 +336,7 @@ export default function PropertyPage({ config }) {
               </>
             }
           >
-            <RecordForm fields={config.fields} values={form} onChange={setForm} />
+            <RecordForm fields={getDynamicFields()} values={form} onChange={setForm} />
           </Modal>
         )
       )}

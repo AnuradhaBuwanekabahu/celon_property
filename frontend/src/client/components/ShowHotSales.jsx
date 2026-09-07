@@ -75,8 +75,6 @@ const ShowHotSales = ({ clientID }) => {
 
                                     <div className="absolute bottom-4 left-4 right-4 rounded-2xl bg-white p-4 shadow-sm">
                                         <p className="font-bold text-[15px] text-slate-800">{item.title}</p>
-                                        <p className="mt-1 text-[11px] text-gray-500">{item.location}</p>
-
                                         <div className="mt-3 flex items-center justify-between">
                                             <p className="font-bold text-[16px] text-slate-800">
                                                 RS.{item.price}

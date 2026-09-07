@@ -8,8 +8,8 @@
     "start": "node index.js",
     "dev": "nodemon index.js",
     "migrate:user-otp": "node migrations/add_user_otp.js",
-    "migrate:client-google": "node migrations/add_client_google_auth.js"
-    ,"migrate:stay-rent": "node migrations/add_stay_rent_schema.js"
+    "migrate:client-google": "node migrations/add_client_google_auth.js",
+    "migrate:stay-rent": "node migrations/add_stay_rent_schema.js"
   },
   "keywords": [],
   "author": "",

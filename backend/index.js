@@ -15,6 +15,7 @@ import paymentrouter from "./client/routers/paymentRoutes.js";
 import StayToBuyRouter from "./client/routers/staytobuyRouter.js";
 import staystorentrouter from "./client/routers/staytorentRouter.js";
 import landsrouter from "./client/routers/landsRoute.js";
+import userWantedRouter from "./user/router/wantedRouter.js";
 
 // Super Admin Routers
 import superAdminRouter from "./superAdmin/routers/superAdminRoutes.js";
@@ -45,7 +46,7 @@ MIDDLEWARE
 
 app.use(
     cors({
-        origin: "http://localhost:5173",
+        origin: ["http://localhost:5173", "http://localhost:4173"],
         methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
         credentials: true,
     })
@@ -107,6 +108,8 @@ app.use("/api/wanted", adminWantedRouter);
 SUPER ADMIN ROUTES
 ==================================================
 */
+ app.use("/api/admin/clients", adminClientsRouter);
+ app.use("/api/admin/lands", adminLandsRouter);
 
 app.use("/api/super-admin", superAdminRouter);
 app.use("/api/admin", superAdminAdminRouter);
@@ -148,6 +151,9 @@ app.use("/api/stays-to-rent", adminStayToRentRouter);
 // Lands
 app.use("/api/lands", landsrouter);
 app.use("/api/lands", adminLandsRouter);
+
+// User wanted requests
+app.use("/api/user-wanted", userWantedRouter);
 
 /*
 ==================================================

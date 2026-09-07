@@ -386,7 +386,7 @@ export const getClientData = async (req, res) => {
         const { id } = req.params;
 
         const [rows] = await db.query(
-            "SELECT id, full_name, email, phone_number, whatsapp_number, avatar, ads_count, is_active FROM clients WHERE id = ?",
+            "SELECT id, full_name, email, phone_number, whatsapp_number, avatar, total_ads_count AS ads_count, is_active FROM clients WHERE id = ?",
             [id]
         );
 
@@ -482,7 +482,7 @@ export const updateClientProfile = async (req, res) => {
         await db.query(updateSql, updateFields);
 
         const [updatedClient] = await db.query(
-            "SELECT id, full_name, email, phone_number, whatsapp_number, avatar, ads_count, is_active FROM clients WHERE id = ?",
+            "SELECT id, full_name, email, phone_number, whatsapp_number, avatar, total_ads_count AS ads_count, is_active FROM clients WHERE id = ?",
             [clientId]
         );
 
@@ -564,7 +564,7 @@ export const getAllClients = async (req, res) => {
                 phone_number,
                 whatsapp_number,
                 avatar,
-                ads_count,
+                total_ads_count AS ads_count,
                 is_active,
                 is_verified,
                 auth_type

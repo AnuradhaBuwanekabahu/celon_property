@@ -6,7 +6,7 @@ import API from "./api";
 // ==========================================
 
 export const getClients = () =>
-    API.get("/api/clients");
+    API.get("/api/admin/clients");
 
 
 // ==========================================
@@ -14,7 +14,7 @@ export const getClients = () =>
 // ==========================================
 
 export const getClientById = (id) =>
-    API.get(`/api/clients/${id}`);
+    API.get(`/api/admin/clients/${id}`);
 
 
 // ==========================================
@@ -23,7 +23,7 @@ export const getClientById = (id) =>
 
 export const getClientAvatar = (id) =>
     API.get(
-        `/api/clients/${id}/avatar`,
+        `/api/admin/clients/${id}/avatar`,
         {
             responseType: "blob"
         }
@@ -36,7 +36,7 @@ export const getClientAvatar = (id) =>
 
 export const updateClientStatus = (id, data) =>
     API.put(
-        `/api/clients/${id}/status`,
+        `/api/admin/clients/${id}/status`,
         data
     );
 
@@ -48,7 +48,7 @@ export const updateClientStatus = (id, data) =>
 
 export const updateClient = (id, data) =>
     API.put(
-        `/api/clients/${id}`,
+        `/api/admin/clients/${id}`,
         data,
         {
             headers: {

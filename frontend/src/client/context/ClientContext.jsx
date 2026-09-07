@@ -1,8 +1,8 @@
-import { createContext, useState ,useCallback} from "react";
+import { createContext, useState ,useCallback, useEffect, useRef} from "react";
 import API from "../api/clientapi";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-import { overviewOptions } from "../Assets/data.js";
+import { overviewOptions } from "../../assets/data.js";
 export const clientContext = createContext();
 
 export function ClientProvider({ children }) {
@@ -13,11 +13,55 @@ export function ClientProvider({ children }) {
   const [stayToBuy, setStayToBuy] = useState([]);
   const [staytoBuySelectedProperty, setStayToBuySelectedProperty] = useState(null);
   const [stayToRent, setStayToRent] = useState([]);
-
-
+  const [availableLimits, setAvailableLimits] = useState([]);
+  const [selectedLimitDays, setSelectedLimitDays] = useState('');
+  const [limitLoading, setLimitLoading] = useState(false);
+  const clientRequestRef = useRef(null);
 
    const navigate = useNavigate();
 const MAX_GALLERY_IMAGES = 9;
+
+  const fetchClientLimitOptions = async (clientId) => {
+      if (!clientId) return;
+
+      try {
+          setLimitLoading(true);
+          const response = await API.get(`/api/clients/limits/${clientId}`);
+          const limits = response?.data?.limits || [];
+          setAvailableLimits(limits);
+
+          const defaultLimit = limits.find((limit) => limit.is_applicable) || limits[0];
+          if (defaultLimit) {
+              setSelectedLimitDays(String(defaultLimit.days));
+              setFormData((prev) => ({
+                  ...prev,
+                  days: String(defaultLimit.days),
+                  limit_id: defaultLimit.id ? String(defaultLimit.id) : '',
+              }));
+          }
+      } catch (error) {
+          console.error('Failed to fetch client limits:', error);
+          setAvailableLimits([]);
+      } finally {
+          setLimitLoading(false);
+      }
+  };
+
+  useEffect(() => {
+      try {
+          const storedClient = localStorage.getItem('client');
+          if (!storedClient || storedClient === 'undefined') return;
+
+          const parsedClient = JSON.parse(storedClient);
+          const clientId = parsedClient?.id ?? parsedClient?.clientId ?? parsedClient?.client_id;
+
+          if (clientId) {
+              fetchClientLimitOptions(clientId);
+          }
+      } catch (error) {
+          console.error('Client limit load failed:', error);
+      }
+  }, []);
     // expose limit to consumers
   
       const [formData, setFormData] = useState({
@@ -30,9 +74,12 @@ const MAX_GALLERY_IMAGES = 9;
           overview: [{ title: 'Bedrooms', value: '' }],
           highlights: [],
           area_sqft: '',
+          district: '',
           city: '',
+          address: '',
           map_address: '',
-          location: '',
+          days: '',
+          limit_id: '',
       });
   
       const [mainImage, setMainImage] = useState(null);
@@ -174,6 +221,11 @@ const MAX_GALLERY_IMAGES = 9;
               return;
           }
 
+          if (!formData.days) {
+              toast.error('Please select a listing limit before adding a property');
+              return;
+          }
+
           try {
               const data = new FormData();
               data.append('client_id', clientId);
@@ -181,7 +233,7 @@ const MAX_GALLERY_IMAGES = 9;
               Object.keys(formData).forEach((key) => {
                   if (key === 'overview' || key === 'highlights') {
                       data.append(key, JSON.stringify(formData[key]));
-                  } else {
+                  } else if (formData[key] !== '' && formData[key] !== null && formData[key] !== undefined) {
                       data.append(key, formData[key]);
                   }
               });
@@ -278,9 +330,10 @@ const fetchHotSaleForEdit = async (id) => {
             rate: data.rate || '',
             duration: data.duration || 'year',
             area_sqft: data.area_sqft || '',
+            district: data.district || '',
             city: data.city || '',
+            address: data.address || '',
             map_address: data.map_address || '',
-            location: data.location || '',
             overview,
             highlights,
             status: data.status || '',
@@ -322,9 +375,10 @@ const handleHotSalesEditSubmit = async (e, id) => {
         data.append("rate", formData.rate);
         data.append("duration", formData.duration);
         data.append("area_sqft", formData.area_sqft);
+        data.append("district", formData.district);
         data.append("city", formData.city);
+        data.append("address", formData.address);
         data.append("map_address", formData.map_address);
-        data.append("location", formData.location);
         data.append("status", formData.status || "active");
         data.append("overview", JSON.stringify(formData.overview));
         data.append("highlights", JSON.stringify(formData.highlights));
@@ -362,18 +416,29 @@ const handleDeleteHotSale = async (id) => {
         toast.error(error?.response?.data?.message || "Failed to delete property");
     }
 };
-  const getclientdata = async (id) => {
+  const getclientdata = useCallback(async (id) => {
     if (!id) return;
+    if (clientRequestRef.current === String(id)) return;
+
+    clientRequestRef.current = String(id);
+
     try {
       setLoading(true);
       const response = await API.get(`/api/clients/${id}`);
       setClient(response.data?.client || response.data);
     } catch (error) {
+      const status = error?.response?.status;
+
+      if (status === 404 || status === 400) {
+        setClient(null);
+        return;
+      }
+
       toast.error("Cannot load client data");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
 // ================== STAY TO BUY ==================
 
@@ -383,13 +448,17 @@ const [stayFormData, setStayFormData] = useState({
     description: '',
     overview: [],
     price: '',
+    rate: '',
     property_type: '',
     highlights: [],
     area_sqft: '',
+    district: '',
     city: '',
+    address: '',
     map_address: '',
-    location: '',
     duration: 'month',
+    days: '',
+    limit_id: '',
     status: 'pending',
 });
 
@@ -521,13 +590,17 @@ const handleStaySubmit = async (e, clientIdOverride) => {
         data.append("title", stayFormData.title);
         data.append("description", stayFormData.description);
         data.append("price", stayFormData.price);
+        data.append("rate", stayFormData.rate);
         data.append("property_type", stayFormData.property_type);
         data.append("area_sqft", stayFormData.area_sqft);
+        data.append("district", stayFormData.district);
         data.append("city", stayFormData.city);
+        data.append("address", stayFormData.address);
         data.append("map_address", stayFormData.map_address);
-        data.append("location", stayFormData.location);
         data.append("duration", stayFormData.duration);
         data.append("status", stayFormData.status);
+        data.append("days", stayFormData.days);
+        data.append("limit_id", stayFormData.limit_id);
         data.append("overview", JSON.stringify(stayFormData.overview));
         data.append("highlights", JSON.stringify(stayFormData.highlights));
 
@@ -557,13 +630,17 @@ const resetStayForm = () => {
         description: '',
         overview: [],
         price: '',
+        rate: '',
         property_type: '',
         highlights: [],
         area_sqft: '',
+        district: '',
         city: '',
+        address: '',
         map_address: '',
-        location: '',
         duration: 'month',
+        days: '',
+        limit_id: '',
         status: 'pending',
     });
     setStayMainImage(null);
@@ -622,10 +699,13 @@ const getStayToBuy = async () => {
         property_type: data?.property_type || '',
         highlights,
         area_sqft: data?.area_sqft || '',
+        district: data?.district || data?.disctrict || '',
         city: data?.city || '',
+        address: data?.address || '',
         map_address: data?.map_address || '',
-        location: data?.location || '',
         duration: data?.duration || 'month',
+        days: data?.days || '',
+        limit_id: data?.limit_id ? String(data.limit_id) : '',
         status: data?.status || 'pending',
       });
 
@@ -689,9 +769,10 @@ const handleStayToBuyEditSubmit = async (e, id) => {
         data.append("property_type", stayFormData.property_type);
         data.append("duration", stayFormData.duration);
         data.append("area_sqft", stayFormData.area_sqft);
+        data.append("district", stayFormData.district);
         data.append("city", stayFormData.city);
+        data.append("address", stayFormData.address);
         data.append("map_address", stayFormData.map_address);
-        data.append("location", stayFormData.location);
         data.append("status", stayFormData.status || "pending");
         data.append("overview", JSON.stringify(stayFormData.overview));
         data.append("highlights", JSON.stringify(stayFormData.highlights));
@@ -739,13 +820,17 @@ const [staytorentFormData, setStaytorentFormData] = useState({
   description: "",
   overview: [],
   price: "",
+  rate: "",
   property_type: "",
   highlights: [],
   area_sqft: "",
+  district: "",
   city: "",
+  address: "",
   map_address: "",
-  location: "",
   duration: "month",
+  days: "",
+  limit_id: "",
   price_period: "monthly",
   status: "pending",
 });
@@ -921,11 +1006,13 @@ const handleStaytorentSubmit = async (e, clientIdOverride) => {
     data.append("title", staytorentFormData.title);
     data.append("description", staytorentFormData.description);
     data.append("price", staytorentFormData.price);
+    data.append("rate", staytorentFormData.rate);
     data.append("property_type", staytorentFormData.property_type);
     data.append("area_sqft", staytorentFormData.area_sqft);
+    data.append("district", staytorentFormData.district);
     data.append("city", staytorentFormData.city);
+    data.append("address", staytorentFormData.address);
     data.append("map_address", staytorentFormData.map_address);
-    data.append("location", staytorentFormData.location);
     data.append("duration", staytorentFormData.duration);
     data.append("price_period", staytorentFormData.price_period);
     data.append("status", staytorentFormData.status);
@@ -979,13 +1066,17 @@ const resetStaytorentForm = () => {
     description: "",
     overview: [],
     price: "",
+    rate: "",
     property_type: "",
     highlights: [],
     area_sqft: "",
+    district: "",
     city: "",
+    address: "",
     map_address: "",
-    location: "",
     duration: "month",
+    days: "",
+    limit_id: "",
     price_period: "monthly",
     status: "pending",
   });
@@ -1082,10 +1173,13 @@ const fetchStayTorentForEdit = useCallback(async (id) => {
         property_type: data?.property_type || '',
         highlights,
         area_sqft: data?.area_sqft || '',
+        district: data?.district || '',
         city: data?.city || '',
+        address: data?.address || '',
         map_address: data?.map_address || '',
-        location: data?.location || '',
         duration: data?.duration || 'month',
+        days: data?.days || '',
+        limit_id: data?.limit_id ? String(data.limit_id) : '',
         price_period: data?.price_period || 'monthly',
         status: data?.status || 'pending',
       });
@@ -1123,9 +1217,10 @@ const fetchStayTorentForEdit = useCallback(async (id) => {
       data.append('duration', staytorentFormData.duration);
       data.append('price_period', staytorentFormData.price_period);
       data.append('area_sqft', staytorentFormData.area_sqft);
+      data.append('district', staytorentFormData.district);
       data.append('city', staytorentFormData.city);
+      data.append('address', staytorentFormData.address);
       data.append('map_address', staytorentFormData.map_address);
-      data.append('location', staytorentFormData.location);
       data.append('status', staytorentFormData.status || 'pending');
       data.append('overview', JSON.stringify(staytorentFormData.overview));
       data.append('highlights', JSON.stringify(staytorentFormData.highlights));
@@ -1183,9 +1278,14 @@ const [landFormData, setLandFormData] = useState({
     land_size: "",
     size_unit: "perches",
     duration: "month",
-    location: "",
+    map_address: "",
     city: "",
+    district: "",
+    address: "",
+    rate: "",
     overview: [{ title: overviewOptions[0]?.value || "", value: "" }],
+    days: "",
+    limit_id: "",
 });
 
 const [landMainImage, setLandMainImage] = useState(null);
@@ -1328,6 +1428,11 @@ const handleLandSubmit = async (e) => {
         return;
     }
 
+    if (!landFormData.days) {
+        toast.error("Please select a listing limit before adding a land");
+        return;
+    }
+
     try {
         const data = new FormData();
 
@@ -1338,8 +1443,13 @@ const handleLandSubmit = async (e) => {
         data.append("land_size", landFormData.land_size);
         data.append("size_unit", landFormData.size_unit);
         data.append("duration", landFormData.duration);
-        data.append("location", landFormData.location);
+        data.append("map_address", landFormData.map_address);
         data.append("city", landFormData.city);
+        data.append("district", landFormData.district);
+        data.append("address", landFormData.address);
+        data.append("rate", landFormData.rate);
+        data.append("days", landFormData.days);
+        data.append("limit_id", landFormData.limit_id);
         data.append("overview", JSON.stringify(landFormData.overview));
 
         data.append("main_image", landMainImage);
@@ -1366,9 +1476,11 @@ const handleLandSubmit = async (e) => {
             land_size: "",
             size_unit: "perches",
             duration: "month",
-            location: "",
+            map_address: "",
             city: "",
             overview: [{ title: overviewOptions[0]?.value || "", value: "" }],
+            days: "",
+            limit_id: "",
         });
         setLandMainImage(null);
         setLandMainImagePreview(null);
@@ -1464,6 +1576,13 @@ const getlands = async () => {
   return (
   <clientContext.Provider
   value={{
+    availableLimits,
+    setAvailableLimits,
+    selectedLimitDays,
+    setSelectedLimitDays,
+    limitLoading,
+    fetchClientLimitOptions,
+
     hotSales,
     selectedProperty,
     client,
@@ -1517,6 +1636,7 @@ const getlands = async () => {
      handleDeleteHotSale,
 
       stayFormData,
+    setStayFormData,
     handleStayChange,
 
     addStayOverview,
@@ -1558,6 +1678,7 @@ const getlands = async () => {
     handlestaytobuydelete,
 
     staytorentFormData,
+    setStaytorentFormData,
     staytorentImage,
     staytorentMainImagePreview,
     staytorentMainVideo,
@@ -1582,6 +1703,7 @@ const getlands = async () => {
     getStayTorentById,
     handleDeleteStaysToRent,
     landFormData,
+      setLandFormData,
         handleLandChange,
         handleLandSubmit,
 

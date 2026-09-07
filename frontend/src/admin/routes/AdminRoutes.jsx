@@ -24,9 +24,6 @@ import EditClient from "../pages/clients/EditClient";
 import Payments from "../pages/Payments/Payments";
 import ViewPayment from "../pages/Payments/ViewPayments";
 import EditPayment from "../pages/Payments/EditPayment";
-import Users from "../pages/Users/Users";
-import ViewUser from "../pages/Users/ViewUser";
-import EditUser from "../pages/Users/EditUser";
 import Wanted from "../pages/wanted/Wanted";
 import ViewWanted from "../pages/wanted/ViewWanted";
 import EditWanted from "../pages/wanted/EditWanted";
@@ -141,17 +138,6 @@ element={<ViewClient />}
     element={<EditPayment />}
 
 />
-
-
-<Route path="users" element={<Users />} />
-
-
-<Route path="users/:id" element={<ViewUser />} />
-
-
-<Route path="users/edit/:id" element={<EditUser />} />
-
-
 
 
 <Route path="wanted" element={<Wanted/>} />

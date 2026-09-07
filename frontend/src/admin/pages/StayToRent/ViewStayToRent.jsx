@@ -138,8 +138,11 @@ const ViewStayToRent = () => {
                         to="/admin/stay-to-rent"
                         className="inline-flex items-center gap-2 bg-[#14213D] text-white px-5 py-2.5 rounded-lg hover:bg-[#E8EEF9] hover:text-[#14213D] transition"
                     >
+
                         <ArrowLeft size={18} />
+
                         Back
+
                     </Link>
 
                 </div>
@@ -169,7 +172,11 @@ const ViewStayToRent = () => {
 
             try {
 
-                return JSON.parse(data);
+                const parsed = JSON.parse(data);
+
+                return Array.isArray(parsed)
+                    ? parsed
+                    : [];
 
             } catch {
 
@@ -221,7 +228,7 @@ const ViewStayToRent = () => {
             case "active":
                 return "bg-green-100 text-green-700";
 
-            case "sold":
+            case "rented":
                 return "bg-red-100 text-red-700";
 
             case "pending":
@@ -254,8 +261,6 @@ const ViewStayToRent = () => {
                     <h1 className="text-2xl sm:text-3xl font-bold text-[#14213D]">
                         Stay To Rent Details
                     </h1>
-
-                    
 
                 </div>
 
@@ -367,23 +372,62 @@ const ViewStayToRent = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
+                    {/* PRICE */}
+
                     <Info
                         label="Price"
                         value={`Rs. ${formatPrice(property.price)}`}
                     />
 
 
+                    {/* PRICE PERIOD */}
+
                     <Info
                         label="Price Period"
-                        value={property.price_period}
+                        value={
+                            property.price_period
+                                ? property.price_period
+                                      .charAt(0)
+                                      .toUpperCase() +
+                                  property.price_period.slice(1)
+                                : "-"
+                        }
                     />
 
+
+                    {/* PROPERTY TYPE */}
+
+                    <Info
+                        label="Property Type"
+                        value={property.property_type}
+                    />
+
+
+                    {/* DISTRICT */}
+
+                    <Info
+                        label="District"
+                        value={property.disctrict}
+                    />
+
+
+                    {/* CITY */}
 
                     <Info
                         label="City"
                         value={property.city}
                     />
 
+
+                    {/* ADDRESS */}
+
+                    <Info
+                        label="Address"
+                        value={property.address}
+                    />
+
+
+                    {/* STATUS */}
 
                     <Info
                         label="Status"
@@ -399,11 +443,7 @@ const ViewStayToRent = () => {
                     />
 
 
-                    <Info
-                        label="Property Type"
-                        value={property.property_type}
-                    />
-
+                    {/* AREA */}
 
                     <Info
                         label="Area"
@@ -415,11 +455,11 @@ const ViewStayToRent = () => {
                     />
 
 
-                    <Info
-                        label="Rate"
-                        value={`${property.rate || 0}/5`}
-                    />
+                    
 
+
+
+                    {/* DURATION */}
 
                     <Info
                         label="Duration"
@@ -427,11 +467,7 @@ const ViewStayToRent = () => {
                     />
 
 
-                    <Info
-                        label="Location"
-                        value={property.location}
-                    />
-
+                    {/* MAP ADDRESS */}
 
                     <Info
                         label="Map Address"
@@ -493,20 +529,15 @@ const ViewStayToRent = () => {
                                             {item.title && (
 
                                                 <p className="font-semibold text-[#14213D]">
-
                                                     {item.title}
-
                                                 </p>
 
                                             )}
-                                            
 
                                             {item.value && (
 
                                                 <p className="text-gray-600 mt-1">
-
                                                     {item.value}
-
                                                 </p>
 
                                             )}
@@ -516,9 +547,7 @@ const ViewStayToRent = () => {
                                     ) : (
 
                                         <p className="text-[#14213D]">
-
                                             {item}
-
                                         </p>
 
                                     )}
@@ -689,4 +718,3 @@ const Info = ({ label, value }) => (
 
 
 export default ViewStayToRent;
-

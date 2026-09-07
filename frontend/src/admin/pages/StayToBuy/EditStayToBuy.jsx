@@ -12,7 +12,8 @@ import {
 import {
     cityOptions,
     highlightOptions,
-    overviewOptions
+    overviewOptions,
+    districtOptions
 } from "../../data/propertyOption";
 import Loader from "../../components/Loader";
 
@@ -31,14 +32,15 @@ const EditStayToBuy = () => {
         description: "",
         price: "",
         property_type: "",
-        rate: "",
+        
         area_sqft: "",
 
         duration: "month",
 
-        city: "",
-        map_address: "",
-        location: "",
+        district: "",
+city: "",
+address: "",
+map_address: "",
 
         status: "pending",
 
@@ -147,8 +149,7 @@ const EditStayToBuy = () => {
                     property_type:
                         property.property_type || "",
 
-                    rate:
-                        property.rate || "",
+             
 
                     area_sqft:
                         property.area_sqft || "",
@@ -156,14 +157,17 @@ const EditStayToBuy = () => {
                     duration:
                         property.duration || "month",
 
-                    city:
-                        property.city || "",
+                    district:
+    property.district || "",
 
-                    map_address:
-                        property.map_address || "",
+city:
+    property.city || "",
 
-                    location:
-                        property.location || "",
+address:
+    property.address || "",
+
+map_address:
+    property.map_address || "",
 
                     status:
                         property.status || "pending",
@@ -188,43 +192,43 @@ const EditStayToBuy = () => {
 
          
 
-                // -----------------------------------------
-                // Load gallery
-                // -----------------------------------------
+// -----------------------------------------
+// Load existing gallery
+// -----------------------------------------
 
-                if (property.gallery) {
+try {
 
-                    try {
+    const galleryResponse = await fetch(
+        `http://localhost:5000/api/stays-to-buy/gallery/${id}`
+    );
 
-                        const galleryResponse =
-                            await fetch(
-                                `http://localhost:5000${property.gallery}`
-                            );
+    const galleryData = await galleryResponse.json();
 
-                        const galleryData =
-                            await galleryResponse.json();
+    if (
+        galleryData.success &&
+        Array.isArray(galleryData.data)
+    ) {
 
-                        if (
-                            galleryData.success &&
-                            Array.isArray(galleryData.data)
-                        ) {
+        setExistingGallery(
+            galleryData.data
+        );
 
-                            setExistingGallery(
-                                galleryData.data
-                            );
+    } else {
 
-                        }
+        setExistingGallery([]);
 
-                    } catch (galleryError) {
+    }
 
-                        console.log(
-                            "GALLERY LOAD ERROR:",
-                            galleryError
-                        );
+} catch (galleryError) {
 
-                    }
+    console.log(
+        "GALLERY LOAD ERROR:",
+        galleryError
+    );
 
-                }
+    setExistingGallery([]);
+
+}
 
             } catch (error) {
 
@@ -440,10 +444,7 @@ const EditStayToBuy = () => {
                 form.property_type
             );
 
-            data.append(
-                "rate",
-                form.rate
-            );
+    
 
             data.append(
                 "area_sqft",
@@ -454,21 +455,26 @@ const EditStayToBuy = () => {
                 "duration",
                 form.duration
             );
+            data.append(
+    "district",
+    form.district
+);
 
             data.append(
                 "city",
                 form.city
             );
+            data.append(
+    "address",
+    form.address
+);
 
             data.append(
                 "map_address",
                 form.map_address
             );
 
-            data.append(
-                "location",
-                form.location
-            );
+            
 
             data.append(
                 "status",
@@ -717,183 +723,187 @@ const EditStayToBuy = () => {
 
 
 
-                    {/* =====================================
-                        PROPERTY TYPE / CITY
-                    ===================================== */}
+{/* =====================================
+    PROPERTY TYPE / DISTRICT
+===================================== */}
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                        <div>
-                             <label className="block text-sm font-medium text-[#14213D] mb-2">
+    <div>
+        <label className="block text-sm font-medium text-[#14213D] mb-2">
+            Property Type
+        </label>
 
-                                 property_type
+        <select
+            name="property_type"
+            value={form.property_type}
+            onChange={handleChange}
+            required
+            className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
+        >
+            <option value="">
+                Select Property Type
+            </option>
 
-                                </label>
+            <option value="House">House</option>
+            <option value="Apartment">Apartment</option>
+            <option value="Bungalow">Bungalow</option>
+            <option value="Hotel">Hotel</option>
+            <option value="WareHouse">WareHouse</option>
+            <option value="Villa">Villa</option>
+            <option value="Studio">Studio</option>
+        </select>
+    </div>
 
-                        <select
-                            name="property_type"
-                            value={form.property_type}
-                            onChange={handleChange}
-                            required
-                            className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
-                        >
 
-                            <option value="">
-                                Select Property Type
-                            </option>
+    <div>
+        <label className="block text-sm font-medium text-[#14213D] mb-2">
+            District
+        </label>
 
-                            <option value="House">
-                                House
-                            </option>
+        <select
+            name="district"
+            value={form.district}
+            onChange={handleChange}
+            required
+            className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
+        >
+            <option value="">
+                Select District
+            </option>
 
-                            <option value="Apartment">
-                                Apartment
-                            </option>
+            {districtOptions.map((district) => (
+                <option
+                    key={district}
+                    value={district}
+                >
+                    {district}
+                </option>
+            ))}
+        </select>
+    </div>
 
-                            <option value="Villa">
-                                Villa
-                            </option>
+</div>
 
-                            <option value="Bungalow">
-                                Bungalow
-                            </option>
+{/* =====================================
+    CITY / ADDRESS
+===================================== */}
 
-                            <option value="Land">
-                                Land
-                            </option>
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                        </select>
+      <div>
+        <label className="block text-sm font-medium text-[#14213D] mb-2">
+            City
+        </label>
 
-                        </div>
+        <input
+            type="text"
+            name="city"
+            value={form.city}
+            onChange={handleChange}
+            required
+            placeholder="Enter city"
+            className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
+        />
+    </div>
 
-                        <div>
-                             <label className="block text-sm font-medium text-[#14213D] mb-2">
 
-                                 City
+    <div>
+        <label className="block text-sm font-medium text-[#14213D] mb-2">
+            Address
+        </label>
 
-                                </label>
+        <input
+            type="text"
+            name="address"
+            value={form.address}
+            onChange={handleChange}
+            required
+            placeholder="Enter property address"
+            className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
+        />
+    </div>
 
-                        <select
-                            name="city"
-                            value={form.city}
-                            onChange={handleChange}
-                            required
-                            className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
-                        >
+</div>
 
-                            <option value="">
-                                Select City
-                            </option>
+ {/* =====================================
+    STATUS / DURATION
+===================================== */}
 
-                            {cityOptions.map(city => (
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                                <option
-                                    key={city}
-                                    value={city}
-                                >
-                                    {city}
-                                </option>
+    {/* Status */}
 
-                            ))}
+    <div>
 
-                        </select>
+        <label className="block text-sm font-medium text-[#14213D] mb-2">
+            Status
+        </label>
 
-                        </div>
+        <select
+            name="status"
+            value={form.status}
+            onChange={handleChange}
+            className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-[#FCA311]"
+        >
 
-                    </div>
+            <option value="pending">
+                Pending
+            </option>
 
-                    {/* =====================================
-                        STATUS / RATE / DURATION
-                    ===================================== */}
+            <option value="active">
+                Active
+            </option>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <option value="sold">
+                Sold
+            </option>
 
-                        <div>
-                             <label className="block text-sm font-medium text-[#14213D] mb-2">
+        </select>
 
-                                 Status
+    </div>
 
-                                </label>
 
-                        <select
-                            name="status"
-                            value={form.status}
-                            onChange={handleChange}
-                            className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-[#FCA311]"
-                        >
+    {/* Duration */}
 
-                            <option value="pending">
-                                Pending
-                            </option>
+    <div>
 
-                            <option value="active">
-                                Active
-                            </option>
+        <label className="block text-sm font-medium text-[#14213D] mb-2">
+            Duration
+        </label>
 
-                            <option value="sold">
-                                Sold
-                            </option>
+        <select
+            name="duration"
+            value={form.duration}
+            onChange={handleChange}
+            className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-[#FCA311]"
+        >
 
-                        </select>
-                        </div>
+            <option value="permanent">
+                Permanent
+            </option>
 
-                        <div>
-                             <label className="block text-sm font-medium text-[#14213D] mb-2">
+            <option value="month">
+                Month
+            </option>
 
-                                 Rate
+            <option value="year">
+                Year
+            </option>
 
-                                </label>
+            <option value="week">
+                Week
+            </option>
 
-                        <input
-                            type="number"
-                            step="0.1"
-                            name="rate"
-                            value={form.rate}
-                            onChange={handleChange}
-                            placeholder="Rate"
-                            className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
-                        />
+            <option value="day">
+                Day
+            </option>
 
-                        </div>
+        </select>
 
-                        <div>
-                             <label className="block text-sm font-medium text-[#14213D] mb-2">
+    </div>
 
-                                 Duration
-
-                                </label>
-
-                        <select
-                            name="duration"
-                            value={form.duration}
-                            onChange={handleChange}
-                            className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-[#FCA311]"
-                        >
-
-                            <option value="permanent">
-                                Permanent
-                            </option>
-
-                            <option value="month">
-                                Month
-                            </option>
-
-                            <option value="year">
-                                Year
-                            </option>
-
-                            <option value="week">
-                                Week
-                            </option>
-
-                            <option value="day">
-                                Day
-                            </option>
-
-                        </select>
-                        </div>
-
-                    </div>
+</div>
 
                     {/* =====================================
                         OVERVIEW
@@ -1068,24 +1078,7 @@ const EditStayToBuy = () => {
 
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-[#14213D] mb-2">
-
-                                 Location
-
-                                </label>
-
-
-                    <input
-                        type="text"
-                        name="location"
-                        value={form.location}
-                        onChange={handleChange}
-                        placeholder="Enter your location address"
-                        className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
-                    />
-
-                    </div>
+                    
 
                     {/* =====================================
                         MEDIA

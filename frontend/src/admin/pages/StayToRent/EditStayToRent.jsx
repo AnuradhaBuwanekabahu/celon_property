@@ -12,7 +12,8 @@ import {
 import {
     cityOptions,
     highlightOptions,
-    overviewOptions
+    overviewOptions,
+    districtOptions,
 } from "../../data/propertyOption";
 import Loader from "../../components/Loader";
 
@@ -39,12 +40,13 @@ const EditStayToRent = () => {
         property_type: "",
         price_period: "monthly",
 
-        rate: "",
+        
         area_sqft: "",
 
+        district: "",
         city: "",
+        address: "",
         map_address: "",
-        location: "",
 
         status: "pending",
 
@@ -164,20 +166,14 @@ const EditStayToRent = () => {
                     price_period:
                         property.price_period || "monthly",
 
-                    rate:
-                        property.rate || "",
 
                     area_sqft:
                         property.area_sqft || "",
 
-                    city:
-                        property.city || "",
-
-                    map_address:
-                        property.map_address || "",
-
-                    location:
-                        property.location || "",
+                    district: property.district || "",
+                    city: property.city || "",
+                    address: property.address || "",
+                    map_address: property.map_address || "",
 
                     status:
                         property.status || "pending",
@@ -428,14 +424,16 @@ const EditStayToRent = () => {
             // ========================================
 
             if (
-                !form.title ||
-                !form.price ||
-                !form.property_type ||
-                !form.city
+                !String(form.title).trim() ||
+                !String(form.price).trim() ||
+                !String(form.property_type).trim() ||
+                !String(form.district).trim() ||
+                !String(form.city).trim() ||
+                !String(form.address).trim()
             ) {
 
                 toast.error(
-                    "Title, price, property type and city are required."
+                    "Title, price, property type, district, city and address are required."
                 );
 
                 setUpdating(false);
@@ -484,19 +482,24 @@ const EditStayToRent = () => {
                 form.price_period
             );
 
-            data.append(
-                "rate",
-                form.rate
-            );
+    
 
             data.append(
                 "area_sqft",
                 form.area_sqft
             );
+            data.append(
+                "district",
+                form.district
+            );
 
             data.append(
                 "city",
                 form.city
+            );
+            data.append(
+                "address",
+                form.address
             );
 
             data.append(
@@ -778,159 +781,95 @@ const EditStayToRent = () => {
                             Select Property Type
                         </option>
 
-                        <option value="House">
-                            House
-                        </option>
-
-                        <option value="Apartment">
-                            Apartment
-                        </option>
-
-                        <option value="Villa">
-                            Villa
-                        </option>
-
-                        <option value="Bungalow">
-                            Bungalow
-                        </option>
+                        <option value="House">House</option>
+                        <option value="Apartment">Apartment</option>
+                        <option value="Bungalow">Bungalow</option>
+                        <option value="Hotel">Hotel</option>
+                        <option value="WareHouse">WareHouse</option>
+                        <option value="Villa">Villa</option>
+                        <option value="Studio">Studio</option>
 
                     </select>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-[#14213D] mb-2">
-
-                                 City
-
-                                </label>
-
-
-                    <select
-                        name="city"
-                        value={form.city}
-                        onChange={handleChange}
-                        className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
-                    >
-
-                        <option value="">
-                            Select City
-                        </option>
-
-                        {cityOptions.map(
-                            (city) => (
-
-                                <option
-                                    key={city}
-                                    value={city}
-                                >
-                                    {city}
-                                </option>
-
-                            )
-                        )}
-
-                    </select>
-                    </div>
 
                 </div>
 
 
-                {/* =================================
-                    RENT DETAILS
-                ================================= */}
+{/* =================================
+    RENT DETAILS
+================================= */}
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                    <div>
-                        <label className="block text-sm font-medium text-[#14213D] mb-2">
+    {/* Duration */}
 
-                                 Duration
+    <div>
 
-                                </label>
+        <label className="block text-sm font-medium text-[#14213D] mb-2">
+            Duration
+        </label>
 
-                    {/* Duration */}
+        <select
+            name="duration"
+            value={form.duration}
+            onChange={handleChange}
+            className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
+        >
 
-                    <select
-                        name="duration"
-                        value={form.duration}
-                        onChange={handleChange}
-                        className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
-                    >
+            <option value="permanent">
+                Permanent
+            </option>
 
-                        <option value="permanent">
-                            Permanent
-                        </option>
+            <option value="year">
+                Year
+            </option>
 
-                        <option value="year">
-                            Year
-                        </option>
+            <option value="month">
+                Month
+            </option>
 
-                        <option value="month">
-                            Month
-                        </option>
+            <option value="week">
+                Week
+            </option>
 
-                        <option value="week">
-                            Week
-                        </option>
+            <option value="day">
+                Day
+            </option>
 
-                        <option value="day">
-                            Day
-                        </option>
+        </select>
 
-                    </select>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-[#14213D] mb-2">
-
-                                 Price_period
-
-                                </label>
+    </div>
 
 
-                    {/* Price Period */}
+    {/* Price Period */}
 
-                    <select
-                        name="price_period"
-                        value={form.price_period}
-                        onChange={handleChange}
-                        className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
-                    >
+    <div>
 
-                        <option value="monthly">
-                            Monthly
-                        </option>
+        <label className="block text-sm font-medium text-[#14213D] mb-2">
+            Price Period
+        </label>
 
-                        <option value="yearly">
-                            Yearly
-                        </option>
+        <select
+            name="price_period"
+            value={form.price_period}
+            onChange={handleChange}
+            className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
+        >
 
-                    </select>
-                    </div>
+            <option value="monthly">
+                Monthly
+            </option>
 
-                    <div>
+            <option value="yearly">
+                Yearly
+            </option>
 
-                        <label className="block text-sm font-medium text-[#14213D] mb-2">
+        </select>
 
-                                 Rate
+    </div>
 
-                                </label>
-
-
-                    {/* Rate */}
-
-                    <input
-                        type="number"
-                        step="0.1"
-                        name="rate"
-                        value={form.rate}
-                        onChange={handleChange}
-                        placeholder="Rate"
-                        className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
-                    />
-                    </div>
-
-                </div>
+</div>
 
 
                 {/* =================================
@@ -962,7 +901,7 @@ const EditStayToRent = () => {
                         </option>
 
                         <option value="sold">
-                            Sold
+                            Rented
                         </option>
 
                     </select>
@@ -1135,47 +1074,99 @@ const EditStayToRent = () => {
                 </div>
 
 
-                {/* =================================
-                    LOCATION
-                ================================= */}
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-[#14213D] mb-2">
+    {/* District */}
+    <div>
 
-                                 Map_address
+        <label className="block text-sm font-medium text-[#14213D] mb-2">
+            District
+        </label>
 
-                                </label>
+        <select
+            name="district"
+            value={form.district}
+            onChange={handleChange}
+            className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
+        >
 
-                    <input
-                        type="text"
-                        name="map_address"
-                        value={form.map_address}
-                        onChange={handleChange}
-                        placeholder="Map address"
-                        className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
-                    />
-                    </div>
+            <option value="">
+                Select District
+            </option>
 
-                    <div>
-                        <label className="block text-sm font-medium text-[#14213D] mb-2">
+            {districtOptions.map((district) => (
 
-                                 Location
+                <option
+                    key={district}
+                    value={district}
+                >
+                    {district}
+                </option>
 
-                                </label>
+            ))}
+
+        </select>
+
+    </div>
 
 
-                    <input
-                        type="text"
-                        name="location"
-                        value={form.location}
-                        onChange={handleChange}
-                        placeholder="Enter your location address"
-                        className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
-                    />
-                    </div>
+    {/* City */}
+       <div>
 
-                </div>
+        <label className="block text-sm font-medium text-[#14213D] mb-2">
+            City
+        </label>
+
+        <input
+            type="text"
+            name="city"
+            value={form.city}
+            onChange={handleChange}
+            placeholder="Enter city"
+            className="w-full h-12 px-4 rounded-xl border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-[#FCA311]"
+        />
+
+    </div>
+
+
+    {/* Address */}
+    <div>
+
+        <label className="block text-sm font-medium text-[#14213D] mb-2">
+            Address
+        </label>
+
+        <input
+            type="text"
+            name="address"
+            value={form.address}
+            onChange={handleChange}
+            placeholder="Enter property address"
+            className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
+        />
+
+    </div>
+
+
+    {/* Map Address */}
+    <div>
+
+        <label className="block text-sm font-medium text-[#14213D] mb-2">
+            Map Address
+        </label>
+
+        <input
+            type="text"
+            name="map_address"
+            value={form.map_address}
+            onChange={handleChange}
+            placeholder="Map address"
+            className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FCA311]"
+        />
+
+    </div>
+
+</div>
 
 
            

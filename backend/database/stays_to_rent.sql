@@ -1,23 +1,19 @@
 USE ceylone_property;
 
 CREATE TABLE stays_to_rent (
-
     id INT AUTO_INCREMENT PRIMARY KEY,
 
     client_id INT NOT NULL,
+    limit_id INT NULL,
 
     title VARCHAR(150) NOT NULL,
-
     description TEXT,
-
     price DECIMAL(12,2) NOT NULL,
-
     overview JSON,
-    
-     main_video LONGBLOB,
 
+    main_video LONGBLOB,
 
-    duration  ENUM (
+    duration ENUM(
         'permanent',
         'month',
         'year',
@@ -25,19 +21,19 @@ CREATE TABLE stays_to_rent (
         'day'
     ),
 
-    property_type VARCHAR(50) NOT NULL,
+    days INT NOT NULL,
+    expires_at TIMESTAMP NULL,
 
+    property_type VARCHAR(50) NOT NULL,
     highlights JSON,
 
-   rate DECIMAL(2,1) DEFAULT 0.0,
-
+    rate DECIMAL(2,1) DEFAULT 0.0,
     area_sqft DECIMAL(10,2),
 
+    district VARCHAR(100) NOT NULL,
     city VARCHAR(100) NOT NULL,
-
+    address VARCHAR(255) NOT NULL,
     map_address VARCHAR(255),
-
-    location VARCHAR(255),
 
     main_image LONGBLOB NOT NULL,
 
@@ -49,23 +45,21 @@ CREATE TABLE stays_to_rent (
     status ENUM(
         'pending',
         'active',
-        'rented'
+        'rented',
+        'expired'
     ) DEFAULT 'pending',
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ON UPDATE CURRENT_TIMESTAMP,
 
+    FOREIGN KEY (client_id)
+        REFERENCES clients(id)
+        ON DELETE CASCADE,
 
-    FOREIGN KEY(client_id)
-
-    REFERENCES clients(id)
-
-    ON DELETE CASCADE
-
+    FOREIGN KEY (limit_id)
+        REFERENCES limits(id)
 );
-
 
 CREATE TABLE stay_to_rent_images (
 
