@@ -60,15 +60,17 @@ export const registerAdmin = async(req,res)=>{
                 Name,
                 email,
                 password,
+                role,
                 is_approved
             )
-            VALUES(?,?,?,?)
+            VALUES(?,?,?,?,?)
             `,
 
             [
                 Name,
                 email,
                 hashedPassword,
+                "admin",
                 false
             ]
 
@@ -93,6 +95,7 @@ export const registerAdmin = async(req,res)=>{
 
 
         res.status(500).json({
+             success: false,
 
             message:error.message
 
@@ -103,141 +106,144 @@ export const registerAdmin = async(req,res)=>{
 
 };
 
-export const loginAdmin = async(req,res)=>{
+// ============================
+// Login Admin
+// ============================
 
+export const loginAdmin = async (req, res) => {
 
-try{
+    try {
 
+        const {
+            Name,
+            password
+        } = req.body;
 
-const { Name, name, password } = req.body;
-const identifier = Name || name;
 
-if (!identifier || !password) {
-    return res.status(400).json({
-        success: false,
-        message: "Username and password are required"
-    });
-}
+        if (!Name || !password) {
 
-const [admins] = await db.query(
-    "SELECT * FROM admins WHERE Name=? OR email=?",
-    [identifier, identifier]
-);
+            return res.status(400).json({
+                success: false,
+                message: "Username/email and password are required"
+            });
 
+        }
 
 
-if(admins.length===0){
+        const [admins] = await db.query(
+            `
+            SELECT *
+            FROM admins
+            WHERE name=? OR email=?
+            `,
+            [Name, Name]
+        );
 
-return res.status(401).json({
 
-message:"Invalid username or password"
+        if (admins.length === 0) {
 
-});
+            return res.status(401).json({
 
-}
+                success: false,
+                message: "Invalid username or password"
 
+            });
 
+        }
 
-const admin = admins[0];
 
+        const admin = admins[0];
 
 
-// Approval check
+        // Approval check
 
-if(!admin.is_approved){
+        if (!admin.is_approved) {
 
+            return res.status(403).json({
 
-return res.status(403).json({
+                success: false,
 
-message:
-"Waiting for super admin approval"
+                message:
+                    "Waiting for super admin approval"
 
-});
+            });
 
+        }
 
-}
 
+        // Password check
 
+        const match = await bcrypt.compare(
+            password,
+            admin.password
+        );
 
 
-const match = await bcrypt.compare(
+        if (!match) {
 
-password,
+            return res.status(401).json({
 
-admin.password
+                success: false,
+                message: "Invalid username or password"
 
-);
+            });
 
+        }
 
 
-if(!match){
+        // JWT
 
-return res.status(401).json({
+        const token = jwt.sign(
 
-message:"Invalid password"
+            {
+                id: admin.id,
+                name: admin.name,
+                email: admin.email,
+                role: admin.role
+            },
 
-});
+            process.env.JWT_SECRET,
 
-}
+            {
+                expiresIn: "1d"
+            }
 
+        );
 
 
+        res.json({
 
+            success: true,
 
-const token = jwt.sign(
+            token,
 
-{
+            admin: {
 
-id:admin.id,
+                id: admin.id,
 
-name:admin.name,
+                name: admin.name,
 
-email:admin.email
+                email: admin.email,
 
-},
+                role: admin.role
 
-process.env.JWT_SECRET,
+            }
 
-{
-expiresIn:"1d"
-}
+        });
 
-);
 
+    } catch (error) {
 
+        console.log(error);
 
+        res.status(500).json({
 
-res.json({
+            success: false,
+            message: error.message
 
-success:true,
+        });
 
-token,
-
-admin:{
-id:admin.id,
-name:admin.Name,
-email:admin.email,
-role:admin.role || "admin"
-}
-
-});
-
-
-
-}
-catch(error){
-
-console.log(error);
-
-
-res.status(500).json({
-
-message:error.message
-
-});
-
-}
-
+    }
 
 };
 
@@ -251,12 +257,14 @@ export const getAdminProfile = async (req, res) => {
 
         const adminId = req.admin.id;
 
+
         const [rows] = await db.query(
             `
             SELECT
                 id,
                 name,
                 email,
+                role,
                 is_approved,
                 created_at
             FROM admins
@@ -265,28 +273,40 @@ export const getAdminProfile = async (req, res) => {
             [adminId]
         );
 
+
         if (rows.length === 0) {
 
             return res.status(404).json({
+
+                success: false,
                 message: "Admin not found"
+
             });
 
         }
 
+
         res.json({
+
             success: true,
             admin: rows[0]
+
         });
+
 
     } catch (error) {
 
         console.log(error);
 
         res.status(500).json({
+
+            success: false,
             message: error.message
+
         });
 
     }
+
 };
 
 
@@ -300,6 +320,7 @@ export const updateAdminProfile = async (req, res) => {
 
         const adminId = req.admin.id;
 
+
         const {
             name,
             email,
@@ -310,7 +331,10 @@ export const updateAdminProfile = async (req, res) => {
         if (!name || !email) {
 
             return res.status(400).json({
+
+                success: false,
                 message: "Name and email are required"
+
             });
 
         }
@@ -331,23 +355,28 @@ export const updateAdminProfile = async (req, res) => {
         if (existing.length > 0) {
 
             return res.status(400).json({
+
+                success: false,
                 message: "Email already exists"
+
             });
 
         }
 
 
-        // Update password only if provided
+        // Update password if provided
 
         if (password && password.trim() !== "") {
 
             const hashedPassword =
                 await bcrypt.hash(password, 10);
 
+
             await db.query(
                 `
                 UPDATE admins
-                SET name=?,
+                SET
+                    name=?,
                     email=?,
                     password=?
                 WHERE id=?
@@ -365,7 +394,8 @@ export const updateAdminProfile = async (req, res) => {
             await db.query(
                 `
                 UPDATE admins
-                SET name=?,
+                SET
+                    name=?,
                     email=?
                 WHERE id=?
                 `,
@@ -380,17 +410,26 @@ export const updateAdminProfile = async (req, res) => {
 
 
         res.json({
+
             success: true,
-            message: "Admin profile updated successfully"
+
+            message:
+                "Admin profile updated successfully"
+
         });
+
 
     } catch (error) {
 
         console.log(error);
 
         res.status(500).json({
+
+            success: false,
             message: error.message
+
         });
 
     }
+
 };
