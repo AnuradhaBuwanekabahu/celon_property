@@ -1,96 +1,54 @@
 import express from "express";
-import upload from "../Middleware/upload.js";
 
 import {
-    addAd,
+    addAds,
+    getAdImage,
+    editAds,
     getAds,
     getAdById,
-    getAdImage,
-    updateAd,
-    deleteAd
-} from "../controllers/adsController.js";
-import authMiddleware from "../Middleware/authMiddleware.js";
+    showAllAds,
+    deleteAds
+} from "../Controllers/adsController.js";
+
+import upload from "../Middleware/upload.js"
 
 
-const adminAdsRouter = express.Router();
+const adsrouter = express.Router();
 
 
-// =======================================================
-// GET ALL ADS
-// GET /api/ads
-// =======================================================
 
-adminAdsRouter.get(
-    "/",
-    authMiddleware,
+// Add ad with image
+
+adsrouter.post( "/add", upload.single("image"), addAds);
+
+
+
+// Display image
+
+adsrouter.get("/image/:id", getAdImage);
+
+adsrouter.put(
+    "/ads/:id",
+    upload.single("image"),
+    editAds
+);
+
+adsrouter.get(
+    "/ads",
     getAds
 );
 
-
-// =======================================================
-// GET AD IMAGE
-// GET /api/ads/image/:id
-// IMPORTANT: Must be BEFORE /:id
-// =======================================================
-
-adminAdsRouter.get(
-    "/image/:id",
-    
-    getAdImage
-);
-
-
-// =======================================================
-// GET SINGLE AD
-// GET /api/ads/:id
-// =======================================================
-
-adminAdsRouter.get(
-    "/:id",
-    authMiddleware,
+adsrouter.get(
+    "/ads/:id",
     getAdById
 );
 
-
-// =======================================================
-// ADD AD
-// POST /api/ads
-// =======================================================
-
-adminAdsRouter.post(
-    "/",
-     
-    upload.single("image"),
-    authMiddleware,
-    
-    addAd
+adsrouter.get(
+    "/showall",
+    showAllAds
 );
 
+// Delete ad
+adsrouter.delete('/delete/:id', deleteAds);
 
-// =======================================================
-// UPDATE AD
-// PUT /api/ads/:id
-// =======================================================
-
-adminAdsRouter.put(
-    "/:id",
-     
-    upload.single("image"),
-    authMiddleware,
-    updateAd
-);
-
-
-// =======================================================
-// DELETE AD
-// DELETE /api/ads/:id
-// =======================================================
-
-adminAdsRouter.delete(
-    "/:id",
-   authMiddleware,
-    deleteAd
-);
-
-
-export default adminAdsRouter;
+export default adsrouter;

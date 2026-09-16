@@ -1,13 +1,12 @@
 import db from "../../configuration/db.js";
 
-// =======================================================
-// ADD ADVERTISEMENT
-// =======================================================
 
-export const addAd = async (req, res) => {
-    let connection;
+// Add Advertisement
+
+export const addAds = async (req, res) => {
 
     try {
+
         const {
             client_id,
             title,
@@ -16,73 +15,18 @@ export const addAd = async (req, res) => {
             is_active
         } = req.body;
 
-        // =======================================================
-        // VALIDATION
-        // =======================================================
 
-        if (!client_id) {
+        // Check image
+        if (!req.file) {
+
             return res.status(400).json({
-                success: false,
-                message: "Client ID is required"
+                message: "Image is required"
             });
+
         }
 
-        if (!title || title.trim() === "") {
-            return res.status(400).json({
-                success: false,
-                message: "Advertisement title is required"
-            });
-        }
 
-        // =======================================================
-        // GET IMAGE
-        // =======================================================
-
-        const imageFile =
-            req.file ||
-            req.files?.image?.[0];
-
-        if (!imageFile) {
-            return res.status(400).json({
-                success: false,
-                message: "Advertisement image is required"
-            });
-        }
-
-        // =======================================================
-        // DATABASE CONNECTION
-        // =======================================================
-
-        connection = await db.getConnection();
-
-        await connection.beginTransaction();
-
-        // =======================================================
-        // POSITION
-        // =======================================================
-
-        const adPosition =
-            position && position.trim() !== ""
-                ? position.trim()
-                : "sub_pages";
-
-        // =======================================================
-        // ACTIVE STATUS
-        // =======================================================
-
-        const activeStatus =
-            is_active === undefined ||
-            is_active === null ||
-            is_active === ""
-                ? 1
-                : Number(is_active);
-
-        // =======================================================
-        // INSERT AD
-        // =======================================================
-
-        const [result] = await connection.query(
-            `
+        const sql = `
             INSERT INTO ads
             (
                 client_id,
@@ -93,59 +37,66 @@ export const addAd = async (req, res) => {
                 is_active
             )
             VALUES (?, ?, ?, ?, ?, ?)
-            `,
-            [
-                Number(client_id),
-                title.trim(),
-                imageFile.buffer,
-                link_url || null,
-                adPosition,
-                activeStatus
-            ]
-        );
+        `;
 
-        await connection.commit();
 
-        return res.status(201).json({
+        const [result] = await db.query(sql, [
+
+            client_id,
+
+            title,
+
+            req.file.buffer,
+
+            link_url || null,
+
+            position || 'sub_pages',
+
+            is_active === undefined || is_active === null || is_active === '' ? 1 : is_active
+
+        ]);
+
+
+        res.status(201).json({
+
             success: true,
+
             message: "Advertisement added successfully",
-            id: result.insertId
+
+            adId: result.insertId
+
         });
+
 
     } catch (error) {
 
-        if (connection) {
-            await connection.rollback();
-        }
+        console.log(error);
 
-        console.error("ADD AD ERROR:", error);
 
-        return res.status(500).json({
-            success: false,
+        res.status(500).json({
+
             message: "Internal server error",
+
             error: error.message
+
         });
 
-    } finally {
-
-        if (connection) {
-            connection.release();
-        }
     }
+
 };
 
 
-// =======================================================
-// GET ALL ADS
-// =======================================================
 
-export const getAds = async (req, res) => {
+
+// Get All Advertisements (show all without client filtering)
+
+export const showAllAds = async (req, res) => {
 
     try {
 
         const [ads] = await db.query(
             `
-            SELECT
+            SELECT 
                 id,
                 client_id,
                 title,
@@ -154,44 +105,35 @@ export const getAds = async (req, res) => {
                 is_active,
                 created_at
             FROM ads
-            ORDER BY
-                CASE position
-                    WHEN 'front_page_top' THEN 1
-                    WHEN 'front_page_bottom' THEN 2
-                    WHEN 'sub_pages' THEN 3
-                    ELSE 4
-                END,
-                created_at DESC
+            ORDER BY CASE position
+                WHEN 'front_page_top' THEN 1
+                WHEN 'front_page_bottom' THEN 2
+                WHEN 'sub_pages' THEN 3
+                ELSE 4
+            END, id ASC
             `
         );
 
-        const data = ads.map((ad) => ({
+        const adsWithImage = ads.map((ad) => ({
             ...ad,
-            image: `/api/ads/image/${ad.id}`
+            image: `/api/ads/image/${ad.id}?v=${Date.now()}`
         }));
 
-        return res.status(200).json({
-            success: true,
+        res.status(200).json({
             message: "Advertisements fetched successfully",
-            ads: data
+            ads: adsWithImage
         });
 
     } catch (error) {
-
-        console.error("GET ADS ERROR:", error);
-
-        return res.status(500).json({
-            success: false,
+        console.log(error);
+        res.status(500).json({
             message: "Internal server error",
             error: error.message
         });
     }
 };
 
-
-// =======================================================
-// GET AD BY ID
-// =======================================================
+// Get one advertisement
 
 export const getAdById = async (req, res) => {
 
@@ -199,7 +141,7 @@ export const getAdById = async (req, res) => {
 
         const { id } = req.params;
 
-        const [ads] = await db.query(
+        const [rows] = await db.query(
             `
             SELECT
                 id,
@@ -215,41 +157,32 @@ export const getAdById = async (req, res) => {
             [id]
         );
 
-        if (ads.length === 0) {
-
+        if (rows.length === 0) {
             return res.status(404).json({
-                success: false,
                 message: "Advertisement not found"
             });
         }
 
-        const ad = {
-            ...ads[0],
-            image: `/api/ads/image/${id}`
-        };
-
-        return res.status(200).json({
-            success: true,
-            message: "Advertisement fetched successfully",
-            ad
+        res.status(200).json({
+            ad: {
+                ...rows[0],
+                image: `/api/ads/image/${rows[0].id}?v=${Date.now()}`
+            }
         });
 
     } catch (error) {
 
-        console.error("GET SINGLE AD ERROR:", error);
+        console.log(error);
 
-        return res.status(500).json({
-            success: false,
+        res.status(500).json({
             message: "Internal server error",
             error: error.message
         });
+
     }
 };
 
-
-// =======================================================
-// GET AD IMAGE
-// =======================================================
+// Get Advertisement Image
 
 export const getAdImage = async (req, res) => {
 
@@ -257,55 +190,56 @@ export const getAdImage = async (req, res) => {
 
         const { id } = req.params;
 
-        const [rows] = await db.query(
-            `
-            SELECT image
-            FROM ads
-            WHERE id = ?
-            `,
+
+        const [result] = await db.query(
+            "SELECT image FROM ads WHERE id = ?",
             [id]
         );
 
-        if (rows.length === 0) {
+
+        if (result.length === 0) {
 
             return res.status(404).json({
-                success: false,
-                message: "Advertisement not found"
+
+                message: "Image not found"
+
             });
+
         }
 
-        if (!rows[0].image) {
 
-            return res.status(404).json({
-                success: false,
-                message: "Advertisement image not found"
-            });
-        }
+        res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+        res.setHeader("Pragma", "no-cache");
+        res.setHeader("Expires", "0");
 
-        res.setHeader("Content-Type", "image/jpeg");
+        // Default image type
+        res.setHeader(
+            "Content-Type",
+            "image/jpeg"
+        );
 
-        return res.send(rows[0].image);
+
+        res.send(result[0].image);
+
 
     } catch (error) {
 
-        console.error("GET AD IMAGE ERROR:", error);
+        console.log(error);
 
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error",
-            error: error.message
+
+        res.status(500).json({
+
+            message: "Internal server error"
+
         });
+
     }
+
 };
 
+//edit ads
 
-// =======================================================
-// UPDATE ADVERTISEMENT
-// =======================================================
-
-export const updateAd = async (req, res) => {
-
-    let connection;
+export const editAds = async (req, res) => {
 
     try {
 
@@ -319,97 +253,31 @@ export const updateAd = async (req, res) => {
             is_active
         } = req.body;
 
-        // =======================================================
-        // DATABASE CONNECTION
-        // =======================================================
 
-        connection = await db.getConnection();
-
-        await connection.beginTransaction();
-
-        // =======================================================
-        // CHECK ADVERTISEMENT
-        // =======================================================
-
-        const [existing] = await connection.query(
-            `
-            SELECT id
-            FROM ads
-            WHERE id = ?
-            `,
+        // Check existing ad
+        const [existingAd] = await db.query(
+            "SELECT * FROM ads WHERE id = ?",
             [id]
         );
 
-        if (existing.length === 0) {
 
-            await connection.rollback();
+        if (existingAd.length === 0) {
 
             return res.status(404).json({
-                success: false,
                 message: "Advertisement not found"
             });
+
         }
 
-        // =======================================================
-        // VALIDATION
-        // =======================================================
 
-        if (!client_id) {
+        let sql;
+        let values;
 
-            await connection.rollback();
 
-            return res.status(400).json({
-                success: false,
-                message: "Client ID is required"
-            });
-        }
+        // If new image uploaded
+        if (req.file) {
 
-        if (!title || title.trim() === "") {
-
-            await connection.rollback();
-
-            return res.status(400).json({
-                success: false,
-                message: "Advertisement title is required"
-            });
-        }
-
-        // =======================================================
-        // POSITION
-        // =======================================================
-
-        const adPosition =
-            position && position.trim() !== ""
-                ? position.trim()
-                : "sub_pages";
-
-        // =======================================================
-        // ACTIVE STATUS
-        // =======================================================
-
-        const activeStatus =
-            is_active === undefined ||
-            is_active === null ||
-            is_active === ""
-                ? 1
-                : Number(is_active);
-
-        // =======================================================
-        // GET NEW IMAGE
-        // =======================================================
-
-        const imageFile =
-            req.file ||
-            req.files?.image?.[0];
-
-        // =======================================================
-        // UPDATE WITH IMAGE
-        // =======================================================
-
-        if (imageFile) {
-
-            await connection.query(
-                `
+            sql = `
                 UPDATE ads
                 SET
                     client_id = ?,
@@ -419,28 +287,34 @@ export const updateAd = async (req, res) => {
                     position = ?,
                     is_active = ?
                 WHERE id = ?
-                `,
-                [
-                    Number(client_id),
-                    title.trim(),
-                    imageFile.buffer,
-                    link_url || null,
-                    adPosition,
-                    activeStatus,
-                    id
-                ]
-            );
+            `;
 
-        }
 
-        // =======================================================
-        // UPDATE WITHOUT IMAGE
-        // =======================================================
+            values = [
 
-        else {
+                client_id,
 
-            await connection.query(
-                `
+                title,
+
+                req.file.buffer,
+
+                link_url || null,
+
+                position || 'sub_pages',
+
+                is_active === undefined || is_active === null || is_active === '' ? 1 : is_active,
+
+                id
+
+            ];
+
+
+        } else {
+
+
+            // Update without changing image
+
+            sql = `
                 UPDATE ads
                 SET
                     client_id = ?,
@@ -449,91 +323,125 @@ export const updateAd = async (req, res) => {
                     position = ?,
                     is_active = ?
                 WHERE id = ?
-                `,
-                [
-                    Number(client_id),
-                    title.trim(),
-                    link_url || null,
-                    adPosition,
-                    activeStatus,
-                    id
-                ]
-            );
+            `;
+
+
+            values = [
+
+                client_id,
+
+                title,
+
+                link_url || null,
+
+                position || 'sub_pages',
+
+                is_active === undefined || is_active === null || is_active === '' ? 1 : is_active,
+
+                id
+
+            ];
+
         }
 
-        // =======================================================
-        // COMMIT
-        // =======================================================
 
-        await connection.commit();
+        const [result] = await db.query(sql, values);
 
-        return res.status(200).json({
+
+        res.status(200).json({
+
             success: true,
+
             message: "Advertisement updated successfully"
+
         });
+
 
     } catch (error) {
 
-        if (connection) {
-            await connection.rollback();
-        }
+        console.log(error);
 
-        console.error("UPDATE AD ERROR:", error);
 
-        return res.status(500).json({
-            success: false,
+        res.status(500).json({
+
             message: "Internal server error",
+
             error: error.message
+
         });
 
-    } finally {
-
-        if (connection) {
-            connection.release();
-        }
     }
+
 };
 
 
-// =======================================================
-// DELETE ADVERTISEMENT
-// =======================================================
 
-export const deleteAd = async (req, res) => {
+
+// Get All Advertisements
+
+export const getAds = async (req, res) => {
+    return showAllAds(req, res);
+};
+
+
+
+
+// Delete Advertisement
+
+export const deleteAds = async (req, res) => {
 
     try {
 
         const { id } = req.params;
 
-        const [result] = await db.query(
-            `
-            DELETE FROM ads
-            WHERE id = ?
-            `,
+
+        // Check existing ad
+
+        const [existingAd] = await db.query(
+            "SELECT * FROM ads WHERE id = ?",
             [id]
         );
 
-        if (result.affectedRows === 0) {
+
+        if (existingAd.length === 0) {
 
             return res.status(404).json({
-                success: false,
+
                 message: "Advertisement not found"
+
             });
+
         }
 
-        return res.status(200).json({
-            success: true,
+
+        // Delete ad
+
+        await db.query(
+            "DELETE FROM ads WHERE id = ?",
+            [id]
+        );
+
+
+        res.status(200).json({
+
             message: "Advertisement deleted successfully"
+
         });
+
 
     } catch (error) {
 
-        console.error("DELETE AD ERROR:", error);
+        console.log(error);
 
-        return res.status(500).json({
-            success: false,
+
+        res.status(500).json({
+
             message: "Internal server error",
+
             error: error.message
+
         });
+
     }
+
 };

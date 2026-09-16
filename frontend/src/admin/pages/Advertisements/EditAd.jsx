@@ -413,27 +413,14 @@ const EditAd = () => {
             );
 
 
-            if (
-                response.data?.success
-            ) {
+            toast.success(
+                response.data?.message ||
+                "Advertisement updated successfully"
+            );
 
-                toast.success(
-                    response.data.message ||
-                    "Advertisement updated successfully"
-                );
-
-                navigate(
-                    "/admin/advertisements"
-                );
-
-            } else {
-
-                toast.error(
-                    response.data?.message ||
-                    "Advertisement update failed"
-                );
-
-            }
+            navigate(
+                "/admin/advertisements"
+            );
 
 
         } catch (error) {
@@ -597,45 +584,7 @@ const EditAd = () => {
                         ">
 
 
-                            {/* CLIENT ID */}
-
-                            <div>
-
-                                <label className="
-                                    block
-                                    text-sm
-                                    font-medium
-                                    text-gray-700
-                                    mb-2
-                                ">
-                                    Client ID
-                                </label>
-
-                                <input
-                                    type="number"
-                                    name="client_id"
-                                    value={
-                                        formData.client_id
-                                    }
-                                    onChange={
-                                        handleChange
-                                    }
-                                    placeholder="Enter client ID"
-                                    required
-                                    className="
-                                        w-full
-                                        border
-                                        border-gray-300
-                                        p-3
-                                        rounded-xl
-                                        text-sm
-                                        focus:outline-none
-                                        focus:ring-2
-                                        focus:ring-[#FCA311]
-                                    "
-                                />
-
-                            </div>
+                          
 
 
                             {/* TITLE */}

@@ -79,6 +79,7 @@ function AdvertisementSlider({ ads, position }) {
 
                 <a
                   href={link || '#'}
+                  target={link ? '_blank' : undefined}
                   rel="noopener noreferrer"
                   onClick={(e) => {
                     if (!link) {

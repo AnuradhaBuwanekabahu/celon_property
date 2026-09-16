@@ -129,8 +129,9 @@ app.use("/api/users", userrouter);
 app.use("/api/users", adminUsersRouter);
 
 // Ads
-app.use("/api/ads", adsrouter);
 app.use("/api/ads", adminAdsRouter);
+app.use("/api/ads", adsrouter);
+
 
 // Hot Sales
 app.use("/api/hotsales", hotsalerouter);
