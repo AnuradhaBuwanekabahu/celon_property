@@ -4,12 +4,10 @@ import {
   LayoutDashboard,
   Flame,
   Building2,
-  Bed,
   Users,
   Megaphone,
-  Settings,
   BedDouble,
-  Map,
+  Bed,
   Search,
   UserCircle,
 } from "lucide-react";
@@ -29,13 +27,12 @@ const menus = [
     name: "Stay To Buy",
     path: "/admin/stay-to-buy",
     icon: <Bed size={20} />,
-},
-{
+  },
+  {
     name: "Stay To Rent",
     path: "/admin/stay-to-rent",
     icon: <BedDouble size={20} />,
-},
-
+  },
   {
     name: "Lands",
     path: "/admin/lands",
@@ -54,8 +51,8 @@ const menus = [
   {
     name: "Wanted",
     path: "/admin/wanted",
-    icon: <Search size={20} />
-},
+    icon: <Search size={20} />,
+  },
   {
     name: "Profile",
     path: "/admin/profile",
@@ -63,45 +60,50 @@ const menus = [
   },
 ];
 
-const Sidebar = () => {
+const Sidebar = ({ setSidebarOpen }) => {
+  const handleMenuClick = () => {
+    // Close sidebar only on mobile
+    if (window.innerWidth < 768 && setSidebarOpen) {
+      setSidebarOpen(false);
+    }
+  };
+
   return (
-    <aside className="w-64 h-screen bg-[#14213D] text-white shadow-lg flex flex-col">
+    <aside className="w-64 h-full bg-[#14213D] text-white shadow-lg flex flex-col">
+      
+      {/* Header */}
+      <div className="h-16 flex-shrink-0 flex items-center justify-center border-b border-gray-600">
+        <h2 className="text-xl font-bold tracking-wide prata-regular">
+          Admin Panel
+        </h2>
+      </div>
 
-        {/* Header */}
-        <div className="h-16 flex-shrink-0 flex items-center justify-center border-b border-gray-600">
-            <h2 className="text-xl font-bold tracking-wide prata-regular">
-                Admin Panel
-            </h2>
-        </div>
+      {/* Scrollable Menu */}
+      <nav className="p-2 space-y-1 overflow-y-auto flex-1">
+        {menus.map((menu) => (
+          <NavLink
+            key={menu.name}
+            to={menu.path}
+            end={menu.path === "/admin"}
+            onClick={handleMenuClick}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                isActive
+                  ? "bg-[#FBBF24] text-[#14213D] font-semibold"
+                  : "text-gray-300 hover:bg-[#1c2c52] hover:text-white"
+              }`
+            }
+          >
+            {menu.icon}
 
-        {/* Scrollable Menu */}
-        <nav className="p-2 space-y-1 overflow-y-auto flex-1">
-
-            {menus.map((menu) => (
-                <NavLink
-                    key={menu.name}
-                    to={menu.path}
-                    end={menu.path === "/admin"}
-                    className={({ isActive }) =>
-                        `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                            isActive
-                                ? "bg-[#FBBF24] text-[#14213D] font-semibold"
-                                : "text-gray-300 hover:bg-[#1c2c52] hover:text-white"
-                        }`
-                    }
-                >
-                    {menu.icon}
-
-                    <span className="font-medium inter">
-                        {menu.name}
-                    </span>
-                </NavLink>
-            ))}
-
-        </nav>
-
+            <span className="font-medium inter">
+              {menu.name}
+            </span>
+          </NavLink>
+        ))}
+      </nav>
     </aside>
-);
+  );
 };
 
 export default Sidebar;
